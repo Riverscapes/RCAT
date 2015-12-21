@@ -103,7 +103,7 @@ def main(
         del row
         del cursor4
 
-        arcpy.AddField_management(intersect2, "COND_RATIO", "DOUBLE")
+        arcpy.AddField_management(intersect2, "DEP_RATIO", "DOUBLE")
         cursor5 = arcpy.da.UpdateCursor(intersect2, ["EVT_MEAN", "BPS_MEAN", "COND_RATIO"])
         for row in cursor5:
             index = row[0]/row[1]
@@ -183,7 +183,7 @@ def main(
         del row
         del cursor10
 
-        arcpy.AddField_management(intersect2, "COND_RATIO", "DOUBLE")
+        arcpy.AddField_management(intersect2, "DEP_RATIO", "DOUBLE")
         cursor11 = arcpy.da.UpdateCursor(intersect2, ["EVT_MEAN", "BPS_MEAN", "COND_RATIO"])
         for row in cursor11:
             index = row[0]/row[1]
