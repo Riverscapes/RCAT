@@ -54,69 +54,171 @@ def main(
     else:
         DrArea = Raster(FlowAcc)
 
-    arcpy.AddMessage("segmenting stream network by drainage area")
-    lg_polyline = scratch + "/lg_polyline"
-    med_polyline = scratch + "/med_polyline"
+    if DrArea.maximum >= 250:
+        arcpy.AddMessage("segmenting stream network by drainage area")
+        lg_polyline = scratch + "/lg_polyline"
+        med_polyline = scratch + "/med_polyline"
 
-    lg_reclass = Reclassify(DrArea, "VALUE", "0 250 NODATA; 250 10000000 1", "NODATA")   #look into using dataset max instead of 10000000
-    med_reclass = Reclassify(DrArea, "VALUE", "0 25 NODATA; 25 250 1; 250 10000000 NODATA", "NODATA")
+        lg_reclass = Reclassify(DrArea, "VALUE", "0 250 NODATA; 250 10000000 1", "NODATA")   #look into using dataset max instead of 10000000
+        med_reclass = Reclassify(DrArea, "VALUE", "0 25 NODATA; 25 250 1; 250 10000000 NODATA", "NODATA")
 
-    arcpy.RasterToPolyline_conversion(lg_reclass, lg_polyline, "NODATA")
-    arcpy.RasterToPolyline_conversion(med_reclass, med_polyline, "NODATA")
+        arcpy.RasterToPolyline_conversion(lg_reclass, lg_polyline, "NODATA")
+        arcpy.RasterToPolyline_conversion(med_reclass, med_polyline, "NODATA")
 
-    # create buffers around the different network segments
-    arcpy.AddMessage("creating buffers")
-    lg_buffer = scratch + "/lg_buffer"
-    med_buffer = scratch + "/med_buffer"
-    sm_buffer = scratch + "/sm_buffer"
-    min_buffer = scratch + "/min_buffer"
-    arcpy.Buffer_analysis(lg_polyline, lg_buffer, lg_buf_size, "", "ROUND", "ALL")
-    arcpy.Buffer_analysis(med_polyline, med_buffer, med_buf_size, "", "ROUND", "ALL")
-    arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
-    arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
+        # create buffers around the different network segments
+        arcpy.AddMessage("creating buffers")
+        lg_buffer = scratch + "/lg_buffer"
+        med_buffer = scratch + "/med_buffer"
+        sm_buffer = scratch + "/sm_buffer"
+        min_buffer = scratch + "/min_buffer"
+        arcpy.Buffer_analysis(lg_polyline, lg_buffer, lg_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(med_polyline, med_buffer, med_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
 
-    # Slope analysis
-    arcpy.AddMessage("creating slope raster")
-    slope_raster = Slope(DEM, "DEGREE", "")
+        # Slope analysis
+        arcpy.AddMessage("creating slope raster")
+        slope_raster = Slope(DEM, "DEGREE", "")
 
-    arcpy.AddMessage("clipping slope raster")
-    lg_buf_slope = ExtractByMask(slope_raster, lg_buffer)
-    med_buf_slope = ExtractByMask(slope_raster, med_buffer)
-    sm_buf_slope = ExtractByMask(slope_raster, sm_buffer)
+        arcpy.AddMessage("clipping slope raster")
+        lg_buf_slope = ExtractByMask(slope_raster, lg_buffer)
+        med_buf_slope = ExtractByMask(slope_raster, med_buffer)
+        sm_buf_slope = ExtractByMask(slope_raster, sm_buffer)
 
-    # reclassify slope rasters for each of the buffers
-    arcpy.AddMessage("reclassifying slope rasters")
-    lg_valley_raster = Reclassify(lg_buf_slope, "VALUE", "0 5 1; 5 100 NODATA", "NODATA")
-    med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 7 1; 7 100 NODATA", "NODATA")
-    sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
+        # reclassify slope rasters for each of the buffers
+        arcpy.AddMessage("reclassifying slope rasters")
+        lg_valley_raster = Reclassify(lg_buf_slope, "VALUE", "0 5 1; 5 100 NODATA", "NODATA")
+        med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 7 1; 7 100 NODATA", "NODATA")
+        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
 
-    # convert valley rasters into polygons
-    arcpy.AddMessage("converting valley rasters into polygons")
-    lg_polygon = scratch + "/lg_polygon"
-    med_polygon = scratch + "/med_polygon"
-    sm_polygon = scratch + "/sm_polygon"
-    arcpy.RasterToPolygon_conversion(lg_valley_raster, lg_polygon, "SIMPLIFY")
-    arcpy.RasterToPolygon_conversion(med_valley_raster, med_polygon, "SIMPLIFY")
-    arcpy.RasterToPolygon_conversion(sm_valley_raster, sm_polygon, "SIMPLIFY")
+        # convert valley rasters into polygons
+        arcpy.AddMessage("converting valley rasters into polygons")
+        lg_polygon = scratch + "/lg_polygon"
+        med_polygon = scratch + "/med_polygon"
+        sm_polygon = scratch + "/sm_polygon"
+        arcpy.RasterToPolygon_conversion(lg_valley_raster, lg_polygon, "SIMPLIFY")
+        arcpy.RasterToPolygon_conversion(med_valley_raster, med_polygon, "SIMPLIFY")
+        arcpy.RasterToPolygon_conversion(sm_valley_raster, sm_polygon, "SIMPLIFY")
 
-    # merge and clean valley bottom polygons
-    merged_polygon = scratch + "/merged_polygon"
-    arcpy.Merge_management([lg_polygon, med_polygon, sm_polygon, min_buffer], merged_polygon)
+        # merge and clean valley bottom polygons
+        merged_polygon = scratch + "/merged_polygon"
+        arcpy.Merge_management([lg_polygon, med_polygon, sm_polygon, min_buffer], merged_polygon)
 
-    arcpy.AddMessage("cleaning outputs for final valley bottom")
-    cleaned_valley = scratch + "/cleaned_valley"
-    arcpy.MakeFeatureLayer_management(merged_polygon, "merged_polygon_lyr")
-    arcpy.SelectLayerByLocation_management("merged_polygon_lyr", "INTERSECT", fcNetwork)
-    arcpy.CopyFeatures_management("merged_polygon_lyr", cleaned_valley)
+        arcpy.AddMessage("cleaning outputs for final valley bottom")
+        cleaned_valley = scratch + "/cleaned_valley"
+        arcpy.MakeFeatureLayer_management(merged_polygon, "merged_polygon_lyr")
+        arcpy.SelectLayerByLocation_management("merged_polygon_lyr", "INTERSECT", fcNetwork)
+        arcpy.CopyFeatures_management("merged_polygon_lyr", cleaned_valley)
 
-    # dissolve and aggregate valley bottom
-    dissolved_valley = scratch + "/dissolved_valley"
-    arcpy.Dissolve_management(cleaned_valley, dissolved_valley)
-    aggregated_valley = scratch + "/aggregated_valley"
-    arcpy.AggregatePolygons_cartography(dissolved_valley, aggregated_valley, ag_distance, min_area, min_hole)
+        # dissolve and aggregate valley bottom
+        dissolved_valley = scratch + "/dissolved_valley"
+        arcpy.Dissolve_management(cleaned_valley, dissolved_valley)
+        aggregated_valley = scratch + "/aggregated_valley"
+        arcpy.AggregatePolygons_cartography(dissolved_valley, aggregated_valley, ag_distance, min_area, min_hole)
 
-    # smooth final valley bottom
-    arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
+        # smooth final valley bottom
+        arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
+
+    elif DrArea.maximum >= 25 and DrArea.maximum < 250:
+        arcpy.AddMessage("segmenting stream network by drainage area")
+        med_polyline = scratch + "/med_polyline"
+
+        med_reclass = Reclassify(DrArea, "VALUE", "0 25 NODATA; 25 250 1; 250 10000000 NODATA", "NODATA")
+
+        arcpy.RasterToPolyline_conversion(med_reclass, med_polyline, "NODATA")
+
+        # create buffers around the different network segments
+        arcpy.AddMessage("creating buffers")
+        med_buffer = scratch + "/med_buffer"
+        sm_buffer = scratch + "/sm_buffer"
+        min_buffer = scratch + "/min_buffer"
+        arcpy.Buffer_analysis(med_polyline, med_buffer, med_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
+
+        # Slope analysis
+        arcpy.AddMessage("creating slope raster")
+        slope_raster = Slope(DEM, "DEGREE", "")
+
+        arcpy.AddMessage("clipping slope raster")
+        med_buf_slope = ExtractByMask(slope_raster, med_buffer)
+        sm_buf_slope = ExtractByMask(slope_raster, sm_buffer)
+
+        # reclassify slope rasters for each of the buffers
+        arcpy.AddMessage("reclassifying slope rasters")
+        med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 7 1; 7 100 NODATA", "NODATA")
+        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
+
+        # convert valley rasters into polygons
+        arcpy.AddMessage("converting valley rasters into polygons")
+        med_polygon = scratch + "/med_polygon"
+        sm_polygon = scratch + "/sm_polygon"
+        arcpy.RasterToPolygon_conversion(med_valley_raster, med_polygon, "SIMPLIFY")
+        arcpy.RasterToPolygon_conversion(sm_valley_raster, sm_polygon, "SIMPLIFY")
+
+        # merge and clean valley bottom polygons
+        merged_polygon = scratch + "/merged_polygon"
+        arcpy.Merge_management([med_polygon, sm_polygon, min_buffer], merged_polygon)
+
+        arcpy.AddMessage("cleaning outputs for final valley bottom")
+        cleaned_valley = scratch + "/cleaned_valley"
+        arcpy.MakeFeatureLayer_management(merged_polygon, "merged_polygon_lyr")
+        arcpy.SelectLayerByLocation_management("merged_polygon_lyr", "INTERSECT", fcNetwork)
+        arcpy.CopyFeatures_management("merged_polygon_lyr", cleaned_valley)
+
+        # dissolve and aggregate valley bottom
+        dissolved_valley = scratch + "/dissolved_valley"
+        arcpy.Dissolve_management(cleaned_valley, dissolved_valley)
+        aggregated_valley = scratch + "/aggregated_valley"
+        arcpy.AggregatePolygons_cartography(dissolved_valley, aggregated_valley, ag_distance, min_area, min_hole)
+
+        # smooth final valley bottom
+        arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
+
+    elif DrArea.maximum < 25:
+        arcpy.AddMessage("segmenting stream network by drainage area")
+
+        # create buffers around the different network segments
+        arcpy.AddMessage("creating buffers")
+        sm_buffer = scratch + "/sm_buffer"
+        min_buffer = scratch + "/min_buffer"
+        arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
+
+        # Slope analysis
+        arcpy.AddMessage("creating slope raster")
+        slope_raster = Slope(DEM, "DEGREE", "")
+
+        arcpy.AddMessage("clipping slope raster")
+        sm_buf_slope = ExtractByMask(slope_raster, sm_buffer)
+
+        # reclassify slope rasters for each of the buffers
+        arcpy.AddMessage("reclassifying slope rasters")
+        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
+
+        # convert valley rasters into polygons
+        arcpy.AddMessage("converting valley rasters into polygons")
+        sm_polygon = scratch + "/sm_polygon"
+        arcpy.RasterToPolygon_conversion(sm_valley_raster, sm_polygon, "SIMPLIFY")
+
+        # merge and clean valley bottom polygons
+        merged_polygon = scratch + "/merged_polygon"
+        arcpy.Merge_management([sm_polygon, min_buffer], merged_polygon)
+
+        arcpy.AddMessage("cleaning outputs for final valley bottom")
+        cleaned_valley = scratch + "/cleaned_valley"
+        arcpy.MakeFeatureLayer_management(merged_polygon, "merged_polygon_lyr")
+        arcpy.SelectLayerByLocation_management("merged_polygon_lyr", "INTERSECT", fcNetwork)
+        arcpy.CopyFeatures_management("merged_polygon_lyr", cleaned_valley)
+
+        # dissolve and aggregate valley bottom
+        dissolved_valley = scratch + "/dissolved_valley"
+        arcpy.Dissolve_management(cleaned_valley, dissolved_valley)
+        aggregated_valley = scratch + "/aggregated_valley"
+        arcpy.AggregatePolygons_cartography(dissolved_valley, aggregated_valley, ag_distance, min_area, min_hole)
+
+        # smooth final valley bottom
+        arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
 
 
     return fcOutput

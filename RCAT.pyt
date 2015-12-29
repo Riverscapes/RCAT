@@ -59,14 +59,14 @@ class VBETtool(object):
             displayName="Large Buffer Size",
             name="lg_buf_size",
             datatype="GPDouble",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input")
 
         param5 = arcpy.Parameter(
             displayName="Medium Buffer Size",
             name="med_buf_size",
             datatype="GPDouble",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input")
 
         param6 = arcpy.Parameter(
