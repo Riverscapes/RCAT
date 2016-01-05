@@ -50,7 +50,8 @@ def main(
     # extract "large" and "medium" portions of the network from the drainage area raster
     if FlowAcc == None:
         DEM_dirname = os.path.dirname(DEM)
-        DrArea = DEM_dirname + "/DrainArea_sqkm.tif"
+        DrAr = DEM_dirname + "/DrainArea_sqkm.tif"
+        DrArea = Raster(DrAr)
     else:
         DrArea = Raster(FlowAcc)
 
