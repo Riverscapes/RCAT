@@ -249,19 +249,13 @@ def main(
         elif row[0] == 12:
             row[1] = "Conversion to Barren"
         elif row[0] == 13:
-            row[1] = "Conversion to Invasive Riparian"
+            row[1] = "Conversion to Invasive Vegetation"
         elif row[0] == 14:
-            row[1] = "Conversion to Invasive Riparian"
+            row[1] = "Conversion to Invasive Vegetation"
         elif row[0] == 15:
-            row[1] = "Conversion to Invasive Upland"
+            row[1] = "Conversion to Invasive Vegetation"
         elif row[0] == 16:
-            row[1] = "Conversion to Invasive Upland"
-#        elif row[0] == 500:
-#            row[1] = "Water"
-#        elif row[0] == 501:
-#            row[1] = "Water"
-#        elif row[0] == 1000:
-#            row[1] = "Water"
+            row[1] = "Conversion to Invasive Vegetation"
         elif row[0] == 0:
             row[1] = "Non-Riparian"
         cursor13.updateRow(row)
@@ -285,6 +279,8 @@ def score_vegetation(evt, bps):
         elif row[0] == "Open Water":
             row[1] = 1
         elif row[0] == "Hardwood":
+            row[1] = 1
+        elif row[0] == "Conifer-Hardwood":
             row[1] = 1
         cursor.updateRow(row)
     del row
@@ -315,6 +311,8 @@ def score_vegetation(evt, bps):
         elif row[0] == "Open Water":
             row[1] = 1
         elif row[0] == "Hardwood":
+            row[1] = 1
+        elif row[0] == "Hardwood-Conifer":
             row[1] = 1
         else:
             row[1] = 0
@@ -357,30 +355,30 @@ def score_vegetation(evt, bps):
         elif row[0] == "Shrubland":
             row[2] = 7
         elif row[0] == "Conifer-Hardwood":
-            row[2] = 9
+            row[2] = 1
         elif row[0] == "Conifer":
             row[2] = 9
         elif row[0] == "Riparian":
             row[2] = 1
         elif row[0] == "Sparsely Vegetated":
             row[2] = 11
-        elif row[1] == 708:
+        elif row[1] == "708":
             row[2] = 13
-        elif row[1] == 709:
+        elif row[1] == "709":
             row[2] = 13
-        elif row[1] == 701:
+        elif row[1] == "701":
             row[2] = 13
-        elif row[1] == 705:
+        elif row[1] == "705":
             row[2] = 13
-        elif row[1] == 702:
+        elif row[1] == "702":
             row[2] = 15
-        elif row[1] == 703:
+        elif row[1] == "703":
             row[2] = 15
-        elif row[1] == 704:
+        elif row[1] == "704":
             row[2] = 15
-        elif row[1] == 706:
+        elif row[1] == "706":
             row[2] = 15
-        elif row[1] == 707:
+        elif row[1] == "707":
             row[2] = 15
         else:
             row[2] = 0
@@ -397,7 +395,7 @@ def score_vegetation(evt, bps):
         if row[0] == "Riparian":
             row[1] = 1
         elif row[0] == "Open Water":
-            row[1] = 1
+            row[1] = 500
         else:
             row[1] = 0
         cursor4.updateRow(row)
