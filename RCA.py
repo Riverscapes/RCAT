@@ -309,12 +309,14 @@ def score_landfire(evt, bps):
             row[2] = 1
         elif row[0] == "Hardwood":
             row[2] = 1
+        elif row[0] == "Conifer-Hardwood":
+            row[2] = 1
         elif row[1] == 708:
-            row[2] = 0.5
+            row[2] = 0
         elif row[1] == 709:
-            row[2] = 0.5
+            row[2] = 0
         elif row[1] == 701:
-            row[2] = 0.5
+            row[2] = 0
         elif row[1] == 602:
             row[2] = 1
         elif row[1] == 603:
@@ -336,6 +338,8 @@ def score_landfire(evt, bps):
         elif row[0] == "Open Water":
             row[1] = 1
         elif row[0] == "Hardwood":
+            row[1] = 1
+        elif row[0] == "Hardwood-Conifer":
             row[1] = 1
         else:
             row[1] = 0
