@@ -198,11 +198,11 @@ def main(
 
     evt_conversion_lookup = Lookup(evt, "CONVERSION")
     bps_conversion_lookup = Lookup(bps, "CONVERSION")
-    conversion_raster = evt_conversion_lookup + bps_conversion_lookup
+    conversion_raster = bps_conversion_lookup - evt_conversion_lookup
     int_conversion_raster = Int(conversion_raster)
-    conversion_reclass = Reclassify(int_conversion_raster, "VALUE", "0 0; 1 1; 2 2; 3 3; 4 4; 5 5; 6 6; 7 7; 8 8; 9 9; 10 10; 11 11; 12 12; 13 13; 14 14; 15 15; 16 16; 500 NODATA; 501 NODATA; 1000 NODATA")
+    #conversion_reclass = Reclassify(int_conversion_raster, "VALUE", "0 0; 1 1; 2 2; 3 3; 4 4; 5 5; 6 6; 7 7; 8 8; 9 9; 10 10; 11 11; 12 12; 13 13; 14 14; 15 15; 16 16; 500 NODATA; 501 NODATA; 1000 NODATA")
 
-    conversion_zs = ZonalStatistics(thiessen_valley, "OBJECTID", conversion_reclass, "MAJORITY", "DATA")
+    conversion_zs = ZonalStatistics(thiessen_valley, "OBJECTID", int_conversion_raster, "MAJORITY", "DATA")
     int_conversion_zs = Int(conversion_zs)
     conversion_poly = scratch + "/conversion_poly"
     arcpy.RasterToPolygon_conversion(int_conversion_zs, conversion_poly)
@@ -224,40 +224,64 @@ def main(
 
     cursor13 = arcpy.da.UpdateCursor(fcOut, ["CONV_CODE", "CONV_TYPE"])
     for row in cursor13:
-        if row[0] == 1:
-            row[1] = "Riparian to Riparian"
-        elif row[0] == 2:
-            row[1] = "Riparian to Riparian"
-        elif row[0] == 3:
+        if row[0] == 0:
+            row[1] = "No Change"
+        elif row[0] == 99:
             row[1] = "Conversion to Agriculture"
-        elif row[0] == 4:
-            row[1] = "Conversion to Agriculture"
-        elif row[0] == 5:
+        elif row[0] == 98:
             row[1] = "Conversion to Developed"
-        elif row[0] == 6:
-            row[1] = "Conversion to Developed"
-        elif row[0] == 7:
-            row[1] = "Riparian to Riparian"
-        elif row[0] == 8:
+        elif row[0] == 97:
+            row[1] = "Conversion to Invasive Vegetation"
+        elif row[0] == 80:
+            row[1] = "Conifer Encroachment"
+        elif row[0] == 60:
+            row[1] = "Conversion to Barren"
+        elif row[0] == 50:
             row[1] = "Upland Encroachment"
-        elif row[0] == 9:
+        elif row[0] == -400:
+            row[1] = "Flooded"
+        elif row[0] == -80:
+            row[1] = "Non-Riparian to Riparian"
+        elif row[0] == 19:
+            row[1] = "Conversion to Agriculture"
+        elif row[0] == 18:
+            row[1] = "Conversion to Developed"
+        elif row[0] == 17:
+            row[1] = "Conversion to Invasive Vegetation"
+        elif row[0] == -20:
+            row[1] = "Conversion to Barren"
+        elif row[0] == -30:
+            row[1] = "Upland Encroachment"
+        elif row[0] == -480:
+            row[1] = "Flooded"
+        elif row[0] == -60:
+            row[1] = "Non-Riparian to Riparian"
+        elif row[0] == 39:
+            row[1] = "Conversion to Agriculture"
+        elif row[0] == 38:
+            row[1] = "Conversion to Developed"
+        elif row[0] == 37:
+            row[1] = "Conversion to Invasive Vegetation"
+        elif row[0] == 20:
+            row[1] = "Conifer Encroachment"
+        elif row[0] == -10:
+            row[1] = "Upland Encroachment"
+        elif row[0] == -50:
+            row[1] = "Non-Riparian to Riparian"
+        elif row[0] == 49:
+            row[1] = "Conversion to Agriculture"
+        elif row[0] == 48:
+            row[1] = "Conversion to Developed"
+        elif row[0] == 47:
+            row[1] = "Conversion to Invasive Vegetation"
+        elif row[0] == 30:
             row[1] = "Conifer Encroachment"
         elif row[0] == 10:
-            row[1] = "Conifer Encroachment"
-        elif row[0] == 11:
-            row[1] = "Non-Riparian"
-        elif row[0] == 12:
             row[1] = "Conversion to Barren"
-        elif row[0] == 13:
-            row[1] = "Conversion to Invasive Vegetation"
-        elif row[0] == 14:
-            row[1] = "Conversion to Invasive Vegetation"
-        elif row[0] == 15:
-            row[1] = "Conversion to Invasive Vegetation"
-        elif row[0] == 16:
-            row[1] = "Conversion to Invasive Vegetation"
-        elif row[0] == 0:
-            row[1] = "Non-Riparian"
+        elif row[0] == -450:
+            row[1] = "Flooded"
+        else:
+            row[1] ="Water Conversions"
         cursor13.updateRow(row)
     del row
     del cursor13
@@ -329,59 +353,59 @@ def score_vegetation(evt, bps):
         if row[0] == "Open Water":
             row[2] = 500
         elif row[0] == "Non-vegetated":
-            row[2] = 11
+            row[2] = 40
         elif row[0] == "Snow-Ice":
-            row[2] = 11
+            row[2] = 40
         elif row[0] == "Developed":
-            row[2] = 5
+            row[2] = 2
         elif row[0] == "Developed-Low Intensity":
-            row[2] = 5
+            row[2] = 2
         elif row[0] == "Developed-Medium Intensity":
-            row[2] = 5
+            row[2] = 2
         elif row[0] == "Developed-High Intensity":
-            row[2] = 5
+            row[2] = 2
         elif row[0] == "Developed-Roads":
-            row[2] = 5
+            row[2] = 2
         elif row[0] == "Barren":
-            row[2] = 11
+            row[2] = 40
         elif row[0] == "Quarries-Strip Mines-Gravel Pits":
-            row[2] = 5
+            row[2] = 2
         elif row[0] == "Agricultural":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Grassland":
-            row[2] = 7
+            row[2] = 50
         elif row[0] == "Hardwood":
-            row[2] = 1
+            row[2] = 100
         elif row[0] == "Shrubland":
-            row[2] = 7
+            row[2] = 50
         elif row[0] == "Conifer-Hardwood":
-            row[2] = 1
+            row[2] = 20
         elif row[0] == "Conifer":
-            row[2] = 9
+            row[2] = 20
         elif row[0] == "Riparian":
-            row[2] = 1
+            row[2] = 100
         elif row[0] == "Sparsely Vegetated":
-            row[2] = 11
+            row[2] = 40
         elif row[1] == "708":
-            row[2] = 13
+            row[2] = 3
         elif row[1] == "709":
-            row[2] = 13
+            row[2] = 3
         elif row[1] == "701":
-            row[2] = 13
+            row[2] = 3
         elif row[1] == "705":
-            row[2] = 13
+            row[2] = 3
         elif row[1] == "702":
-            row[2] = 15
+            row[2] = 3
         elif row[1] == "703":
-            row[2] = 15
+            row[2] = 3
         elif row[1] == "704":
-            row[2] = 15
+            row[2] = 3
         elif row[1] == "706":
-            row[2] = 15
+            row[2] = 3
         elif row[1] == "707":
-            row[2] = 15
+            row[2] = 3
         else:
-            row[2] = 0
+            row[2] = 50
         cursor3.updateRow(row)
     del row
     del cursor3
@@ -393,11 +417,27 @@ def score_vegetation(evt, bps):
     cursor4 = arcpy.da.UpdateCursor(bps, ["GROUPVEG", "CONVERSION"])
     for row in cursor4:
         if row[0] == "Riparian":
-            row[1] = 1
+            row[1] = 100
         elif row[0] == "Open Water":
             row[1] = 500
+        elif row[0] == "PerennialIce/Snow":
+            row[1] = 40
+        elif row[0] == "Barren-Rock/Sand/Clay":
+            row[1] = 40
+        elif row[0] == "Sparse":
+            row[1] = 40
+        elif row[0] == "Hardwood":
+            row[1] = 100
+        elif row[0] == "Conifer":
+            row[1] = 20
+        elif row[0] == "Shrubland":
+            row[1] = 50
+        elif row[0] == "Hardwood-Conifer":
+            row[1] = 20
+        elif row[0] == "Grassland":
+            row[1] = 50
         else:
-            row[1] = 0
+            row[1] = 50
         cursor4.updateRow(row)
     del row
     del cursor4
