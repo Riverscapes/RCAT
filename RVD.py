@@ -200,7 +200,6 @@ def main(
     bps_conversion_lookup = Lookup(bps, "CONVERSION")
     conversion_raster = bps_conversion_lookup - evt_conversion_lookup
     int_conversion_raster = Int(conversion_raster)
-    #conversion_reclass = Reclassify(int_conversion_raster, "VALUE", "0 0; 1 1; 2 2; 3 3; 4 4; 5 5; 6 6; 7 7; 8 8; 9 9; 10 10; 11 11; 12 12; 13 13; 14 14; 15 15; 16 16; 500 NODATA; 501 NODATA; 1000 NODATA")
 
     conversion_zs = ZonalStatistics(thiessen_valley, "OBJECTID", int_conversion_raster, "MAJORITY", "DATA")
     int_conversion_zs = Int(conversion_zs)
