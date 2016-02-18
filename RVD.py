@@ -41,6 +41,8 @@ def main(
     arcpy.Buffer_analysis(valley, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
     thiessen_valley = scratch + "/thiessen_valley"
     arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
+    thiessen_valley2 = scratch + "/thiessen_valley2"
+    arcpy.Clip_analysis(thiessen, valley, thiessen_valley2)
 
     # give the landfire rasters riparian vegetation scores and conversion scores
     score_vegetation(evt, bps)
@@ -201,7 +203,7 @@ def main(
     conversion_raster = bps_conversion_lookup - evt_conversion_lookup
     int_conversion_raster = Int(conversion_raster)
 
-    conversion_zs = ZonalStatistics(thiessen_valley, "OBJECTID", int_conversion_raster, "MAJORITY", "DATA")
+    conversion_zs = ZonalStatistics(thiessen_valley2, "OBJECTID", int_conversion_raster, "MAJORITY", "DATA")
     int_conversion_zs = Int(conversion_zs)
     conversion_poly = scratch + "/conversion_poly"
     arcpy.RasterToPolygon_conversion(int_conversion_zs, conversion_poly)
