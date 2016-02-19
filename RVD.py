@@ -41,8 +41,10 @@ def main(
     arcpy.Buffer_analysis(valley, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
     thiessen_valley = scratch + "/thiessen_valley"
     arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
+    valley_buf2 = scratch + "/valley_buf2"
+    arcpy.Buffer_analysis(valley, valley_buf2, "10 Meters", "FULL", "ROUND", "ALL")
     thiessen_valley2 = scratch + "/thiessen_valley2"
-    arcpy.Clip_analysis(thiessen, valley, thiessen_valley2)
+    arcpy.Clip_analysis(thiessen, valley_buf2, thiessen_valley2)
 
     # give the landfire rasters riparian vegetation scores and conversion scores
     score_vegetation(evt, bps)
