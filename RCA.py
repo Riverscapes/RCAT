@@ -159,23 +159,23 @@ def main(
     CONNECTrange = np.linspace(0, 1, len(CONNECT))
 
     # Define membership functions for each input
-    RVDlarge = fuzz.trapmf(RVDrange, [0, 0, 0.2, 0.45])
-    RVDsig = fuzz.trimf(RVDrange, [0.2,0.45,0.8])
-    RVDminor = fuzz.trimf(RVDrange, [0.45,0.8,0.9])
-    RVDneg = fuzz.trapmf(RVDrange, [0.8, 0.9, 1, 1])
+    RVDlarge = fuzz.trapmf(RVDrange, [0, 0, 0.3, 0.5])
+    RVDsig = fuzz.trimf(RVDrange, [0.3, 0.5, 0.8])
+    RVDminor = fuzz.trimf(RVDrange, [0.5, 0.85, 0.95])
+    RVDneg = fuzz.trapmf(RVDrange, [0.85, 0.95, 1, 1])
 
-    LUIhigh = fuzz.trapmf(LUIrange, [0, 0, 0.75, 1.5])
-    LUImoderate = fuzz.trimf(LUIrange, [0.75, 1.5, 2.5])
-    LUIlow = fuzz.trapmf(LUIrange, [1.5, 2.5, 3, 3])
+    LUIhigh = fuzz.trapmf(LUIrange, [0, 0, 1.25, 1.75])
+    LUImoderate = fuzz.trapmf(LUIrange, [1.25, 1.75, 2.5, 2.95])
+    LUIlow = fuzz.trapmf(LUIrange, [2.5, 2.95, 3, 3])
 
-    CONNECTlow = fuzz.trapmf(CONNECTrange, [0, 0, 0.3, 0.5])
-    CONNECTmoderate = fuzz.trimf(CONNECTrange, [0.3, 0.5, 0.9])
-    CONNECThigh = fuzz.trapmf(CONNECTrange, [0.5, 0.9, 1, 1])
+    CONNECTlow = fuzz.trapmf(CONNECTrange, [0, 0, 0.5, 0.7])
+    CONNECTmoderate = fuzz.trapmf(CONNECTrange, [0.5, 0.7, 0.9, 0.95])
+    CONNECThigh = fuzz.trapmf(CONNECTrange, [0.9, 0.95, 1, 1])
 
     CONDpoor = fuzz.trapmf(CONDITION, [0, 0, 0.35, 0.5])
     CONDmod = fuzz.trimf(CONDITION, [0.35, 0.5, 0.8])
-    CONDgood = fuzz.trimf(CONDITION, [0.5, 0.8, 0.9])
-    CONDintact = fuzz.trapmf(CONDITION, [0.8, 0.9, 1, 1])
+    CONDgood = fuzz.trimf(CONDITION, [0.5, 0.8, 0.95])
+    CONDintact = fuzz.trapmf(CONDITION, [0.8, 0.95, 1, 1])
 
     # Create a copy of the relevant array for each MF and calculate membership in each
     RVDlarge_mem = np.copy(RVD)
