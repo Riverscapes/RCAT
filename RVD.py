@@ -389,6 +389,8 @@ def score_vegetation(evt, bps):
             row[2] = 100
         elif row[0] == "Sparsely Vegetated":
             row[2] = 40
+        elif row[0] == "Exotic Tree-Shrub":
+            row[2] = 3
         elif row[1] == "708":
             row[2] = 3
         elif row[1] == "709":
