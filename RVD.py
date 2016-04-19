@@ -208,7 +208,7 @@ def main(
     conversion_zs = ZonalStatistics(thiessen_valley2, "OBJECTID", int_conversion_raster, "MAJORITY", "DATA")
     int_conversion_zs = Int(conversion_zs)
     conversion_poly = scratch + "/conversion_poly"
-    arcpy.RasterToPolygon_conversion(int_conversion_zs, conversion_poly)
+    arcpy.RasterToPolygon_conversion(int_conversion_zs, conversion_poly, "NO_SIMPLIFY")
 
 
     arcpy.Intersect_analysis([intersect2, conversion_poly], fcOut, "", "", "LINE")

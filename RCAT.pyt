@@ -333,14 +333,14 @@ class RVDtool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="LANDFIRE EVT Layer",
+            displayName="Existing Vegetation Layer",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="LANDFIRE BPS Layer",
+            displayName="Historic Vegetation Layer",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
@@ -442,14 +442,14 @@ class RCAtool(object):
         param1.filter.list = ["Polygon"]
 
         param2 = arcpy.Parameter(
-            displayName="Input LANDFIRE EVT",
+            displayName="Existing Vegetation Layer",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Input LANDFIRE BPS",
+            displayName="Historic Vegetation Layer",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
