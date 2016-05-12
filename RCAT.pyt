@@ -10,7 +10,7 @@ class Toolbox(object):
     def __init__(self):
         """Define the toolbox (the name of the toolbox is the name of the
         .pyt file)."""
-        self.label = "Riparian Area Condition Assessments"
+        self.label = "Riparian Area Condition Assessments 1.0"
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
@@ -56,67 +56,107 @@ class VBETtool(object):
             direction="Output")
 
         param4 = arcpy.Parameter(
+            displayName="High Drainage Area Threshold",
+            name="high_da_thresh",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        param4.value = 250
+
+        param5 = arcpy.Parameter(
+            displayName="Low Drainage Area Threshold",
+            name="low_da_thresh",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        param5.value = 25
+
+        param6 = arcpy.Parameter(
             displayName="Large Buffer Size",
             name="lg_buf_size",
             datatype="GPDouble",
             parameterType="Optional",
             direction="Input")
 
-        param5 = arcpy.Parameter(
+        param7 = arcpy.Parameter(
             displayName="Medium Buffer Size",
             name="med_buf_size",
             datatype="GPDouble",
             parameterType="Optional",
             direction="Input")
 
-        param6 = arcpy.Parameter(
+        param8 = arcpy.Parameter(
             displayName="Small Buffer Size",
             name="sm_buf_size",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
 
-        param7 = arcpy.Parameter(
+        param9 = arcpy.Parameter(
             displayName="Minimum Buffer Size",
             name="min_buf_size",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
 
-        param8 = arcpy.Parameter(
+        param10 = arcpy.Parameter(
+            displayName="Large Slope Threshold",
+            name="lg_slope_thresh",
+            datatype="GPDouble",
+            parameterType="Optional",
+            direction="Input")
+        param10.value = 5
+
+        param11 = arcpy.Parameter(
+            displayName="Medium Slope Threshold",
+            name="med_slope_thresh",
+            datatype="GPDouble",
+            parameterType="Optional",
+            direction="Input")
+        param11.value = 7
+
+        param12 = arcpy.Parameter(
+            displayName="Small Slope Threshold",
+            name="sm_slope_thresh",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        param12.value = 12
+
+        param13 = arcpy.Parameter(
             displayName="Scratch Workspace",
             name="scratchWS",
             datatype="DEWorkspace",
             parameterType="Required",
             direction="Input")
-        param8.filter.list = ["Local Database"]
-        param8.value = arcpy.env.scratchWorkspace
+        param13.filter.list = ["Local Database"]
+        param13.value = arcpy.env.scratchWorkspace
 
-        param9 = arcpy.Parameter(
+        param14 = arcpy.Parameter(
             displayName="Aggregation Distance",
             name="ag_distance",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param9.value = 150
+        param14.value = 100
 
-        param10 = arcpy.Parameter(
+        param15 = arcpy.Parameter(
             displayName="Minimum Polygon Area to Keep in Output",
             name="min_area",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param10.value = 30000
+        param15.value = 30000
 
-        param11 = arcpy.Parameter(
+        param16 = arcpy.Parameter(
             displayName="Minimum Hole Area to Keep in Output",
             name="min_hole",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param11.value = 30000
+        param16.value = 50000
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -147,7 +187,12 @@ class VBETtool(object):
                   p[8].valueAsText,
                   p[9].valueAsText,
                   p[10].valueAsText,
-                  p[11].valueAsText)
+                  p[11].valueAsText,
+                  p[12].valueAsText,
+                  p[13].valueAsText,
+                  p[14].valueAsText,
+                  p[15].valueAsText,
+                  p[16].valueAsText)
         return
 
 
