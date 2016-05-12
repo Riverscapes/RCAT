@@ -4,8 +4,9 @@
 #              the valley bottom
 # Author:      Jordan Gilbert
 #
-# Created:     25/09/2015
-# Copyright:   (c) Jordan Gilbert 2015
+# Created:     09/25/2015
+# Latest Update: 05/12/2016
+# Copyright:   (c) Jordan Gilbert 2016
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
@@ -21,10 +22,15 @@ def main(
     fcNetwork,
     FlowAcc,
     fcOutput,
+    high_da_thresh,
+    low_da_thresh,
     lg_buf_size,
     med_buf_size,
     sm_buf_size,
     min_buf_size,
+    lg_slope_thresh,
+    med_slope_thresh,
+    sm_slope_thresh,
     scratch = arcpy.env.scratchWorkspace,
     ag_distance = 150.0,
     min_area = 30000.0,
@@ -47,7 +53,6 @@ def main(
     else:
         pass
 
-    # extract "large" and "medium" portions of the network from the drainage area raster
     if FlowAcc == None:
         DEM_dirname = os.path.dirname(DEM)
         DrAr = DEM_dirname + "/DrainArea_sqkm.tif"
@@ -55,27 +60,63 @@ def main(
     else:
         DrArea = Raster(FlowAcc)
 
+    arcpy.AddMessage("segmenting stream network by drainage area")
+
+    # This strange workflow extracts drainage area values from the raster to an attribute for each network segment.
+    network_midpoints = scratch + "/network_midpoints"
+    arcpy.FeatureVerticesToPoints_management(fcNetwork, network_midpoints, "MID")
+    midpoint_fields = [f.name for f in arcpy.ListFields(network_midpoints)]
+    midpoint_fields.remove('OBJECTID')
+    midpoint_fields.remove('Shape')
+    midpoint_fields.remove('ORIG_FID')
+    arcpy.DeleteField_management(network_midpoints, midpoint_fields)
+
+    midpoint_buffer = scratch + "/midpoint_buffer"
+    arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "NONE")
+    drarea_zs = ZonalStatistics(midpoint_buffer, "OBJECTID", DrArea, "MAXIMUM", "DATA")
+    drarea_int = Int(drarea_zs)
+    drarea_poly = scratch + "/drarea_poly"
+    arcpy.RasterToPolygon_conversion(drarea_int, drarea_poly)
+    poly_point_join = scratch + "/poly_point_join"
+    arcpy.SpatialJoin_analysis(drarea_poly, network_midpoints, poly_point_join, "JOIN_ONE_TO_MANY", "KEEP_COMMON", "", "INTERSECT")
+    arcpy.DeleteField_management(poly_point_join, ["Id", "JOIN_FID", "Join_Count", "TARGET_FID"])
+    arcpy.JoinField_management(fcNetwork, "FID", poly_point_join, "ORIG_FID")
+
+    lf = arcpy.ListFields(fcNetwork, "DA_sqkm")
+    if len(lf) is 1:
+        arcpy.DeleteField_management(fcNetwork, "DA_sqkm")
+    else:
+        pass
+
+    arcpy.AddField_management(fcNetwork, "DA_sqkm", "SHORT")
+    cursor = arcpy.da.UpdateCursor(fcNetwork, ["gridcode", "DA_sqkm"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+    del row
+    del cursor
+
+    delete_fields = [f.name for f in arcpy.ListFields(fcNetwork, "*_1")]
+    other_fields = ["gridcode", "ORIG_FID"]
+    delete_fields.extend(other_fields)
+    arcpy.DeleteField_management(fcNetwork, delete_fields)
+
+
     if DrArea.maximum >= 250:
-        arcpy.AddMessage("segmenting stream network by drainage area")
-        lg_polyline = scratch + "/lg_polyline"
-        med_polyline = scratch + "/med_polyline"
-
-        lg_reclass = Reclassify(DrArea, "VALUE", "0 250 NODATA; 250 10000000 1", "NODATA")   #look into using dataset max instead of 10000000
-        med_reclass = Reclassify(DrArea, "VALUE", "0 25 NODATA; 25 250 1; 250 10000000 NODATA", "NODATA")
-
-        arcpy.RasterToPolyline_conversion(lg_reclass, lg_polyline, "NODATA")
-        arcpy.RasterToPolyline_conversion(med_reclass, med_polyline, "NODATA")
-
         # create buffers around the different network segments
         arcpy.AddMessage("creating buffers")
+        arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
         lg_buffer = scratch + "/lg_buffer"
-        med_buffer = scratch + "/med_buffer"
-        sm_buffer = scratch + "/sm_buffer"
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" >= {0}'.format(high_da_thresh))
+        arcpy.Buffer_analysis("network_lyr", lg_buffer, lg_buf_size, "FULL", "ROUND", "ALL")
+        med_buffer = scratch + "/med_buf"
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" >= {0} AND "DA_sqkm" < {1}'.format(low_da_thresh, high_da_thresh))
+        arcpy.Buffer_analysis("network_lyr", med_buffer, med_buf_size, "FULL", "ROUND", "ALL")
+        sm_buffer = scratch + "/sm_buf"
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" < {0}'.format(low_da_thresh))
+        arcpy.Buffer_analysis("network_lyr", sm_buffer, sm_buf_size, "FULL", "ROUND", "ALL")
         min_buffer = scratch + "/min_buffer"
-        arcpy.Buffer_analysis(lg_polyline, lg_buffer, lg_buf_size, "", "ROUND", "ALL")
-        arcpy.Buffer_analysis(med_polyline, med_buffer, med_buf_size, "", "ROUND", "ALL")
-        arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
-        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "FULL", "ROUND", "ALL")
 
         # Slope analysis
         arcpy.AddMessage("creating slope raster")
@@ -88,9 +129,9 @@ def main(
 
         # reclassify slope rasters for each of the buffers
         arcpy.AddMessage("reclassifying slope rasters")
-        lg_valley_raster = Reclassify(lg_buf_slope, "VALUE", "0 5 1; 5 100 NODATA", "NODATA")
-        med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 7 1; 7 100 NODATA", "NODATA")
-        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
+        lg_valley_raster = Reclassify(lg_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(lg_slope_thresh), "NODATA")
+        med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(med_slope_thresh), "NODATA")
+        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(sm_slope_thresh), "NODATA")
 
         # convert valley rasters into polygons
         arcpy.AddMessage("converting valley rasters into polygons")
@@ -121,21 +162,17 @@ def main(
         arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
 
     elif DrArea.maximum >= 25 and DrArea.maximum < 250:
-        arcpy.AddMessage("segmenting stream network by drainage area")
-        med_polyline = scratch + "/med_polyline"
-
-        med_reclass = Reclassify(DrArea, "VALUE", "0 25 NODATA; 25 250 1; 250 10000000 NODATA", "NODATA")
-
-        arcpy.RasterToPolyline_conversion(med_reclass, med_polyline, "NODATA")
-
         # create buffers around the different network segments
         arcpy.AddMessage("creating buffers")
-        med_buffer = scratch + "/med_buffer"
-        sm_buffer = scratch + "/sm_buffer"
+        arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
+        med_buffer = scratch + "/med_buf"
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" >= {0} AND "DA_sqkm" < {1}'.format(low_da_thresh, high_da_thresh))
+        arcpy.Buffer_analysis("network_lyr", med_buffer, med_buf_size, "FULL", "ROUND", "ALL")
+        sm_buffer = scratch + "/sm_buf"
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" < {0}'.format(low_da_thresh))
+        arcpy.Buffer_analysis("network_lyr", sm_buffer, sm_buf_size, "FULL", "ROUND", "ALL")
         min_buffer = scratch + "/min_buffer"
-        arcpy.Buffer_analysis(med_polyline, med_buffer, med_buf_size, "", "ROUND", "ALL")
-        arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
-        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "FULL", "ROUND", "ALL")
 
         # Slope analysis
         arcpy.AddMessage("creating slope raster")
@@ -147,8 +184,8 @@ def main(
 
         # reclassify slope rasters for each of the buffers
         arcpy.AddMessage("reclassifying slope rasters")
-        med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 7 1; 7 100 NODATA", "NODATA")
-        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
+        med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(med_slope_thresh), "NODATA")
+        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(sm_slope_thresh), "NODATA")
 
         # convert valley rasters into polygons
         arcpy.AddMessage("converting valley rasters into polygons")
@@ -177,14 +214,14 @@ def main(
         arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
 
     elif DrArea.maximum < 25:
-        arcpy.AddMessage("segmenting stream network by drainage area")
-
         # create buffers around the different network segments
         arcpy.AddMessage("creating buffers")
-        sm_buffer = scratch + "/sm_buffer"
+        arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
+        sm_buffer = scratch + "/sm_buf"
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" < {0}'.format(low_da_thresh))
+        arcpy.Buffer_analysis("network_lyr", sm_buffer, sm_buf_size, "FULL", "ROUND", "ALL")
         min_buffer = scratch + "/min_buffer"
-        arcpy.Buffer_analysis(fcNetwork, sm_buffer, sm_buf_size, "", "ROUND", "ALL")
-        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "", "ROUND", "ALL")
+        arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "FULL", "ROUND", "ALL")
 
         # Slope analysis
         arcpy.AddMessage("creating slope raster")
@@ -195,7 +232,7 @@ def main(
 
         # reclassify slope rasters for each of the buffers
         arcpy.AddMessage("reclassifying slope rasters")
-        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 12 1; 12 100 NODATA", "NODATA")
+        sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(sm_slope_thresh), "NODATA")
 
         # convert valley rasters into polygons
         arcpy.AddMessage("converting valley rasters into polygons")
@@ -265,4 +302,9 @@ if __name__ == '__main__':
         sys.argv[9],
         sys.argv[10],
         sys.argv[11],
-        sys.argv[12])
+        sys.argv[12],
+        sys.argv[13],
+        sys.argv[14],
+        sys.argv[15],
+        sys.argv[16],
+        sys.argv[17])
