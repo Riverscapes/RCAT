@@ -360,11 +360,11 @@ def score_landfire(evt, bps):
         elif row[0] == "Conifer-Hardwood":
             row[2] = 3
         elif row[0] == "Developed":
-            row[2] = 0
+            row[2] = 1.5
         elif row[0] == "Developed-High Intensity":
             row[2] = 0
         elif row[0] == "Developed-Low Intensity":
-            row[2] = 1
+            row[2] = 0
         elif row[0] == "Developed-Medium Intensity":
             row[2] = 0
         elif row[0] == "Developed-Roads":
