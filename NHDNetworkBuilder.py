@@ -38,8 +38,14 @@ def main(
     pWaterbody = scratch + "/pWaterbody.shp"
     pArea = scratch + "/pArea.shp"
     arcpy.Project_management(inFlowline, pFlowline, projection)
-    arcpy.Project_management(inWaterbody, pWaterbody, projection)
-    arcpy.Project_management(inArea, pArea, projection)
+    if inWaterbody is not None:
+        arcpy.Project_management(inWaterbody, pWaterbody, projection)
+    else:
+        pass
+    if inArea is not None:
+        arcpy.Project_management(inArea, pArea, projection)
+    else:
+        pass
 
     arcpy.AddMessage("Splitting the flowline into components")
     #extract canals
