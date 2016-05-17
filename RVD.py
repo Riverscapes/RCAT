@@ -228,7 +228,7 @@ def main(
     cursor13 = arcpy.da.UpdateCursor(fcOut, ["CONV_CODE", "CONV_TYPE"])
     for row in cursor13:
         if row[0] == 0:
-            row[1] = "No Dominant Change"
+            row[1] = "No Dominant Conversion"
         elif row[0] == 99:
             row[1] = "Conversion to Agriculture"
         elif row[0] == 98:
