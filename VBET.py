@@ -102,7 +102,7 @@ def main(
     arcpy.DeleteField_management(fcNetwork, delete_fields)
 
 
-    if DrArea.maximum >= high_da_thresh:
+    if DrArea.maximum >= int(high_da_thresh):
         # create buffers around the different network segments
         arcpy.AddMessage("creating buffers")
         arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
@@ -161,7 +161,7 @@ def main(
         # smooth final valley bottom
         arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
 
-    elif DrArea.maximum >= low_da_thresh and DrArea.maximum < high_da_thresh:
+    elif DrArea.maximum >= int(low_da_thresh) and DrArea.maximum < int(high_da_thresh):
         # create buffers around the different network segments
         arcpy.AddMessage("creating buffers")
         arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
@@ -213,7 +213,7 @@ def main(
         # smooth final valley bottom
         arcpy.SmoothPolygon_cartography(aggregated_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
 
-    elif DrArea.maximum < low_da_thresh:
+    elif DrArea.maximum < int(low_da_thresh):
         # create buffers around the different network segments
         arcpy.AddMessage("creating buffers")
         arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
