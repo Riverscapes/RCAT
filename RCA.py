@@ -141,6 +141,28 @@ def main(
 
     arcpy.AddMessage('Calculating riparian condition')
 
+    # fix values outside of range of membership functions
+    cursor = arcpy.da.UpdateCursor(rca_final, ["RVD", "LUI", "CONNECT"])
+    for row in cursor:
+        if row[0] < 0:
+            row[0] = 0.01
+        elif row[0] > 1:
+            row[0] = 0.99
+        elif row[1] < 0:
+            row[1] = 0.01
+        elif row[1] > 3:
+            row[1] = 2.99
+        elif row[2] < 0:
+            row[2] = 0.01
+        elif row[2] > 1:
+            row[2] = 0.99
+        else:
+            pass
+        cursor.updateRow(row)
+    del row
+    del cursor
+
+
     # get arrays from the fields of interest
     RVDarray = arcpy.da.FeatureClassToNumPyArray(rca_final, "RVD")
     LUIarray = arcpy.da.FeatureClassToNumPyArray(rca_final, "LUI")
