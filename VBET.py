@@ -60,6 +60,18 @@ def main(
     else:
         DrArea = Raster(FlowAcc)
 
+    # check that da thresholds are not larger than the da of the inputs
+    if DrArea.maximum > high_da_thresh and DrArea.maximum > low_da_thresh:
+        pass
+    else:
+        raise Exception('drainage area threshold value is greater than highest network drainage area value')
+
+    if DrArea.minimum < low_da_thresh:
+        pass
+    else:
+        raise Exception('low drainage area threshold is lower than lowest network drainage area value')
+
+
     arcpy.AddMessage("segmenting stream network by drainage area")
 
     # This strange workflow extracts drainage area values from the raster to an attribute for each network segment.

@@ -75,14 +75,14 @@ class VBETtool(object):
             displayName="Large Buffer Size",
             name="lg_buf_size",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
 
         param7 = arcpy.Parameter(
             displayName="Medium Buffer Size",
             name="med_buf_size",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
 
         param8 = arcpy.Parameter(
@@ -103,7 +103,7 @@ class VBETtool(object):
             displayName="Large Slope Threshold",
             name="lg_slope_thresh",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
         param10.value = 5
 
@@ -111,7 +111,7 @@ class VBETtool(object):
             displayName="Medium Slope Threshold",
             name="med_slope_thresh",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
         param11.value = 7
 
