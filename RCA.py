@@ -15,21 +15,22 @@ import sys
 import os
 import numpy as np
 import skfuzzy as fuzz
-
+from math import pi
 
 def main(
     seg_network,
     frag_valley,
     evt,
     bps,
+    width_thresh,
     lg_river,
     output,
-    out_table,
     scratch = arcpy.env.scratchWorkspace):
 
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
 
+    # make sure that the fragmented valley input has a field called "connected"
     valley_fields = arcpy.ListFields(frag_valley, "Connected")
     if len(valley_fields) == 1:
         pass
@@ -48,7 +49,24 @@ def main(
     thiessen_valley = scratch + "/thiessen_valley"
     arcpy.Clip_analysis(thiessen, buf_valley, thiessen_valley)
 
-    arcpy.AddMessage('Classifying landfire rasters')
+    # Add width field to thiessen polygons
+    arcpy.AddField_management(thiessen_valley, "Width", "DOUBLE")
+    with arcpy.da.UpdateCursor(thiessen_valley, ["Shape_Length", "Shape_Area", "Width"]) as cur:
+        for row in cur:
+            perim, area, width = row
+            row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
+            cur.updateRow(row)
+    del row
+    del cur
+
+    # seperate unconfined from confined portions of valley bottom
+    arcpy.MakeFeatureLayer_management(thiessen_valley, "thiessen_lyr")
+    arcpy.SelectLayerByAttribute_management("thiessen_lyr", "NEW_SELECTION", '"Width" > {0}'.format(width_thresh))
+    arcpy.FeatureClassToFeatureClass_conversion("thiessen_lyr", scratch, "wide_valley")
+    arcpy.SelectLayerByAttribute_management("thiessen_lyr", "NEW_SELECTION", '"Width" <= {0}'.format(width_thresh))
+    arcpy.FeatureClassToFeatureClass_conversion("thiessen_lyr", scratch, "narrow_valley")
+
+    arcpy.AddMessage('Classifying vegetation rasters')
     score_landfire(evt, bps)
 
     arcpy.AddMessage('Calculating riparian departure')
@@ -60,6 +78,10 @@ def main(
     arcpy.AddMessage('Assessing floodplain connectivity')
     calc_connectivity(frag_valley, thiessen_valley, scratch)
 
+    arcpy.AddMessage('Calculating overall vegetation departure')
+    calc_veg(evt, bps, thiessen_valley, scratch)
+
+    # attribute the network with "RVD", "LUI", "CONNECT", and "VEG" fields
     arcpy.AddMessage('Attributing stream network')
     diss_network = scratch + '/diss_network'
     arcpy.Dissolve_management(seg_network, diss_network)
@@ -67,6 +89,7 @@ def main(
     rvd_final = Raster(scratch + '/RVD_final')
     lui_final = Raster(scratch + '/Land_Use_Intensity')
     fp_conn_final = Raster(scratch + '/Floodplain_Connectivity')
+    veg_final = Raster(scratch + '/veg_final')
 
     rvd100 = rvd_final * 100
     rvdint = Int(rvd100)
@@ -82,6 +105,11 @@ def main(
     fp_connint = Int(fp_conn100)
     fp_conn_poly = scratch + '/fp_conn_poly'
     arcpy.RasterToPolygon_conversion(fp_connint, fp_conn_poly)
+
+    veg100 = veg_final * 100
+    veg_int = Int(veg100)
+    veg_poly = scratch + '/veg_poly'
+    arcpy.RasterToPolygon_conversion(veg_int, veg_poly)
 
     intersect1 = scratch + '/intersect1'
     arcpy.Intersect_analysis([diss_network, rvd_poly], intersect1, "", "", "LINE")
@@ -119,54 +147,80 @@ def main(
     del cursor
     arcpy.DeleteField_management(intersect2, ["GRIDCODE", "GRID"])
 
-    rca_final = output
-    arcpy.Intersect_analysis([intersect2, fp_conn_poly], rca_final, "", "", "LINE")
-    arcpy.AddField_management(rca_final, "GRID", "DOUBLE")
-    arcpy.AddField_management(rca_final, "CONNECT", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(rca_final, ["GRIDCODE", "GRID"])
+    intersect3 = scratch + '/intersect3'
+    arcpy.Intersect_analysis([intersect2, fp_conn_poly], intersect3, "", "", "LINE")
+    arcpy.AddField_management(intersect3, "GRID", "DOUBLE")
+    arcpy.AddField_management(intersect3, "CONNECT", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(intersect3, ["GRIDCODE", "GRID"])
     for row in cursor:
         row[1] = row[0]
         cursor.updateRow(row)
     del row
     del cursor
-    cursor = arcpy.da.UpdateCursor(rca_final, ["GRID", "CONNECT"])
+    cursor = arcpy.da.UpdateCursor(intersect3, ["GRID", "CONNECT"])
     for row in cursor:
         row[1] = row[0]/100
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.DeleteField_management(rca_final, ["GRIDCODE", "GRID"])
+    arcpy.DeleteField_management(intersect3, ["GRIDCODE", "GRID"])
 
-    arcpy.DeleteField_management(rca_final, ["FID_inters", "FID_inte_1", "FID_diss_n", "FID_rvd_po", "FID_lui_po", "Id_1", "FID_fp_con", "Id_12", "Shape_Le_1"])
+    rca_input = scratch + '/rca_input'
+    arcpy.Intersect_analysis([intersect3, veg_poly], rca_input, "", "", "LINE")
+    arcpy.AddField_management(rca_input, "GRID", "DOUBLE")
+    arcpy.AddField_management(rca_input, "VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(rca_input, ["GRIDCODE", "GRID"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+    del row
+    del cursor
+    cursor = arcpy.da.UpdateCursor(rca_input, ["GRID", "VEG"])
+    for row in cursor:
+        row[1] = row[0]/100
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(rca_input, ["GRIDCODE", "GRID"])
+
+    df = [f.name for f in arcpy.ListFields(rca_input, "FID_*")]
+    df2 = [f.name for f in arcpy.ListFields(rca_input, "Id_*")]
+    df.extend(df2)
+    arcpy.DeleteField_management(rca_input, df)
+
 
     arcpy.AddMessage('Calculating riparian condition')
 
-    # fix values outside of range of membership functions
-    cursor = arcpy.da.UpdateCursor(rca_final, ["RVD", "LUI", "CONNECT"])
+    # # # calculate rca for segments in unconfined valleys # # #
+    arcpy.MakeFeatureLayer_management(rca_input, "rca_in_lyr")
+    wide_valley = scratch + '/wide_valley'
+    arcpy.SelectLayerByLocation_management("rca_in_lyr", "HAVE_THEIR_CENTER_IN", wide_valley)
+    arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_u")
+    rca_u = scratch + '/rca_u'
+
+    # fix values outside of range of membership functions.
+    cursor = arcpy.da.UpdateCursor(rca_u, ["RVD", "LUI", "CONNECT"])
     for row in cursor:
         if row[0] < 0:
             row[0] = 0.01
         elif row[0] > 1:
-            row[0] = 0.99
+            row[0] = 1
         elif row[1] < 0:
             row[1] = 0.01
         elif row[1] > 3:
-            row[1] = 2.99
+            row[3] = 3
         elif row[2] < 0:
             row[2] = 0.01
         elif row[2] > 1:
-            row[2] = 0.99
-        else:
-            pass
+            row[2] = 1
         cursor.updateRow(row)
     del row
     del cursor
 
-
     # get arrays from the fields of interest
-    RVDarray = arcpy.da.FeatureClassToNumPyArray(rca_final, "RVD")
-    LUIarray = arcpy.da.FeatureClassToNumPyArray(rca_final, "LUI")
-    CONNECTarray = arcpy.da.FeatureClassToNumPyArray(rca_final, "CONNECT")
+    RVDarray = arcpy.da.FeatureClassToNumPyArray(rca_u, "RVD")
+    LUIarray = arcpy.da.FeatureClassToNumPyArray(rca_u, "LUI")
+    CONNECTarray = arcpy.da.FeatureClassToNumPyArray(rca_u, "CONNECT")
 
     # convert the data type of the arrays
     RVD = np.asarray(RVDarray, np.float64)
@@ -308,10 +362,54 @@ def main(
     for i in range(len(out)):
         out[i] = fuzz.defuzz(CONDITION, aggregated[i, :], 'centroid')
 
-    # save the output text file
+    # save the output text file and merge to network
     fid = np.arange(0, len(out), 1)
     columns = np.column_stack((fid, out))
-    np.savetxt(out_table, columns, delimiter=',', header='FID, CONDITION', comments='')
+    out_table = os.path.dirname(output) + '/RCA_Table.txt'
+    np.savetxt(out_table, columns, delimiter=',', header='ID, COND_VAL', comments='')
+    arcpy.CopyRows_management(out_table, "final_table")
+
+    final_table = scratch + '/final_table'
+    arcpy.JoinField_management(rca_u, 'OBJECTID', final_table, 'OBJECTID', 'COND_VAL')
+    rca_u_final = scratch + '/rca_u_final'
+    arcpy.CopyFeatures_management(rca_u, rca_u_final)
+
+    # # # calculate rca for segments in confined valleys # # #
+    narrow_valley = scratch + '/narrow_valley'
+    arcpy.SelectLayerByLocation_management("rca_in_lyr", "HAVE_THEIR_CENTER_IN", narrow_valley)
+    arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c")
+    rca_c = scratch + '/rca_c'
+
+    arcpy.AddField_management(rca_c, "CONDITION", "TEXT")
+    cursor = arcpy.da.UpdateCursor(rca_c, ["LUI", "CONNECT", "VEG", "CONDITION"])
+    for row in cursor:
+        if row[0] >= 2.9 and row[1] == 1 and row[2] > 0.8:
+            row[3] = "Confined - Unimpacted"
+        else:
+            row[3] = "Confined - Impacted"
+        cursor.updateRow(row)
+    del row
+    del cursor
+
+    # merge the results of the rca for confined and unconfined valleys
+    arcpy.Merge_management([rca_u_final, rca_c], output)
+
+    # add final condition category for each segment
+    cursor = arcpy.da.UpdateCursor(output, ["COND_VAL", "CONDITION"])
+    for row in cursor:
+        if row[0] == 0:
+            pass
+        elif row[0] > 0 and row[0] <= 0.4:
+            row[1] = "Poor"
+        elif row[0] > 0.4 and row[0] <= 0.65:
+            row[1] = "Moderate"
+        elif row[0] > 0.65 and row[0] <= 0.85:
+            row[1] = "Good"
+        elif row[0] > 0.85:
+            row[1] = "Intact"
+        cursor.updateRow(row)
+    del row
+    del cursor
 
 
     arcpy.CheckInExtension('spatial')
@@ -439,6 +537,61 @@ def score_landfire(evt, bps):
     del row
     del cursor3
 
+    evt_fields3 = arcpy.ListFields(evt, "VEGETATED")
+    if len(evt_fields3) is not 1:
+        arcpy.AddField_management(evt, "VEGETATED", "SHORT")
+
+    cursor4 = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "VEGETATED"])
+    for row in cursor4:
+        if row[0] == "Open Water":
+            row[1] = 0
+        elif row[0] == "Non-vegetated":
+            row[1] = 0
+        elif row[0] == "Snow-Ice":
+            row[1] = 0
+        elif row[0] == "Developed-Low Intensity":
+            row[1] = 0
+        elif row[0] == "Developed-Medium Intensity":
+            row[1] = 0
+        elif row[0] == "Developed-High Intensity":
+            row[1] = 0
+        elif row[0] == "Developed-Roads":
+            row[1] = 0
+        elif row[0] == "Barren":
+            row[1] = 0
+        elif row[0] == "Quarries-Strip Mines-Gravel Pits":
+            row[1] = 0
+        elif row[0] == "Agricultural":
+            row[1] = 0
+        elif row[0] == "Exotic Herbaceous":
+            row[1] = 0
+        elif row[0] == "Exotic Tree-Shrub":
+            row[0] = 0
+        else:
+            row[1] = 1
+        cursor4.updateRow(row)
+    del row
+    del cursor4
+
+    bps_fields2 = arcpy.ListFields(bps, "VEGETATED")
+    if len(bps_fields2) is not 1:
+        arcpy.AddField_management(bps, "VEGETATED", "SHORT")
+
+    cursor5 = arcpy.da.UpdateCursor(bps, ["GROUPVEG", "VEGETATED"])
+    for row in cursor5:
+        if row[0] == "Open Water":
+            row[1] = 0
+        elif row[0] == "Perrennial Ice/Snow":
+            row[1] = 0
+        elif row[0] == "Barren-Rock/Sand/Clay":
+            row[1] = 0
+        elif row[0] == "Sparse":
+            row[1] = 0
+        else:
+            row[1] = 1
+        cursor5.updateRow(row)
+    del row
+    del cursor5
 
 
 def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
@@ -624,7 +777,82 @@ def calc_connectivity(frag_valley, thiessen_valley, scratch):
 
     return fp_conn_zs
 
+def calc_veg(evt, bps, thiessen_valley, scratch):
+    exveg_lookup = Lookup(evt, "VEGETATED")
+    histveg_lookup = Lookup(bps, "VEGETATED")
 
+    exveg_zs = ZonalStatistics(thiessen_valley, "OBJECTID", exveg_lookup, "MEAN", "DATA")
+    histveg_zs = ZonalStatistics(thiessen_valley, "OBJECTID", histveg_lookup, "MEAN", "DATA")
+
+    exvegx100 = exveg_zs * 100
+    exveg_int = Int(exvegx100)
+
+    arcpy.AddField_management(exveg_int, "NEWVALUE", "SHORT")
+    cursor = arcpy.UpdateCursor(exveg_int)
+    for row in cursor:
+        row.NEWVALUE = row.Value
+        cursor.updateRow(row)
+    del row
+    del cursor
+    cursor2 = arcpy.UpdateCursor(exveg_int)
+    for row in cursor2:
+        if row.Value == 0:
+            row.NEWVALUE = 1
+            cursor2.updateRow(row)
+    del row
+    del cursor2
+
+    exveg_int_lookup = Lookup(exveg_int, "NEWVALUE")
+    exveg_float = Float(exveg_int_lookup)
+    exveg_final = exveg_float/100
+
+    histvegx100 = histveg_zs * 100
+    histveg_int = Int(histvegx100)
+
+    arcpy.AddField_management(histveg_int, "NEWVALUE", "SHORT")
+    cursor3 = arcpy.UpdateCursor(histveg_int)
+    for row in cursor3:
+        row.NEWVALUE = row.Value
+        cursor3.updateRow(row)
+    del row
+    del cursor3
+    cursor4 = arcpy.UpdateCursor(histveg_int)
+    for row in cursor4:
+        if row.Value == 0:
+            row.NEWVALUE = 1
+            cursor4.updateRow(row)
+    del row
+    del cursor4
+
+    histveg_int_lookup = Lookup(histveg_int, "NEWVALUE")
+    histveg_float = Float(histveg_int_lookup)
+    histveg_final = histveg_float/100
+
+    veg_init = exveg_final/histveg_final
+    vegx100 = veg_init * 100
+    veg_int = Int(vegx100)
+
+    arcpy.AddField_management(veg_int, "NEWVALUE", "SHORT")
+    cursor5 = arcpy.UpdateCursor(veg_int)
+    for row in cursor5:
+        row.NEWVALUE = row.Value
+        cursor5.updateRow(row)
+    del row
+    del cursor5
+    cursor6 = arcpy.UpdateCursor(veg_int)
+    for row in cursor6:
+        if row.Value > 100:
+            row.NEWVALUE = 100
+            cursor6.updateRow(row)
+    del row
+    del cursor6
+
+    veg_lookup = Lookup(veg_int, "NEWVALUE")
+    veg_float = Float(veg_lookup)
+    veg_final = veg_float/100
+    veg_final.save(scratch + "/veg_final")
+
+    return veg_final
 
 
 

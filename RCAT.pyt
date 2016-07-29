@@ -10,7 +10,7 @@ class Toolbox(object):
     def __init__(self):
         """Define the toolbox (the name of the toolbox is the name of the
         .pyt file)."""
-        self.label = "Riparian Area Condition Assessments 1.0"
+        self.label = "Riparian Area Condition Assessments 1.1"
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
@@ -75,14 +75,14 @@ class VBETtool(object):
             displayName="Large Buffer Size",
             name="lg_buf_size",
             datatype="GPDouble",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input")
 
         param7 = arcpy.Parameter(
             displayName="Medium Buffer Size",
             name="med_buf_size",
             datatype="GPDouble",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input")
 
         param8 = arcpy.Parameter(
@@ -103,7 +103,7 @@ class VBETtool(object):
             displayName="Large Slope Threshold",
             name="lg_slope_thresh",
             datatype="GPDouble",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input")
         param10.value = 5
 
@@ -111,7 +111,7 @@ class VBETtool(object):
             displayName="Medium Slope Threshold",
             name="med_slope_thresh",
             datatype="GPDouble",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input")
         param11.value = 7
 
@@ -501,26 +501,28 @@ class RCAtool(object):
             direction="Input")
 
         param4 = arcpy.Parameter(
+            displayName="Valley Bottom Width Threshold",
+            name="width_thresh",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        param4.value = 190
+
+        param5 = arcpy.Parameter(
             displayName="Large River Polygon",
             name="lg_river",
             datatype="DEFeatureClass",
             parameterType="Optional",
             direction="Input")
-        param4.filter.list = ["Polygon"]
+        param5.filter.list = ["Polygon"]
 
-        param5 = arcpy.Parameter(
+        param6 = arcpy.Parameter(
             displayName="RCA Output",
             name="output",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Output")
-
-        param6 = arcpy.Parameter(
-            displayName="Output Table",
-            name="table_out",
-            datatype="DETextfile",
-            parameterType="Required",
-            direction="Output")
+        param6.symbology = os.path.join(os.path.dirname(__file__), "RCA.lyr")
 
         param7 = arcpy.Parameter(
             displayName="Scratch Workspace",
