@@ -46,6 +46,12 @@ def main(
     else:
         raise Exception("Input stream network must have a projected coordinate system")
 
+    # check that input network is segmented
+    ct = arcpy.GetCount_management(fcNetwork)
+    count = int(ct.getOutput(0))
+    if count < 30:
+        raise Exception("Input stream network must have more than 30 segments")
+
     # calculate flow accumulation and convert to drainage area, or input drainage area raster
     if FlowAcc == None:
         arcpy.AddMessage("calculating drainage area")
@@ -61,12 +67,12 @@ def main(
         DrArea = Raster(FlowAcc)
 
     # check that da thresholds are not larger than the da of the inputs
-    if DrArea.maximum > high_da_thresh and DrArea.maximum > low_da_thresh:
+    if float(DrArea.maximum) > float(high_da_thresh) and float(DrArea.maximum) > float(low_da_thresh):
         pass
     else:
         raise Exception('drainage area threshold value is greater than highest network drainage area value')
 
-    if DrArea.minimum < low_da_thresh:
+    if float(DrArea.minimum) < float(low_da_thresh):
         pass
     else:
         raise Exception('low drainage area threshold is lower than lowest network drainage area value')
