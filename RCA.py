@@ -15,6 +15,7 @@ import sys
 import os
 import numpy as np
 import skfuzzy as fuzz
+from skfuzzy import control as ctrl
 from math import pi
 
 def main(
@@ -222,149 +223,77 @@ def main(
         del cursor
 
         # get arrays from the fields of interest
-        RVDarray = arcpy.da.FeatureClassToNumPyArray(rca_u, "RVD")
-        LUIarray = arcpy.da.FeatureClassToNumPyArray(rca_u, "LUI")
-        CONNECTarray = arcpy.da.FeatureClassToNumPyArray(rca_u, "CONNECT")
+        RVDa = arcpy.da.FeatureClassToNumPyArray(rca_u, "RVD")
+        LUIa = arcpy.da.FeatureClassToNumPyArray(rca_u, "LUI")
+        CONNECTa = arcpy.da.FeatureClassToNumPyArray(rca_u, "CONNECT")
 
         # convert the data type of the arrays
-        RVD = np.asarray(RVDarray, np.float64)
-        LUI = np.asarray(LUIarray, np.float64)
-        CONNECT = np.asarray(CONNECTarray, np.float64)
-        CONDITION = np.linspace(0, 1, len(RVD))
+        RVDarray = np.asarray(RVDa, np.float64)
+        LUIarray = np.asarray(LUIa, np.float64)
+        CONNECTarray = np.asarray(CONNECTa, np.float64)
 
-        del RVDarray, LUIarray, CONNECTarray
+        del RVDa, LUIa, CONNECTa
 
-        RVDrange = np.linspace(0, 1, len(RVD))
-        LUIrange = np.linspace(0, 3, len(LUI))
-        CONNECTrange = np.linspace(0, 1, len(CONNECT))
+        # set up FIS
+        RVD = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input1')
+        LUI = ctrl.Antecedent(np.arange(0, 3, 0.03), 'input2')
+        CONNECT = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input3')
+        CONDITION = ctrl.Consequent(np.arange(0, 1, 0.1), 'result')
 
-        # Define membership functions for each input
-        RVDlarge = fuzz.trapmf(RVDrange, [0, 0, 0.3, 0.5])
-        RVDsig = fuzz.trimf(RVDrange, [0.3, 0.5, 0.8])
-        RVDminor = fuzz.trimf(RVDrange, [0.5, 0.85, 0.95])
-        RVDneg = fuzz.trapmf(RVDrange, [0.85, 0.95, 1, 1])
+        RVD['large'] = fuzz.trapmf(RVD.universe, [0, 0, 0.3, 0.5])
+        RVD['significant'] = fuzz.trimf(RVD.universe, [0.3, 0.5, 0.85])
+        RVD['minor'] = fuzz.trimf(RVD.universe, [0.5, 0.85, 0.95])
+        RVD['negligible'] = fuzz.trapmf(RVD.universe, [0.85, 0.95, 1, 1])
 
-        LUIhigh = fuzz.trapmf(LUIrange, [0, 0, 1.25, 1.75])
-        LUImoderate = fuzz.trapmf(LUIrange, [1.25, 1.75, 2.5, 2.95])
-        LUIlow = fuzz.trapmf(LUIrange, [2.5, 2.95, 3, 3])
+        LUI['high'] = fuzz.trapmf(LUI.universe, [0, 0, 1.25, 1.75])
+        LUI['moderate'] = fuzz.trapmf(LUI.universe, [1.25, 1.75, 2.5, 2.95])
+        LUI['low'] = fuzz.trapmf(LUI.universe, [2.5, 2.95, 3, 3])
 
-        CONNECTlow = fuzz.trapmf(CONNECTrange, [0, 0, 0.5, 0.7])
-        CONNECTmoderate = fuzz.trapmf(CONNECTrange, [0.5, 0.7, 0.9, 0.95])
-        CONNECThigh = fuzz.trapmf(CONNECTrange, [0.9, 0.95, 1, 1])
+        CONNECT['low'] = fuzz.trapmf(CONNECT.universe, [0, 0, 0.5, 0.7])
+        CONNECT['moderate'] = fuzz.trapmf(CONNECT.universe, [0.5, 0.7, 0.9, 0.95])
+        CONNECT['high'] = fuzz.trapmf(CONNECT.universe, [0.9, 0.95, 1, 1])
 
-        CONDpoor = fuzz.trapmf(CONDITION, [0, 0, 0.35, 0.5])
-        CONDmod = fuzz.trimf(CONDITION, [0.35, 0.5, 0.8])
-        CONDgood = fuzz.trimf(CONDITION, [0.5, 0.8, 0.95])
-        CONDintact = fuzz.trapmf(CONDITION, [0.8, 0.95, 1, 1])
+        CONDITION['poor'] = fuzz.trapmf(CONDITION.universe, [0, 0, 0.35, 0.5])
+        CONDITION['moderate'] = fuzz.trimf(CONDITION.universe, [0.35, 0.5, 0.8])
+        CONDITION['good'] = fuzz.trimf(CONDITION.universe, [0.5, 0.8, 0.95])
+        CONDITION['intact'] = fuzz.trapmf(CONDITION.universe, [0.8, 0.95, 1, 1])
 
-        # Create a copy of the relevant array for each MF and calculate membership in each
-        RVDlarge_mem = np.copy(RVD)
-        for i in np.nditer(RVDlarge_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(RVDrange, RVDlarge, i)
+        rule0 = ctrl.Rule(RVD['large'] & LUI['low'] & CONNECT['low'], CONDITION['poor'])
+        rule1 = ctrl.Rule(RVD['large'] & LUI['low'] & CONNECT['moderate'], CONDITION['poor']) #
+        rule2 = ctrl.Rule(RVD['large'] & LUI['low'] & CONNECT['high'], CONDITION['moderate']) #
+        rule3 = ctrl.Rule(RVD['large'] & LUI['moderate'] & CONNECT['low'], CONDITION['poor'])
+        rule4 = ctrl.Rule(LUI['moderate'] & CONNECT['moderate'], CONDITION['moderate'])
+        rule5 = ctrl.Rule(RVD['large'] & LUI['moderate'] & CONNECT['high'], CONDITION['poor']) #
+        rule6 = ctrl.Rule(LUI['high'] & CONNECT['low'], CONDITION['poor'])
+        rule7 = ctrl.Rule(LUI['high'] & CONNECT['moderate'], CONDITION['poor'])
+        rule8 = ctrl.Rule(LUI['high'] & CONNECT['high'], CONDITION['moderate'])
+        rule9 = ctrl.Rule(RVD['significant'] & LUI['low'] & CONNECT['low'], CONDITION['moderate'])
+        rule10 = ctrl.Rule(RVD['significant'] & LUI['low'] & CONNECT['moderate'], CONDITION['moderate'])
+        rule11 = ctrl.Rule(RVD['significant'] & LUI['low'] & CONNECT['high'], CONDITION['good'])
+        rule12 = ctrl.Rule(RVD['significant'] & LUI['moderate'] & CONNECT['low'], CONDITION['poor'])
+        rule13 = ctrl.Rule(RVD['significant'] & LUI['moderate'] & CONNECT['high'], CONDITION['moderate'])
+        rule14 = ctrl.Rule(RVD['minor'] & LUI['low'] & CONNECT['low'], CONDITION['moderate'])
+        rule15 = ctrl.Rule(RVD['minor'] & LUI['low'] & CONNECT['moderate'], CONDITION['good'])
+        rule16 = ctrl.Rule(RVD['minor'] & LUI['low'] & CONNECT['high'], CONDITION['intact'])
+        rule17 = ctrl.Rule(RVD['minor'] & LUI['moderate'] & CONNECT['low'], CONDITION['moderate'])
+        rule18 = ctrl.Rule(RVD['minor'] & LUI['moderate'] & CONNECT['high'], CONDITION['moderate'])
+        rule19 = ctrl.Rule(RVD['negligible'] & LUI['low'] & CONNECT['low'], CONDITION['moderate'])
+        rule20 = ctrl.Rule(RVD['negligible'] & LUI['low'] & CONNECT['moderate'], CONDITION['good'])
+        rule21 = ctrl.Rule(RVD['negligible'] & LUI['low'] & CONNECT['high'], CONDITION['intact'])
+        rule22 = ctrl.Rule(RVD['negligible'] & LUI['moderate'] & CONNECT['low'], CONDITION['moderate'])
+        rule23 = ctrl.Rule(RVD['negligible'] & LUI['moderate'] & CONNECT['high'], CONDITION['good'])
 
-        RVDsig_mem = np.copy(RVD)
-        for i in np.nditer(RVDsig_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(RVDrange, RVDsig, i)
-
-        RVDminor_mem = np.copy(RVD)
-        for i in np.nditer(RVDminor_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(RVDrange, RVDminor, i)
-
-        RVDneg_mem = np.copy(RVD)
-        for i in np.nditer(RVDneg_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(RVDrange, RVDneg, i)
-
-        LUIhigh_mem = np.copy(LUI)
-        for i in np.nditer(LUIhigh_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(LUIrange, LUIhigh, i)
-
-        LUImoderate_mem = np.copy(LUI)
-        for i in np.nditer(LUImoderate_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(LUIrange, LUImoderate, i)
-
-        LUIlow_mem = np.copy(LUI)
-        for i in np.nditer(LUIlow_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(LUIrange, LUIlow, i)
-
-        CONNECTlow_mem = np.copy(CONNECT)
-        for i in np.nditer(CONNECTlow_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(CONNECTrange, CONNECTlow, i)
-
-        CONNECTmoderate_mem = np.copy(CONNECT)
-        for i in np.nditer(CONNECTmoderate_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(CONNECTrange, CONNECTmoderate, i)
-
-        CONNECThigh_mem = np.copy(CONNECT)
-        for i in np.nditer(CONNECThigh_mem, op_flags=['readwrite']):
-            i[...] = fuzz.interp_membership(CONNECTrange, CONNECThigh, i)
-
-        del LUI, CONNECT, RVDrange, LUIrange, CONNECTrange
-
-        # rules
-        rule1 = np.fmin(RVDlarge_mem, np.fmin(LUIlow_mem, CONNECTlow_mem))
-        rule2 = np.fmin(RVDlarge_mem, np.fmin(LUIlow_mem, CONNECTmoderate_mem))
-        rule3 = np.fmin(RVDlarge_mem, np.fmin(LUIlow_mem, CONNECThigh_mem))
-        rule4 = np.fmin(RVDlarge_mem, np.fmin(LUImoderate_mem, CONNECTlow_mem))
-        rule5 = np.fmin(LUImoderate_mem, CONNECTmoderate_mem)
-        rule6 = np.fmin(RVDlarge_mem, np.fmin(LUImoderate_mem, CONNECThigh_mem))
-        rule7 = np.fmin(LUIhigh_mem, CONNECTlow_mem)
-        rule8 = np.fmin(LUIhigh_mem, CONNECTmoderate_mem)
-        rule9 = np.fmin(LUIhigh_mem, CONNECThigh_mem)
-        rule10 = np.fmin(RVDsig_mem, np.fmin(LUIlow_mem, CONNECTlow_mem))
-        rule11 = np.fmin(RVDsig_mem, np.fmin(LUIlow_mem, CONNECTmoderate_mem))
-        rule12 = np.fmin(RVDsig_mem, np.fmin(LUIlow_mem, CONNECThigh_mem))
-        rule13 = np.fmin(RVDsig_mem, np.fmin(LUImoderate_mem, CONNECTlow_mem))
-        rule14 = np.fmin(RVDsig_mem, np.fmin(LUImoderate_mem, CONNECThigh_mem))
-        rule15 = np.fmin(RVDminor_mem, np.fmin(LUIlow_mem, CONNECTlow_mem))
-        rule16 = np.fmin(RVDminor_mem, np.fmin(LUIlow_mem, CONNECTmoderate_mem))
-        rule17 = np.fmin(RVDminor_mem, np.fmin(LUIlow_mem, CONNECThigh_mem))
-        rule18 = np.fmin(RVDminor_mem, np.fmin(LUImoderate_mem, CONNECTlow_mem))
-        rule19 = np.fmin(RVDminor_mem, np.fmin(LUImoderate_mem, CONNECThigh_mem))
-        rule20 = np.fmin(RVDneg_mem, np.fmin(LUIlow_mem, CONNECTlow_mem))
-        rule21 = np.fmin(RVDneg_mem, np.fmin(LUIlow_mem, CONNECTmoderate_mem))
-        rule22 = np.fmin(RVDneg_mem, np.fmin(LUIlow_mem, CONNECThigh_mem))
-        rule23 = np.fmin(RVDneg_mem, np.fmin(LUImoderate_mem, CONNECTlow_mem))
-        rule24 = np.fmin(RVDneg_mem, np.fmin(LUImoderate_mem, CONNECThigh_mem))
-
-        # output membership functions
-        out_intact1 = fuzz.relation_min(rule17, CONDintact)
-        out_intact2 = fuzz.relation_min(rule22, CONDintact)
-        out_good1 = fuzz.relation_min(rule3, CONDgood)
-        out_good2 = fuzz.relation_min(rule12, CONDgood)
-        out_good3 = fuzz.relation_min(rule16, CONDgood)
-        out_good4 = fuzz.relation_min(rule21, CONDgood)
-        out_good5 = fuzz.relation_min(rule24, CONDgood)
-        out_mod1 = fuzz.relation_min(rule2, CONDmod)
-        out_mod2 = fuzz.relation_min(rule5, CONDmod)
-        out_mod3 = fuzz.relation_min(rule6, CONDmod)
-        out_mod4 = fuzz.relation_min(rule9, CONDmod)
-        out_mod5 = fuzz.relation_min(rule10, CONDmod)
-        out_mod6 = fuzz.relation_min(rule11, CONDmod)
-        out_mod7 = fuzz.relation_min(rule14, CONDmod)
-        out_mod8 = fuzz.relation_min(rule15, CONDmod)
-        out_mod9 = fuzz.relation_min(rule18, CONDmod)
-        out_mod10 = fuzz.relation_min(rule19, CONDmod)
-        out_mod11 = fuzz.relation_min(rule20, CONDmod)
-        out_mod12 = fuzz.relation_min(rule23, CONDmod)
-        out_poor1 = fuzz.relation_min(rule1, CONDpoor)
-        out_poor2 = fuzz.relation_min(rule4, CONDpoor)
-        out_poor3 = fuzz.relation_min(rule7, CONDpoor)
-        out_poor4 = fuzz.relation_min(rule8, CONDpoor)
-        out_poor5 = fuzz.relation_min(rule13, CONDpoor)
-
-        del rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9, rule10, rule11, rule12, rule13, rule14, rule15, rule16, rule17, rule18, rule19, rule20, rule21, rule22, rule23, rule24
-
-        # aggregate output membership functions
-        aggregated =  np.fmax(out_intact1, np.fmax(out_intact2, np.fmax(out_good1, np.fmax(out_good2, np.fmax(out_good3, np.fmax(out_good4, np.fmax(out_good5, np.fmax(out_mod1,
-                      np.fmax(out_mod2, np.fmax(out_mod3, np.fmax(out_mod4, np.fmax(out_mod5, np.fmax(out_mod6, np.fmax(out_mod7, np.fmax(out_mod8, np.fmax(out_mod9,
-                      np.fmax(out_mod10, np.fmax(out_mod11, np.fmax(out_mod12, np.fmax(out_poor1, np.fmax(out_poor2, np.fmax(out_poor3, np.fmax(out_poor4, out_poor5)))))))))))))))))))))))
-
-        del out_intact1, out_intact2, out_good1, out_good2, out_good3, out_good4, out_good5, out_mod1, out_mod2, out_mod3, out_mod4, out_mod5, out_mod6, out_mod7, out_mod8, out_mod9, out_mod10, out_mod11, out_mod12, out_poor1, out_poor2, out_poor3, out_poor4, out_poor5
+        rca_ctrl = ctrl.ControlSystem([rule0, rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9, rule10, rule11, rule12, rule13, rule14, rule15, rule16, rule17, rule18, rule19, rule20, rule21, rule22, rule23])
+        rca_fis = ctrl.ControlSystemSimulation(rca_ctrl)
 
         # Defuzzify
-        out = np.zeros_like(RVD)
+        out = np.zeros(len(RVDarray))
         for i in range(len(out)):
-            out[i] = fuzz.defuzz(CONDITION, aggregated[i, :], 'centroid')
+            rca_fis.input['input1'] = RVDarray[i]
+            rca_fis.input['input2'] = LUIarray[i]
+            rca_fis.input['input3'] = CONNECTarray[i]
+            rca_fis.compute()
+            out[i] = rca_fis.output['result']
 
         # save the output text file and merge to network
         fid = np.arange(0, len(out), 1)
@@ -399,28 +328,24 @@ def main(
     del cursor
 
     # merge the results of the rca for confined and unconfined valleys
-    if count is not 0:
-        arcpy.Merge_management([rca_u_final, rca_c], output)
-    else:
-        output = arcpy.CopyFeatures_management(rca_c, output)
+    arcpy.Merge_management([rca_u_final, rca_c], output)
 
     # add final condition category for each segment
-    if count is not 0:
-        cursor = arcpy.da.UpdateCursor(output, ["COND_VAL", "CONDITION"])
-        for row in cursor:
-            if row[0] == 0:
-                pass
-            elif row[0] > 0 and row[0] <= 0.4:
-                row[1] = "Poor"
-            elif row[0] > 0.4 and row[0] <= 0.65:
-                row[1] = "Moderate"
-            elif row[0] > 0.65 and row[0] <= 0.85:
-                row[1] = "Good"
-            elif row[0] > 0.85:
-                row[1] = "Intact"
-            cursor.updateRow(row)
-        del row
-        del cursor
+    cursor = arcpy.da.UpdateCursor(output, ["COND_VAL", "CONDITION"])
+    for row in cursor:
+        if row[0] == 0:
+            pass
+        elif row[0] > 0 and row[0] <= 0.4:
+            row[1] = "Poor"
+        elif row[0] > 0.4 and row[0] <= 0.65:
+            row[1] = "Moderate"
+        elif row[0] > 0.65 and row[0] <= 0.85:
+            row[1] = "Good"
+        elif row[0] > 0.85:
+            row[1] = "Intact"
+        cursor.updateRow(row)
+    del row
+    del cursor
 
 
     arcpy.CheckInExtension('spatial')
