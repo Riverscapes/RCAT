@@ -212,8 +212,8 @@ def main(
                 row[0] = 1
             elif row[1] < 0:
                 row[1] = 0.01
-            elif row[1] > 3:
-                row[3] = 3
+            elif row[1] > 1:
+                row[3] = 1
             elif row[2] < 0:
                 row[2] = 0.01
             elif row[2] > 1:
@@ -236,24 +236,25 @@ def main(
 
         # set up FIS
         RVD = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input1')
-        LUI = ctrl.Antecedent(np.arange(0, 3, 0.03), 'input2')
+        LUI = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input2')
         CONNECT = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input3')
-        CONDITION = ctrl.Consequent(np.arange(0, 1, 0.1), 'result')
+        CONDITION = ctrl.Consequent(np.arange(0, 1, 0.01), 'result')
 
         RVD['large'] = fuzz.trapmf(RVD.universe, [0, 0, 0.3, 0.5])
         RVD['significant'] = fuzz.trimf(RVD.universe, [0.3, 0.5, 0.85])
         RVD['minor'] = fuzz.trimf(RVD.universe, [0.5, 0.85, 0.95])
         RVD['negligible'] = fuzz.trapmf(RVD.universe, [0.85, 0.95, 1, 1])
 
-        LUI['high'] = fuzz.trapmf(LUI.universe, [0, 0, 1.25, 1.75])
-        LUI['moderate'] = fuzz.trapmf(LUI.universe, [1.25, 1.75, 2.5, 2.95])
-        LUI['low'] = fuzz.trapmf(LUI.universe, [2.5, 2.95, 3, 3])
+        LUI['high'] = fuzz.trapmf(LUI.universe, [0, 0, 0.416, 0.583])
+        LUI['moderate'] = fuzz.trapmf(LUI.universe, [0.416, 0.583, 0.83, 0.983])
+        LUI['low'] = fuzz.trapmf(LUI.universe, [0.83, 0.983, 1, 1])
 
         CONNECT['low'] = fuzz.trapmf(CONNECT.universe, [0, 0, 0.5, 0.7])
         CONNECT['moderate'] = fuzz.trapmf(CONNECT.universe, [0.5, 0.7, 0.9, 0.95])
         CONNECT['high'] = fuzz.trapmf(CONNECT.universe, [0.9, 0.95, 1, 1])
 
-        CONDITION['poor'] = fuzz.trapmf(CONDITION.universe, [0, 0, 0.35, 0.5])
+        CONDITION['very poor'] = fuzz.trapmf(CONDITION.universe, [0, 0, 0.1, 0.25])
+        CONDITION['poor'] = fuzz.trapmf(CONDITION.universe, [0.1, 0.25, 0.35, 0.5])
         CONDITION['moderate'] = fuzz.trimf(CONDITION.universe, [0.35, 0.5, 0.8])
         CONDITION['good'] = fuzz.trimf(CONDITION.universe, [0.5, 0.8, 0.95])
         CONDITION['intact'] = fuzz.trapmf(CONDITION.universe, [0.8, 0.95, 1, 1])
@@ -264,7 +265,8 @@ def main(
         rule3 = ctrl.Rule(RVD['large'] & LUI['moderate'] & CONNECT['low'], CONDITION['poor'])
         rule4 = ctrl.Rule(LUI['moderate'] & CONNECT['moderate'], CONDITION['moderate'])
         rule5 = ctrl.Rule(RVD['large'] & LUI['moderate'] & CONNECT['high'], CONDITION['poor']) #
-        rule6 = ctrl.Rule(LUI['high'] & CONNECT['low'], CONDITION['poor'])
+        rule6 = ctrl.Rule(RVD['large'] & LUI['high'] & CONNECT['low'], CONDITION['very poor'])
+        rule6_1 = ctrl.Rule((RVD['significant'] | RVD['minor'] | RVD['negligible']) & LUI['high'] & CONNECT['low'], CONDITION['poor'])
         rule7 = ctrl.Rule(LUI['high'] & CONNECT['moderate'], CONDITION['poor'])
         rule8 = ctrl.Rule(LUI['high'] & CONNECT['high'], CONDITION['moderate'])
         rule9 = ctrl.Rule(RVD['significant'] & LUI['low'] & CONNECT['low'], CONDITION['moderate'])
@@ -283,7 +285,7 @@ def main(
         rule22 = ctrl.Rule(RVD['negligible'] & LUI['moderate'] & CONNECT['low'], CONDITION['moderate'])
         rule23 = ctrl.Rule(RVD['negligible'] & LUI['moderate'] & CONNECT['high'], CONDITION['good'])
 
-        rca_ctrl = ctrl.ControlSystem([rule0, rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9, rule10, rule11, rule12, rule13, rule14, rule15, rule16, rule17, rule18, rule19, rule20, rule21, rule22, rule23])
+        rca_ctrl = ctrl.ControlSystem([rule0, rule1, rule2, rule3, rule4, rule5, rule6, rule6_1, rule7, rule8, rule9, rule10, rule11, rule12, rule13, rule14, rule15, rule16, rule17, rule18, rule19, rule20, rule21, rule22, rule23])
         rca_fis = ctrl.ControlSystemSimulation(rca_ctrl)
 
         # Defuzzify
@@ -319,7 +321,7 @@ def main(
     arcpy.AddField_management(rca_c, "CONDITION", "TEXT")
     cursor = arcpy.da.UpdateCursor(rca_c, ["LUI", "CONNECT", "VEG", "CONDITION"])
     for row in cursor:
-        if row[0] >= 2.9 and row[1] == 1 and row[2] > 0.8:
+        if row[0] >= 0.96 and row[1] == 1 and row[2] > 0.8:
             row[3] = "Confined - Unimpacted"
         else:
             row[3] = "Confined - Impacted"
@@ -335,7 +337,9 @@ def main(
     for row in cursor:
         if row[0] == 0:
             pass
-        elif row[0] > 0 and row[0] <= 0.4:
+        elif row[0] > 0 and row[0] <= 0.2:
+            row[1] = "Very Poor"
+        elif row[0] > 0.2 and row[0] <= 0.4:
             row[1] = "Poor"
         elif row[0] > 0.4 and row[0] <= 0.65:
             row[1] = "Moderate"
@@ -410,13 +414,13 @@ def score_landfire(evt, bps):
     cursor3 = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "EVT_GP", "LUI"])
     for row in cursor3:
         if row[0] == "Barren":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Conifer":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Conifer-Hardwood":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Developed":
-            row[2] = 1.5
+            row[2] = 0.5
         elif row[0] == "Developed-High Intensity":
             row[2] = 0
         elif row[0] == "Developed-Low Intensity":
@@ -426,49 +430,49 @@ def score_landfire(evt, bps):
         elif row[0] == "Developed-Roads":
             row[2] = 0
         elif row[0] == "Exotic Herbaceous":
-            row[2] = 2
+            row[2] = 0.66
         elif row[0] == "Exotic Tree-Shrub":
-            row[2] = 2
+            row[2] = 0.66
         elif row[0] == "Grassland":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Hardwood":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Open Water":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Quarries-Strip Mines-Gravel Pits":
-            row[2] = 1
+            row[2] = 0.33
         elif row[0] == "Riparian":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Shrubland":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Snow-Ice":
-            row[2] = 3
+            row[2] = 1
         elif row[0] == "Sparsely Vegetated":
-            row[2] = 3
+            row[2] = 1
         elif row[1] == "60":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "61":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "62":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "63":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "64":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "65":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "66":
-            row[2] = 2
+            row[2] = 0.66
         elif row[1] == "67":
-            row[2] = 2
+            row[2] = 0.66
         elif row[1] == "68":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "69":
-            row[2] = 1
+            row[2] = 0.33
         elif row[1] == "81":
-            row[2] = 2
+            row[2] = 0.66
         elif row[1] == "82":
-            row[2] = 1
+            row[2] = 0.33
         cursor3.updateRow(row)
     del row
     del cursor3
