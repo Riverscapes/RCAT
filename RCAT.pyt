@@ -1,8 +1,11 @@
 import os
 import arcpy
+import VBETProject
 import VBET
 import NHDNetworkBuilder
+import RVDProject
 import RVD
+import RCAProject
 import RCA
 
 
@@ -10,11 +13,78 @@ class Toolbox(object):
     def __init__(self):
         """Define the toolbox (the name of the toolbox is the name of the
         .pyt file)."""
-        self.label = "Riparian Area Condition Assessments 1.1"
+        self.label = "Riparian Area Condition Assessments 1.0"
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
-        self.tools = [VBETtool, NHDNetworkBuildertool, RVDtool, RCAtool]
+        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool]
+
+
+class VBETBuilder(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Build VBET Project"
+        self.description = "Sets up a VBET project folder and defines the inputs"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="projPath",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Select DEM inputs",
+            name="dem",
+            datatype="DERasterDataset",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param2 = arcpy.Parameter(
+            displayName="Select drainage network datasets",
+            name="network",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param3 = arcpy.Parameter(
+            displayName="Select drainage area raster datasets",
+            name="drar",
+            datatype="DERasterDataset",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        return [param0, param1, param2, param3]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(VBETProject)
+        VBETProject.main(p[0].valueAsText,
+                        p[1].valueAsText,
+                        p[2].valueAsText,
+                        p[3].valueAsText)
+        return
 
 
 class VBETtool(object):
@@ -27,136 +97,165 @@ class VBETtool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
+            displayName="Project Name",
+            name="projName",
+            datatype="GPString",
+            parameterType="Optional",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Watershed HUC ID",
+            name="hucID",
+            datatype="GPDouble",
+            parameterType="Optional",
+            direction="Input")
+
+        param2 = arcpy.Parameter(
+            displayName="Watershed Name",
+            name="hucName",
+            datatype="GPString",
+            parameterType="Optional",
+            direction="Input")
+
+        param3 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="proj_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param4 = arcpy.Parameter(
             displayName="Input DEM",
             name="inDEM",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
-        param1 = arcpy.Parameter(
+        param5 = arcpy.Parameter(
             displayName="Input Stream Network",
             name="inNetwork",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
-        param1.filter.list = ["Polyline"]
+        param5.filter.list = ["Polyline"]
 
-        param2 = arcpy.Parameter(
+        param6 = arcpy.Parameter(
             displayName="Input Drainage Area Raster",
             name="inDA",
             datatype="DERasterDataset",
             parameterType="Optional",
             direction="Input")
 
-        param3 = arcpy.Parameter(
-            displayName="Valley Bottom Output",
+        param7 = arcpy.Parameter(
+            displayName="Name Valley Bottom Output",
             name="outValleyBottom",
-            datatype="DEFeatureClass",
+            datatype="GPString",
             parameterType="Required",
-            direction="Output")
+            direction="Input")
 
-        param4 = arcpy.Parameter(
+        param8 = arcpy.Parameter(
             displayName="High Drainage Area Threshold",
             name="high_da_thresh",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param4.value = 250
+        param8.value = 250
 
-        param5 = arcpy.Parameter(
+        param9 = arcpy.Parameter(
             displayName="Low Drainage Area Threshold",
             name="low_da_thresh",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param5.value = 25
+        param9.value = 25
 
-        param6 = arcpy.Parameter(
+        param10 = arcpy.Parameter(
             displayName="Large Buffer Size",
             name="lg_buf_size",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
 
-        param7 = arcpy.Parameter(
+        param11 = arcpy.Parameter(
             displayName="Medium Buffer Size",
             name="med_buf_size",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
 
-        param8 = arcpy.Parameter(
+        param12 = arcpy.Parameter(
             displayName="Small Buffer Size",
             name="sm_buf_size",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
 
-        param9 = arcpy.Parameter(
+        param13 = arcpy.Parameter(
             displayName="Minimum Buffer Size",
             name="min_buf_size",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
 
-        param10 = arcpy.Parameter(
+        param14 = arcpy.Parameter(
             displayName="Large Slope Threshold",
             name="lg_slope_thresh",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
-        param10.value = 5
+        param14.value = 5
 
-        param11 = arcpy.Parameter(
+        param15 = arcpy.Parameter(
             displayName="Medium Slope Threshold",
             name="med_slope_thresh",
             datatype="GPDouble",
-            parameterType="Optional",
+            parameterType="Required",
             direction="Input")
-        param11.value = 7
+        param15.value = 7
 
-        param12 = arcpy.Parameter(
+        param16 = arcpy.Parameter(
             displayName="Small Slope Threshold",
             name="sm_slope_thresh",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param12.value = 12
+        param16.value = 12
 
-        param13 = arcpy.Parameter(
+        param17 = arcpy.Parameter(
             displayName="Scratch Workspace",
             name="scratchWS",
             datatype="DEWorkspace",
             parameterType="Required",
             direction="Input")
-        param13.filter.list = ["Local Database"]
-        param13.value = arcpy.env.scratchWorkspace
+        param17.filter.list = ["Local Database"]
+        param17.value = arcpy.env.scratchWorkspace
 
-        param14 = arcpy.Parameter(
+        param18 = arcpy.Parameter(
             displayName="Aggregation Distance",
             name="ag_distance",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param14.value = 100
+        param18.value = 100
 
-        param15 = arcpy.Parameter(
+        param19 = arcpy.Parameter(
             displayName="Minimum Polygon Area to Keep in Output",
             name="min_area",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param15.value = 30000
+        param19.value = 30000
 
-        param16 = arcpy.Parameter(
+        param20 = arcpy.Parameter(
             displayName="Minimum Hole Area to Keep in Output",
             name="min_hole",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param16.value = 50000
+        param20.value = 50000
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11,
+                param12, param13, param14, param15, param16, param17, param18, param19, param20]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -192,7 +291,11 @@ class VBETtool(object):
                   p[13].valueAsText,
                   p[14].valueAsText,
                   p[15].valueAsText,
-                  p[16].valueAsText)
+                  p[16].valueAsText,
+                  p[17].valueAsText,
+                  p[18].valueAsText,
+                  p[19].valueAsText,
+                  p[20].valueAsText)
         return
 
 
@@ -368,6 +471,91 @@ class NHDNetworkBuildertool(object):
                                p[16].valueAsText)
         return
 
+class RVDBuilder(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Build RVD Project"
+        self.description = "Sets up an RVD project folder and defines the inputs"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="projPath",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Select existing vegetation datasets",
+            name="ex_veg",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param2 = arcpy.Parameter(
+            displayName="Select historic vegetation datasets",
+            name="hist_veg",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param3 = arcpy.Parameter(
+            displayName="Select drainage network datasets",
+            name="network",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param4 = arcpy.Parameter(
+            displayName="Select valley bottom datasets",
+            name="valley",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param5 = arcpy.Parameter(
+            displayName="Select large river polygons",
+            name="lrp",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        return [param0, param1, param2, param3, param4, param5]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(RVDProject)
+        RVDProject.main(p[0].valueAsText,
+                        p[1].valueAsText,
+                        p[2].valueAsText,
+                        p[3].valueAsText,
+                        p[4].valueAsText,
+                        p[5].valueAsText)
+        return
+
+
 class RVDtool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
@@ -378,61 +566,89 @@ class RVDtool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
+            displayName="Project Name",
+            name="projName",
+            datatype="GPString",
+            parameterType="Optional",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Watershed HUC ID",
+            name="hucID",
+            datatype="GPDouble",
+            parameterType="Optional",
+            direction="Input")
+
+        param2 = arcpy.Parameter(
+            displayName="Watershed Name",
+            name="hucName",
+            datatype="GPString",
+            parameterType="Optional",
+            direction="Input")
+
+        param3 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="projPath",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param4 = arcpy.Parameter(
             displayName="Existing Vegetation Layer",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
-        param1 = arcpy.Parameter(
+        param5 = arcpy.Parameter(
             displayName="Historic Vegetation Layer",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
-        param2 = arcpy.Parameter(
+        param6 = arcpy.Parameter(
             displayName="Input Segmented Stream Network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
-        param2.filter.list = ["Polyline"]
+        param6.filter.list = ["Polyline"]
 
-        param3 = arcpy.Parameter(
+        param7 = arcpy.Parameter(
             displayName="Input Valley Bottom Polygon",
             name="valley",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
-        param3.filter.list = ["Polygon"]
+        param7.filter.list = ["Polygon"]
 
-        param4 = arcpy.Parameter(
+        param8 = arcpy.Parameter(
             displayName="Large River Polygon",
             name="lg_river",
             datatype="DEFeatureClass",
             parameterType="Optional",
             direction="Input")
-        param4.filter.list = ["Polygon"]
+        param8.filter.list = ["Polygon"]
 
-        param5 = arcpy.Parameter(
-            displayName="RVD Output",
-            name="output",
-            datatype="DEFeatureClass",
+        param9 = arcpy.Parameter(
+            displayName="Name RVD Output",
+            name="outName",
+            datatype="GPString",
             parameterType="Required",
-            direction="Output")
-        param5.symbology = os.path.join(os.path.dirname(__file__), "RVD_ratio.lyr")
+            direction="Input")
+        # param9.symbology = os.path.join(os.path.dirname(__file__), "RVD_ratio.lyr")
 
-        param6 = arcpy.Parameter(
+        param10 = arcpy.Parameter(
             displayName="Scratch Workspace",
             name="scratch",
             datatype="DEWorkspace",
             parameterType="Required",
             direction = "Input")
-        param6.filter.list = ["Local Database"]
-        param6.value = arcpy.env.scratchWorkspace
+        param10.filter.list = ["Local Database"]
+        param10.value = arcpy.env.scratchWorkspace
 
-        return [param0, param1, param2, param3, param4, param5, param6]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -458,8 +674,98 @@ class RVDtool(object):
                   p[3].valueAsText,
                   p[4].valueAsText,
                   p[5].valueAsText,
-                  p[6].valueAsText,)
+                  p[6].valueAsText,
+                  p[7].valueAsText,
+                  p[8].valueAsText,
+                  p[9].valueAsText,
+                  p[10].valueAsText)
         return
+
+
+class RCABuilder(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Build RCA Project"
+        self.description = "Sets up an RCA project folder and defines the inputs"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="projPath",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Select existing cover datasets",
+            name="ex_cov",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param2 = arcpy.Parameter(
+            displayName="Select historic cover datasets",
+            name="hist_cov",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param3 = arcpy.Parameter(
+            displayName="Select drainage network datasets",
+            name="network",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param4 = arcpy.Parameter(
+            displayName="Select fragmented valley bottom datasets",
+            name="frag_valley",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param5 = arcpy.Parameter(
+            displayName="Select large river polygons",
+            name="lrp",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        return [param0, param1, param2, param3, param4, param5]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(RCAProject)
+        RCAProject.main(p[0].valueAsText,
+                        p[1].valueAsText,
+                        p[2].valueAsText,
+                        p[3].valueAsText,
+                        p[4].valueAsText,
+                        p[5].valueAsText)
+        return
+
 
 class RCAtool(object):
     def __init__(self):
@@ -471,69 +777,96 @@ class RCAtool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Input Segmented Stream Network",
-            name="seg_network",
-            datatype="DEFeatureClass",
-            parameterType="Required",
+            displayName="Project Name",
+            name="projName",
+            datatype="GPString",
+            parameterType="Optional",
             direction="Input")
-        param0.filter.list = ["Polyline"]
 
         param1 = arcpy.Parameter(
-            displayName="Input Fragmented Valley Bottom",
-            name="frag_valley",
-            datatype="DEFeatureClass",
-            parameterType="Required",
+            displayName="Watershed HUC ID",
+            name="hucID",
+            datatype="GPDouble",
+            parameterType="Optional",
             direction="Input")
-        param1.filter.list = ["Polygon"]
 
         param2 = arcpy.Parameter(
-            displayName="Existing Vegetation Layer",
+            displayName="Watershed HUC Name",
+            name="hucName",
+            datatype="GPString",
+            parameterType="Optional",
+            direction="Input")
+
+        param3 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="projPath",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param4 = arcpy.Parameter(
+            displayName="Existing Cover Layer",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
-        param3 = arcpy.Parameter(
-            displayName="Historic Vegetation Layer",
+        param5 = arcpy.Parameter(
+            displayName="Historic Cover Layer",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
-        param4 = arcpy.Parameter(
-            displayName="Valley Bottom Width Threshold",
-            name="width_thresh",
-            datatype="GPDouble",
+        param6 = arcpy.Parameter(
+            displayName="Input Segmented Stream Network",
+            name="seg_network",
+            datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
-        param4.value = 190
+        param6.filter.list = ["Polyline"]
 
-        param5 = arcpy.Parameter(
+        param7 = arcpy.Parameter(
+            displayName="Input Fragmented Valley Bottom",
+            name="frag_valley",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+        param7.filter.list = ["Polygon"]
+
+        param8 = arcpy.Parameter(
             displayName="Large River Polygon",
             name="lg_river",
             datatype="DEFeatureClass",
             parameterType="Optional",
             direction="Input")
-        param5.filter.list = ["Polygon"]
+        param8.filter.list = ["Polygon"]
 
-        param6 = arcpy.Parameter(
-            displayName="RCA Output",
-            name="output",
-            datatype="DEFeatureClass",
+        param9 = arcpy.Parameter(
+            displayName="Valley Bottom Width Threshold",
+            name="width_thresh",
+            datatype="GPDouble",
             parameterType="Required",
-            direction="Output")
-        param6.symbology = os.path.join(os.path.dirname(__file__), "RCA.lyr")
+            direction="Input")
+        param9.value = 120
 
-        param7 = arcpy.Parameter(
+        param10 = arcpy.Parameter(
+            displayName="Name RCA Output",
+            name="output",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Input")
+
+        param11 = arcpy.Parameter(
             displayName="Scratch Workspace",
             name="scratch",
             datatype="DEWorkspace",
             parameterType="Required",
             direction = "Input")
-        param7.filter.list = ["Local Database"]
-        param7.value = arcpy.env.scratchWorkspace
+        param11.filter.list = ["Local Database"]
+        param11.value = arcpy.env.scratchWorkspace
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -560,5 +893,9 @@ class RCAtool(object):
                   p[4].valueAsText,
                   p[5].valueAsText,
                   p[6].valueAsText,
-                  p[7].valueAsText)
+                  p[7].valueAsText,
+                  p[8].valueAsText,
+                  p[9].valueAsText,
+                  p[10].valueAsText,
+                  p[11].valueAsText)
         return

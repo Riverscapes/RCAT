@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Name:        Riparian Condition Assessment (RCA)
 # Purpose:     Models floodplain/riparian area condition using three inputs: riparian departure,
 #              land use intensity, and floodplain accessibility
@@ -6,9 +6,10 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Copyright:   (c) Jordan Gilbert 2015
+# Latest Update: 01/18/2017
+# Copyright:   (c) Jordan Gilbert 2017
 # Licence:     <your licence>
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 import arcpy
 from arcpy.sa import *
 import sys
@@ -17,16 +18,23 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 from math import pi
+import projectxml
+import uuid
+import datetime
 
 def main(
-    seg_network,
-    frag_valley,
+    projName,
+    hucID,
+    hucName,
+    projPath,
     evt,
     bps,
-    width_thresh,
+    seg_network,
+    frag_valley,
     lg_river,
-    output,
-    scratch = arcpy.env.scratchWorkspace):
+    width_thresh,
+    outName,
+    scratch):
 
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
@@ -46,13 +54,19 @@ def main(
     thiessen = scratch + "/thiessen"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen)
     buf_valley = scratch + "/buf_valley"
-    arcpy.Buffer_analysis(frag_valley, buf_valley, "30 Meters", "FULL", "ROUND", "ALL")
-    thiessen_valley = scratch + "/thiessen_valley"
+    arcpy.Buffer_analysis(frag_valley, buf_valley, "10 Meters", "FULL", "ROUND", "ALL")
+    if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
+        os.mkdir(os.path.dirname(seg_network) + "/Thiessen")
+    thiessen_valley = os.path.dirname(seg_network) + "/Thiessen/Thiessen_Valley.shp"
     arcpy.Clip_analysis(thiessen, buf_valley, thiessen_valley)
 
     # Add width field to thiessen polygons
+    arcpy.AddField_management(thiessen_valley, "Perim", "DOUBLE")
+    arcpy.AddField_management(thiessen_valley, "Area", "DOUBLE")
+    arcpy.CalculateField_management(thiessen_valley, "Perim", "!SHAPE.LENGTH@METERS!", "PYTHON_9.3")
+    arcpy.CalculateField_management(thiessen_valley, "Area", "!SHAPE.AREA@SQUAREMETERS!", "PYTHON_9.3")
     arcpy.AddField_management(thiessen_valley, "Width", "DOUBLE")
-    with arcpy.da.UpdateCursor(thiessen_valley, ["Shape_Length", "Shape_Area", "Width"]) as cur:
+    with arcpy.da.UpdateCursor(thiessen_valley, ["Perim", "Area", "Width"]) as cur:
         for row in cur:
             perim, area, width = row
             row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
@@ -60,59 +74,59 @@ def main(
     del row
     del cur
 
-    # seperate unconfined from confined portions of valley bottom
+    # separate unconfined from confined portions of valley bottom
     arcpy.MakeFeatureLayer_management(thiessen_valley, "thiessen_lyr")
     arcpy.SelectLayerByAttribute_management("thiessen_lyr", "NEW_SELECTION", '"Width" > {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("thiessen_lyr", scratch, "wide_valley")
     arcpy.SelectLayerByAttribute_management("thiessen_lyr", "NEW_SELECTION", '"Width" <= {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("thiessen_lyr", scratch, "narrow_valley")
 
-    arcpy.AddMessage('Classifying vegetation rasters')
+    arcpy.AddMessage("Classifying vegetation rasters")
     score_landfire(evt, bps)
 
-    arcpy.AddMessage('Calculating riparian departure')
+    arcpy.AddMessage("Calculating riparian departure")
     calc_rvd(evt, bps, thiessen_valley, lg_river, scratch)
 
-    arcpy.AddMessage('Assessing land use intensity')
+    arcpy.AddMessage("Assessing land use intensity")
     calc_lui(evt, thiessen_valley, scratch)
 
-    arcpy.AddMessage('Assessing floodplain connectivity')
+    arcpy.AddMessage("Assessing floodplain connectivity")
     calc_connectivity(frag_valley, thiessen_valley, scratch)
 
-    arcpy.AddMessage('Calculating overall vegetation departure')
+    arcpy.AddMessage("Calculating overall vegetation departure")
     calc_veg(evt, bps, thiessen_valley, scratch)
 
     # attribute the network with "RVD", "LUI", "CONNECT", and "VEG" fields
-    arcpy.AddMessage('Attributing stream network')
-    diss_network = scratch + '/diss_network'
+    arcpy.AddMessage("Attributing stream network")
+    diss_network = scratch + "/diss_network"
     arcpy.Dissolve_management(seg_network, diss_network)
 
-    rvd_final = Raster(scratch + '/RVD_final')
-    lui_final = Raster(scratch + '/Land_Use_Intensity')
-    fp_conn_final = Raster(scratch + '/Floodplain_Connectivity')
-    veg_final = Raster(scratch + '/veg_final')
+    rvd_final = Raster(scratch + "/RVD_final")
+    lui_final = Raster(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Land_Use_Intensity.tif")
+    fp_conn_final = Raster(scratch + "/Floodplain_Connectivity")
+    veg_final = Raster(scratch + "/veg_final")
 
     rvd100 = rvd_final * 100
     rvdint = Int(rvd100)
-    rvd_poly = scratch + '/rvd_poly'
+    rvd_poly = scratch + "/rvd_poly"
     arcpy.RasterToPolygon_conversion(rvdint, rvd_poly)
 
     lui100 = lui_final * 100
     luiint = Int(lui100)
-    lui_poly = scratch + '/lui_poly'
+    lui_poly = scratch + "/lui_poly"
     arcpy.RasterToPolygon_conversion(luiint, lui_poly)
 
     fp_conn100 = fp_conn_final * 100
     fp_connint = Int(fp_conn100)
-    fp_conn_poly = scratch + '/fp_conn_poly'
+    fp_conn_poly = scratch + "/fp_conn_poly"
     arcpy.RasterToPolygon_conversion(fp_connint, fp_conn_poly)
 
     veg100 = veg_final * 100
     veg_int = Int(veg100)
-    veg_poly = scratch + '/veg_poly'
+    veg_poly = scratch + "/veg_poly"
     arcpy.RasterToPolygon_conversion(veg_int, veg_poly)
 
-    intersect1 = scratch + '/intersect1'
+    intersect1 = scratch + "/intersect1"
     arcpy.Intersect_analysis([diss_network, rvd_poly], intersect1, "", "", "LINE")
     arcpy.AddField_management(intersect1, "GRID", "DOUBLE")
     arcpy.AddField_management(intersect1, "RVD", "DOUBLE")
@@ -130,7 +144,7 @@ def main(
     del cursor
     arcpy.DeleteField_management(intersect1, ["GRIDCODE", "GRID"])
 
-    intersect2 = scratch + '/intersect2'
+    intersect2 = scratch + "/intersect2"
     arcpy.Intersect_analysis([intersect1, lui_poly], intersect2, "", "", "LINE")
     arcpy.AddField_management(intersect2, "GRID", "DOUBLE")
     arcpy.AddField_management(intersect2, "LUI", "DOUBLE")
@@ -148,7 +162,7 @@ def main(
     del cursor
     arcpy.DeleteField_management(intersect2, ["GRIDCODE", "GRID"])
 
-    intersect3 = scratch + '/intersect3'
+    intersect3 = scratch + "/intersect3"
     arcpy.Intersect_analysis([intersect2, fp_conn_poly], intersect3, "", "", "LINE")
     arcpy.AddField_management(intersect3, "GRID", "DOUBLE")
     arcpy.AddField_management(intersect3, "CONNECT", "DOUBLE")
@@ -166,7 +180,7 @@ def main(
     del cursor
     arcpy.DeleteField_management(intersect3, ["GRIDCODE", "GRID"])
 
-    rca_input = scratch + '/rca_input'
+    rca_input = scratch + "/rca_input"
     arcpy.Intersect_analysis([intersect3, veg_poly], rca_input, "", "", "LINE")
     arcpy.AddField_management(rca_input, "GRID", "DOUBLE")
     arcpy.AddField_management(rca_input, "VEG", "DOUBLE")
@@ -189,15 +203,22 @@ def main(
     df.extend(df2)
     arcpy.DeleteField_management(rca_input, df)
 
+    arcpy.AddMessage("Calculating riparian condition")
 
-    arcpy.AddMessage('Calculating riparian condition')
+    # set up output
+    j = 1
+    while os.path.exists(projPath + "/02_Analyses/Output_" + str(j)):
+        j += 1
+
+    os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
+    output = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
 
     # # # calculate rca for segments in unconfined valleys # # #
     arcpy.MakeFeatureLayer_management(rca_input, "rca_in_lyr")
-    wide_valley = scratch + '/wide_valley'
+    wide_valley = scratch + "/wide_valley"
     arcpy.SelectLayerByLocation_management("rca_in_lyr", "HAVE_THEIR_CENTER_IN", wide_valley)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_u")
-    rca_u = scratch + '/rca_u'
+    rca_u = scratch + "/rca_u"
 
     ct = arcpy.GetCount_management(rca_u)
     count = int(ct.getOutput(0))
@@ -235,29 +256,29 @@ def main(
         del RVDa, LUIa, CONNECTa
 
         # set up FIS
-        RVD = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input1')
-        LUI = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input2')
-        CONNECT = ctrl.Antecedent(np.arange(0, 1, 0.01), 'input3')
-        CONDITION = ctrl.Consequent(np.arange(0, 1, 0.01), 'result')
+        RVD = ctrl.Antecedent(np.arange(0, 1, 0.01), "input1")
+        LUI = ctrl.Antecedent(np.arange(0, 1, 0.01), "input2")
+        CONNECT = ctrl.Antecedent(np.arange(0, 1, 0.01), "input3")
+        CONDITION = ctrl.Consequent(np.arange(0, 1, 0.01), "result")
 
-        RVD['large'] = fuzz.trapmf(RVD.universe, [0, 0, 0.3, 0.5])
-        RVD['significant'] = fuzz.trimf(RVD.universe, [0.3, 0.5, 0.85])
-        RVD['minor'] = fuzz.trimf(RVD.universe, [0.5, 0.85, 0.95])
-        RVD['negligible'] = fuzz.trapmf(RVD.universe, [0.85, 0.95, 1, 1])
+        RVD["large"] = fuzz.trapmf(RVD.universe, [0, 0, 0.3, 0.5])
+        RVD["significant"] = fuzz.trimf(RVD.universe, [0.3, 0.5, 0.85])
+        RVD["minor"] = fuzz.trimf(RVD.universe, [0.5, 0.85, 0.95])
+        RVD["negligible"] = fuzz.trapmf(RVD.universe, [0.85, 0.95, 1, 1])
 
-        LUI['high'] = fuzz.trapmf(LUI.universe, [0, 0, 0.416, 0.583])
-        LUI['moderate'] = fuzz.trapmf(LUI.universe, [0.416, 0.583, 0.83, 0.983])
-        LUI['low'] = fuzz.trapmf(LUI.universe, [0.83, 0.983, 1, 1])
+        LUI["high"] = fuzz.trapmf(LUI.universe, [0, 0, 0.416, 0.583])
+        LUI["moderate"] = fuzz.trapmf(LUI.universe, [0.416, 0.583, 0.83, 0.983])
+        LUI["low"] = fuzz.trapmf(LUI.universe, [0.83, 0.983, 1, 1])
 
-        CONNECT['low'] = fuzz.trapmf(CONNECT.universe, [0, 0, 0.5, 0.7])
-        CONNECT['moderate'] = fuzz.trapmf(CONNECT.universe, [0.5, 0.7, 0.9, 0.95])
-        CONNECT['high'] = fuzz.trapmf(CONNECT.universe, [0.9, 0.95, 1, 1])
+        CONNECT["low"] = fuzz.trapmf(CONNECT.universe, [0, 0, 0.5, 0.7])
+        CONNECT["moderate"] = fuzz.trapmf(CONNECT.universe, [0.5, 0.7, 0.9, 0.95])
+        CONNECT["high"] = fuzz.trapmf(CONNECT.universe, [0.9, 0.95, 1, 1])
 
-        CONDITION['very poor'] = fuzz.trapmf(CONDITION.universe, [0, 0, 0.1, 0.25])
-        CONDITION['poor'] = fuzz.trapmf(CONDITION.universe, [0.1, 0.25, 0.35, 0.5])
-        CONDITION['moderate'] = fuzz.trimf(CONDITION.universe, [0.35, 0.5, 0.8])
-        CONDITION['good'] = fuzz.trimf(CONDITION.universe, [0.5, 0.8, 0.95])
-        CONDITION['intact'] = fuzz.trapmf(CONDITION.universe, [0.8, 0.95, 1, 1])
+        CONDITION["very poor"] = fuzz.trapmf(CONDITION.universe, [0, 0, 0.1, 0.25])
+        CONDITION["poor"] = fuzz.trapmf(CONDITION.universe, [0.1, 0.25, 0.35, 0.5])
+        CONDITION["moderate"] = fuzz.trimf(CONDITION.universe, [0.35, 0.5, 0.8])
+        CONDITION["good"] = fuzz.trimf(CONDITION.universe, [0.5, 0.8, 0.95])
+        CONDITION["intact"] = fuzz.trapmf(CONDITION.universe, [0.8, 0.95, 1, 1])
 
         rule0 = ctrl.Rule(RVD['large'] & LUI['low'] & CONNECT['low'], CONDITION['poor'])
         rule1 = ctrl.Rule(RVD['large'] & LUI['low'] & CONNECT['moderate'], CONDITION['poor']) #
@@ -291,32 +312,32 @@ def main(
         # Defuzzify
         out = np.zeros(len(RVDarray))
         for i in range(len(out)):
-            rca_fis.input['input1'] = RVDarray[i]
-            rca_fis.input['input2'] = LUIarray[i]
-            rca_fis.input['input3'] = CONNECTarray[i]
+            rca_fis.input["input1"] = RVDarray[i]
+            rca_fis.input["input2"] = LUIarray[i]
+            rca_fis.input["input3"] = CONNECTarray[i]
             rca_fis.compute()
-            out[i] = rca_fis.output['result']
+            out[i] = rca_fis.output["result"]
 
         # save the output text file and merge to network
         fid = np.arange(0, len(out), 1)
         columns = np.column_stack((fid, out))
-        out_table = os.path.dirname(output) + '/RCA_Table.txt'
-        np.savetxt(out_table, columns, delimiter=',', header='ID, COND_VAL', comments='')
+        out_table = os.path.dirname(output) + "/RCA_Table.txt"
+        np.savetxt(out_table, columns, delimiter=",", header="ID, COND_VAL", comments="")
         arcpy.CopyRows_management(out_table, "final_table")
 
-        final_table = scratch + '/final_table'
-        arcpy.JoinField_management(rca_u, 'OBJECTID', final_table, 'OBJECTID', 'COND_VAL')
-        rca_u_final = scratch + '/rca_u_final'
+        final_table = scratch + "/final_table"
+        arcpy.JoinField_management(rca_u, "OBJECTID", final_table, "OBJECTID", "COND_VAL")
+        rca_u_final = scratch + "/rca_u_final"
         arcpy.CopyFeatures_management(rca_u, rca_u_final)
 
     else:
         pass
 
     # # # calculate rca for segments in confined valleys # # #
-    narrow_valley = scratch + '/narrow_valley'
+    narrow_valley = scratch + "/narrow_valley"
     arcpy.SelectLayerByLocation_management("rca_in_lyr", "HAVE_THEIR_CENTER_IN", narrow_valley)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c")
-    rca_c = scratch + '/rca_c'
+    rca_c = scratch + "/rca_c"
 
     arcpy.AddField_management(rca_c, "CONDITION", "TEXT")
     cursor = arcpy.da.UpdateCursor(rca_c, ["LUI", "CONNECT", "VEG", "CONDITION"])
@@ -351,10 +372,215 @@ def main(
     del row
     del cursor
 
+    # # # Write xml file # # #
+
+    if not os.path.exists(projPath + "/rca.xml"):
+        # xml file
+        xmlfile = projPath + "/rca.xml"
+
+        # initiate xml file creation
+        newxml = projectxml.ProjectXML(xmlfile, "RCA", projName)
+
+        if not hucID == None:
+            newxml.addMeta("HUCID", hucID, newxml.project)
+        if not hucID == None:
+            idlist = [int(x) for x in str(hucID)]
+            if idlist[0] == 1 and idlist[1] == 7:
+                newxml.addMeta("Region", "CRB", newxml.project)
+        if not hucName == None:
+            newxml.addMeta("Watershed", hucName, newxml.project)
+
+        mainguid = getUUID()
+
+        newxml.addRCARealization("RCA Realization 1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 productVersion="1.0", guid=mainguid)
+
+        newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
+
+        # add inputs and outputs to xml file
+        newxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV1",
+                               guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Existing Vegetation", ref="EXCOV1")
+
+        newxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV1",
+                               guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Historic Vegetation", ref="HISTCOV1")
+
+        newxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):], iid="NETWORK1",
+                               guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Network", ref="NETWORK1")
+
+        newxml.addProjectInput("Vector", "Fragmented Valley Bottom", frag_valley[frag_valley.find("01_Inputs"):], iid="VALLEY1",
+                               guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Fragmented Valley", ref="VALLEY1")
+
+        if lg_river is not None:
+            newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=mainguid)
+            newxml.addRCAInput(newxml.RCArealizations[0], "LRP", ref="LRP1")
+
+        newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
+                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif", guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
+                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs")])) + "/Hist_Rasters/Hist_Veg_Cover.tif", guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif", guid=mainguid)
+        newxml.addRCAInput(newxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                           path=os.path.dirname(seg_network[seg_network.find("01_Inputs")]) + "/Thiessen/Thiessen_Valley.shp", guid=mainguid)
+
+        newxml.addOutput("Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0])
+
+        newxml.write()
+
+    else:
+        xmlfile = projPath + "/rca.xml"
+
+        exxml = projectxml.ExistingXML(xmlfile)
+
+        rcar = exxml.rz.findall("RCA")
+        rcarf = rcar[-1]
+        rname = rcarf.find("Name")
+        k = 2
+        while rname.text == "RCA Realization " + str(k):
+            k += 1
+
+        exxml.addRCARealization("RCA Realization " + str(k),
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0")
+
+        exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
+
+        inputs = exxml.root.find("Inputs")
+
+        raster = inputs.findall("Raster")
+        rasterid = range(len(raster))
+        for i in range(len(raster)):
+            rasterid[i] = raster[i].get("id")
+        rasterpath = range(len(raster))
+        for i in range(len(raster)):
+            rasterpath[i] = raster[i].find("Path").text
+
+        for i in range(len(rasterpath)):
+            if os.path.abspath(rasterpath[i]) == os.path.abspath(evt[evt.find("01_Inputs"):]):
+                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Vegetation", ref=str(rasterid[i]))
+                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
+                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
+                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
+                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif")
+                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
+                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif")
+            elif os.path.abspath(rasterpath[i]) == os.path.abspath(bps[bps.find("01_Inputs"):]):
+                exxml.addRCAInput(exxml.RCArealizations[0], "Historic Vegetation", ref=str(rasterid[i]))
+                exxml.addRCAInput(exxml.RCArealizations[0], "Historic Cover", "Historic Riparian",
+                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
+                exxml.addRVDInput(exxml.RCArealizations[0], "Historic Cover", "Historic Vegetation Cover",
+                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif")
+
+        nlist = []
+        for j in rasterpath:
+            if os.path.abspath(evt[evt.find("01_Inputs"):]) == os.path.abspath(j):
+                nlist.append("yes")
+            else:
+                nlist.append("no")
+        if "yes" in nlist:
+            pass
+        else:
+            exxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Existing Vegetation", ref="EXCOV" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
+            exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif")
+            exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif")
+        nlist2 = []
+        for j in rasterpath:
+            if os.path.abspath(bps[bps.find("01_Inputs"):]) == os.path.abspath(j):
+                nlist2.append("yes")
+            else:
+                nlist2.append("no")
+        if "yes" in nlist2:
+            pass
+        else:
+            exxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Historic Vegetation", ref="HISTCOV" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
+                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
+            exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
+                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif")
+        del nlist, nlist2
+
+        vector = inputs.findall("Vector")
+        vectorid = range(len(vector))
+        for i in range(len(vector)):
+            vectorid[i] = vector[i].get("id")
+        vectorpath = range(len(vector))
+        for i in range(len(vector)):
+            vectorpath[i] = vector[i].find("Path").text
+
+        for i in range(len(vectorpath)):
+            if os.path.abspath(vectorpath[i]) == os.path.abspath(seg_network[seg_network.find("01_Inputs"):]):
+                exxml.addRCAInput(exxml.RCArealizations[0], "Network", ref=str(vectorid[i]))
+                exxml.addRCAInput(exxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                                  path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
+            elif os.path.abspath(vectorpath[i]) == os.path.abspath(frag_valley[frag_valley.find("01_Inputs"):]):
+                exxml.addRCAInput(exxml.RCArealizations[0], "Fragmented Valley", ref=str(vectorid[i]))
+            if lg_river is not None:
+                if os.path.abspath(vectorpath[i]) == os.path.abspath(lg_river[lg_river.find("01_Inputs"):]):
+                    exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref=str(vectorid[i]))
+
+        nlist = []
+        for j in vectorpath:
+            if os.path.abspath(seg_network[seg_network.find("01_Inputs"):]) == os.path.abspath(j):
+                nlist.append("yes")
+            else:
+                nlist.append("no")
+        if "yes" in nlist:
+            pass
+        else:
+            exxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):],
+                                  iid="NETWORK" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Network", ref="NETWORK" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                              path=os.path.dirname(seg_network[seg_network.find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
+        nlist = []
+        for j in vectorpath:
+            if os.path.abspath(frag_valley[frag_valley.find("01_Inputs"):]) == os.path.abspath(j):
+                nlist.append("yes")
+            else:
+                nlist.append("no")
+        if "yes" in nlist:
+            pass
+        else:
+            exxml.addProjectInput("Vector", "Valley Bottom", frag_valley[frag_valley.find("01_Inputs"):], iid="VALLEY" + str(k))
+            exxml.addRCAInput(exxml.RCArealizations[0], "Fragmented Valley", ref="VALLEY" + str(k))
+
+        if lg_river is not None:
+            nlist = []
+            for j in vectorpath:
+                if os.path.abspath(lg_river[lg_river.find("01_Inputs"):]) == os.path.abspath(j):
+                    nlist.append("yes")
+                else:
+                    nlist.append("no")
+            if "yes" in nlist:
+                pass
+            else:
+                exxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):],
+                                      iid="LRP" + str(k))
+                exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref="LRP" + str(k))
+
+        del nlist
+
+        exxml.addOutput("Analysis", "Vector", "RCA Output", output[output.find("02_Analyses"):], exxml.RCArealizations[0])
+
+        exxml.write()
 
     arcpy.CheckInExtension('spatial')
 
     return
+
 
 def score_landfire(evt, bps):
     evt_fields = arcpy.ListFields(evt, "VEG_SCORE")
@@ -536,12 +762,18 @@ def score_landfire(evt, bps):
 
 def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
     evt_lookup = Lookup(evt, "VEG_SCORE")
+    if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
+        os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
+    evt_lookup.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_Riparian.tif")
     bps_lookup = Lookup(bps, "VEG_SCORE")
+    if not os.path.exists(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters"):
+        os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
+    bps_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Riparian.tif")
 
     if lg_river == None:
-         # create raster output of riparian vegetation departure for areas without large rivers
-        evt_zs = ZonalStatistics(thiessen_valley, "OBJECTID", evt_lookup, "MEAN", "DATA")
-        bps_zs = ZonalStatistics(thiessen_valley, "OBJECTID", bps_lookup, "MEAN", "DATA")
+        # create raster output of riparian vegetation departure for areas without large rivers
+        evt_zs = ZonalStatistics(thiessen_valley, "FID", evt_lookup, "MEAN", "DATA")
+        bps_zs = ZonalStatistics(thiessen_valley, "FID", bps_lookup, "MEAN", "DATA")
 
         evtx100 = evt_zs * 100
         evt_int = Int(evtx100)
@@ -629,8 +861,8 @@ def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
         evt_wo_rivers = Reclassify(evt_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
         bps_wo_rivers = Reclassify(bps_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
 
-        evt_zs = ZonalStatistics(thiessen_valley, "OBJECTID", evt_wo_rivers, "MEAN", "DATA")
-        bps_zs = ZonalStatistics(thiessen_valley, "OBJECTID", bps_wo_rivers, "MEAN", "DATA")
+        evt_zs = ZonalStatistics(thiessen_valley, "FID", evt_wo_rivers, "MEAN", "DATA")
+        bps_zs = ZonalStatistics(thiessen_valley, "FID", bps_wo_rivers, "MEAN", "DATA")
 
         evtx100 = evt_zs * 100
         evt_int = Int(evtx100)
@@ -702,27 +934,38 @@ def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
 
     return rvd_final
 
+
 def calc_lui(evt, thiessen_valley, scratch):
     lui_lookup = Lookup(evt, "LUI")
-    lui_zs = ZonalStatistics(thiessen_valley, "OBJECTID", lui_lookup, "MEAN", "DATA")
-    lui_zs.save(scratch + '/Land_Use_Intensity')
+    lui_zs = ZonalStatistics(thiessen_valley, "FID", lui_lookup, "MEAN", "DATA")
+    if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
+        os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
+    lui_zs.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Land_Use_Intensity.tif")
 
     return lui_zs
+
 
 def calc_connectivity(frag_valley, thiessen_valley, scratch):
     fp_conn = scratch + '/fp_conn'
     arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 30)
-    fp_conn_zs = ZonalStatistics(thiessen_valley, "OBJECTID", fp_conn, "MEAN", "DATA")
+    fp_conn_zs = ZonalStatistics(thiessen_valley, "FID", fp_conn, "MEAN", "DATA")
     fp_conn_zs.save(scratch + '/Floodplain_Connectivity')
 
     return fp_conn_zs
 
+
 def calc_veg(evt, bps, thiessen_valley, scratch):
     exveg_lookup = Lookup(evt, "VEGETATED")
+    if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
+        os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
+    exveg_lookup.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_Veg_Cover.tif")
     histveg_lookup = Lookup(bps, "VEGETATED")
+    if not os.path.exists(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters"):
+        os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
+    histveg_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Veg_Cover.tif")
 
-    exveg_zs = ZonalStatistics(thiessen_valley, "OBJECTID", exveg_lookup, "MEAN", "DATA")
-    histveg_zs = ZonalStatistics(thiessen_valley, "OBJECTID", histveg_lookup, "MEAN", "DATA")
+    exveg_zs = ZonalStatistics(thiessen_valley, "FID", exveg_lookup, "MEAN", "DATA")
+    histveg_zs = ZonalStatistics(thiessen_valley, "FID", histveg_lookup, "MEAN", "DATA")
 
     exvegx100 = exveg_zs * 100
     exveg_int = Int(exvegx100)
@@ -794,6 +1037,8 @@ def calc_veg(evt, bps, thiessen_valley, scratch):
 
     return veg_final
 
+def getUUID():
+    return str(uuid.uuid4()).upper()
 
 
 if __name__ == '__main__':
@@ -805,4 +1050,8 @@ if __name__ == '__main__':
         sys.argv[5],
         sys.argv[6],
         sys.argv[7],
-        sys.argv[8])
+        sys.argv[8],
+        sys.argv[9],
+        sys.argv[10],
+        sys.argv[11],
+        sys.argv[12])
