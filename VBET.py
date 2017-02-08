@@ -5,9 +5,10 @@
 # Author:      Jordan Gilbert
 #
 # Created:     09/25/2015
-# Latest Update: 01/18/2017
+# Latest Update: 02/08/2017
 # Copyright:   (c) Jordan Gilbert 2017
-# Licence:     <your licence>
+# Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+#              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
 # -------------------------------------------------------------------------------
 
 # import modules
@@ -220,10 +221,8 @@ def main(
         if not hucName == None:
             newxml.addMeta("Watershed", hucName, newxml.project)
 
-        mainguid = getUUID()
-
-        newxml.addVBETRealization("VBET Realization 1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  productVersion="1.0", guid=mainguid)
+        newxml.addVBETRealization("VBET Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                  productVersion="1.0.1", guid=getUUID())
 
         newxml.addParameter("high_da", high_da_thresh, newxml.VBETrealizations[0])
         newxml.addParameter("low_da", low_da_thresh, newxml.VBETrealizations[0])
@@ -239,25 +238,25 @@ def main(
         newxml.addParameter("min_hole", min_hole, newxml.VBETrealizations[0])
 
         # add inputs and outputs to xml file
-        newxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM1", guid=mainguid)
+        newxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM1", guid=getUUID())
         newxml.addVBETInput(newxml.VBETrealizations[0], "DEM", ref="DEM1")
 
-        newxml.addProjectInput("Vector", "Drainage Network", fcNetwork[fcNetwork.find("01_Inputs"):], iid="DN1", guid=mainguid)
+        newxml.addProjectInput("Vector", "Drainage Network", fcNetwork[fcNetwork.find("01_Inputs"):], iid="DN1", guid=getUUID())
         newxml.addVBETInput(newxml.VBETrealizations[0], "Network", ref="DN1")
 
         if FlowAcc == None:
-            newxml.addVBETInput(newxml.VBETrealizations[0], "Flow", name="Drainage Area", path=DrAr[DrAr.find("01_Inputs"):], guid=mainguid)
+            newxml.addVBETInput(newxml.VBETrealizations[0], "Flow", name="Drainage Area", path=DrAr[DrAr.find("01_Inputs"):], guid=getUUID())
         else:
-            newxml.addProjectInput("Raster", "Drainage Area", DrAr[DrAr.find("01_Inputs"):], iid="DA1", guid=mainguid)
+            newxml.addProjectInput("Raster", "Drainage Area", DrAr[DrAr.find("01_Inputs"):], iid="DA1", guid=getUUID())
             newxml.addVBETInput(newxml.VBETrealizations[0], "Flow", ref="DA1")
 
-        newxml.addVBETInput(newxml.VBETrealizations[0], "Slope", name="Slope", path=inSlope[inSlope.find("01_Inputs"):], guid=mainguid)
+        newxml.addVBETInput(newxml.VBETrealizations[0], "Slope", name="Slope", path=inSlope[inSlope.find("01_Inputs"):], guid=getUUID())
 
-        newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=mainguid)
-        newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=mainguid)
-        newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=mainguid)
+        newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
+        newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
+        newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], newxml.VBETrealizations[0])
+        newxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], newxml.VBETrealizations[0], guid=getUUID())
 
         newxml.write()
 
@@ -274,8 +273,8 @@ def main(
         while rname.text == "VBET Realization " + str(k):
             k += 1
 
-        exxml.addVBETRealization("VBET Realization " + str(k), dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0")
+        exxml.addVBETRealization("VBET Realization " + str(k), rid="RZ" + str(k), dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 productVersion="1.0.1", guid=getUUID())
 
         exxml.addParameter("high_da", high_da_thresh, exxml.VBETrealizations[0])
         exxml.addParameter("low_da", low_da_thresh, exxml.VBETrealizations[0])
@@ -312,7 +311,7 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM" + str(k))
+            exxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM" + str(k), guid=getUUID())
             exxml.addVBETInput(exxml.VBETrealizations[0], "DEM", ref="DEM" + str(k))
         del nlist
 
@@ -327,9 +326,9 @@ def main(
         for i in range(len(dnpath)):
             if os.path.abspath(dnpath[i]) == os.path.abspath(fcNetwork[fcNetwork.find("01_Inputs"):]):
                 exxml.addVBETInput(exxml.VBETrealizations[0], "Network", ref=str(dnid[i]))
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):])
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):])
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):])
+                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
+                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
+                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
         nlist = []
         for j in dnpath:
             if os.path.abspath(fcNetwork[fcNetwork.find("01_Inputs"):]) == os.path.abspath(j):
@@ -339,15 +338,15 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Vector", "Drainage Network", fcNetwork[fcNetwork.find("01_Inputs"):], iid="DN" + str(k))
+            exxml.addProjectInput("Vector", "Drainage Network", fcNetwork[fcNetwork.find("01_Inputs"):], iid="DN" + str(k), guid=getUUID())
             exxml.addVBETInput(exxml.VBETrealizations[0], "Network", ref="DN" + str(k))
-            exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):])
-            exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):])
-            exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):])
+            exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
+            exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
+            exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
         del nlist
 
         if FlowAcc == None:
-            exxml.addVBETInput(exxml.VBETrealizations[0], "Flow", name="Drainage Area", path=DrAr[DrAr.find("01_Inputs"):])
+            exxml.addVBETInput(exxml.VBETrealizations[0], "Flow", name="Drainage Area", path=DrAr[DrAr.find("01_Inputs"):], guid=getUUID())
         else:
             raster = inputs.findall("Raster")
             daid = range(len(raster))
@@ -369,10 +368,10 @@ def main(
             if "yes" in nlist:
                 pass
             else:
-                exxml.addProjectInput("Raster", "Drainage Area", DrAr[DrAr.find("01_Inputs"):], iid="DA" + str(k))
+                exxml.addProjectInput("Raster", "Drainage Area", DrAr[DrAr.find("01_Inputs"):], iid="DA" + str(k), guid=getUUID())
                 exxml.addVBETInput(exxml.VBETrealizations[0], "Flow", ref="DA" + str(k))
 
-        exxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0])
+        exxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0], guid=getUUID())
 
         exxml.write()
 

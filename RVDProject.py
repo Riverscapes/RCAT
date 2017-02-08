@@ -1,3 +1,16 @@
+# -------------------------------------------------------------------------------
+# Name:        RVD Project Builder
+# Purpose:     Gathers and structures the inputs for an RVD project
+#              the valley bottom
+# Author:      Jordan Gilbert
+#
+# Created:     09/25/2015
+# Latest Update: 02/08/2017
+# Copyright:   (c) Jordan Gilbert 2017
+# Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+#              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
+# -------------------------------------------------------------------------------
+
 # import modules
 import os
 import arcpy

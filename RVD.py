@@ -9,9 +9,10 @@
 # Author:      Jordan Gilbert
 #
 # Created:     10/15/2015
-# Latest Update: 01/18/2017
+# Latest Update: 02/08/2017
 # Copyright:   (c) Jordan Gilbert 2017
-# Licence:     <your licence>
+# Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+#              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
 # -------------------------------------------------------------------------------
 
 import arcpy
@@ -22,6 +23,7 @@ import numpy as np
 import projectxml
 import uuid
 import datetime
+import xml.etree.ElementTree as ET
 
 
 def main(
@@ -606,42 +608,40 @@ def main(
         if not hucName == None:
             newxml.addMeta("Watershed", hucName, newxml.project)
 
-        mainguid = getUUID()
-
-        newxml.addRVDRealization("RVD Realization 1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0", guid=mainguid)
+        newxml.addRVDRealization("RVD Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 productVersion="1.0.1", guid=getUUID())
 
         # add inputs and outputs to xml file
-        newxml.addProjectInput("Raster", "Existing Vegetation", evt[evt.find("01_Inputs"):], iid="EXVEG1", guid=mainguid)
+        newxml.addProjectInput("Raster", "Existing Vegetation", evt[evt.find("01_Inputs"):], iid="EXVEG1", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Existing Vegetation", ref="EXVEG1")
 
-        newxml.addProjectInput("Raster", "Historic Vegetation", bps[bps.find("01_Inputs"):], iid="HISTVEG1", guid=mainguid)
+        newxml.addProjectInput("Raster", "Historic Vegetation", bps[bps.find("01_Inputs"):], iid="HISTVEG1", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Historic Vegetation", ref="HISTVEG1")
 
-        newxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):], iid="NETWORK1", guid=mainguid)
+        newxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):], iid="NETWORK1", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Network", ref="NETWORK1")
 
-        newxml.addProjectInput("Vector", "Valley Bottom", valley[valley.find("01_Inputs"):], iid="VALLEY1", guid=mainguid)
+        newxml.addProjectInput("Vector", "Valley Bottom", valley[valley.find("01_Inputs"):], iid="VALLEY1", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Valley", ref="VALLEY1")
 
         if lg_river is not None:
-            newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=mainguid)
+            newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=getUUID())
             newxml.addRVDInput(newxml.RVDrealizations[0], "LRP", ref="LRP1")
 
         newxml.addRVDInput(newxml.RVDrealizations[0], "Existing Cover", "Existing Riparian",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Historic Cover", "Historic Riparian",
-                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Existing Cover", "Existing Cover",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Historic Cover", "Historic Cover",
-                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Thiessen Polygons", "Thiessen Polygons",
-                           path=thiessen_valley[thiessen_valley.find("01_Inputs"):], guid=mainguid)
+                           path=thiessen_valley[thiessen_valley.find("01_Inputs"):], guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "RVD", fcOut[fcOut.find("02_Analyses"):], newxml.RVDrealizations[0])
+        newxml.addOutput("Analysis", "Vector", "RVD", fcOut[fcOut.find("02_Analyses"):], newxml.RVDrealizations[0], guid=getUUID())
         newxml.addOutput("Analysis", "Raster", "Conversion Raster",
-                         os.path.dirname(fcOut[fcOut.find("02_Analyses"):]) + "/Converstion_Raster.tif", newxml.RVDrealizations[0])
+                         os.path.dirname(fcOut[fcOut.find("02_Analyses"):]) + "/Converstion_Raster.tif", newxml.RVDrealizations[0], guid=getUUID())
 
         newxml.write()
 
@@ -657,8 +657,8 @@ def main(
         while rname.text == "RVD Realization " + str(k):
             k += 1
 
-        exxml.addRVDRealization("RVD Realization " + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0")
+        exxml.addRVDRealization("RVD Realization " + str(k), rid="RZ" + str(k),
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.1", guid=getUUID())
 
         inputs = exxml.root.find("Inputs")
 
@@ -672,17 +672,49 @@ def main(
 
         for i in range(len(rasterpath)):
             if os.path.abspath(rasterpath[i]) == os.path.abspath(evt[evt.find("01_Inputs"):]):
+                EV = exxml.root.findall(".//ExistingVegetation")
+                for x in range(len(EV)):
+                    if EV[x].attrib['ref'] == rasterid[i]:
+                        r = EV[x].findall(".//Raster")
+                        exrip_guid = r[0].attrib['guid']
+                        excov_guid = r[1].attrib['guid']
+                    else:
+                        r = []
                 exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Vegetation", ref=str(rasterid[i]))
-                exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Riparian",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
-                exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Cover",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif")
+                if len(r) > 0:
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif",
+                                      guid=exrip_guid)
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif",
+                                      guid=excov_guid)
+                else:
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif")
             elif os.path.abspath(rasterpath[i]) == os.path.abspath(bps[bps.find("01_Inputs"):]):
+                HV = exxml.root.findall(".//HistoricVegetation")
+                for x in range(len(HV)):
+                    if HV[x].attrib['ref'] == rasterid[i]:
+                        r = HV[x].findall(".//Raster")
+                        histrip_guid = r[0].attrib['guid']
+                        histcov_guid = r[1].attrib['guid']
+                    else:
+                        r = []
                 exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Vegetation", ref=str(rasterid[i]))
-                exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Riparian",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
-                exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Cover",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif")
+                if len(r) > 0:
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif",
+                                      guid=histrip_guid)
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif",
+                                      guid=histcov_guid)
+                else:
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif")
 
         nlist = []
         for j in rasterpath:
@@ -693,12 +725,14 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Raster", "Existing Vegetation", evt[evt.find("01_Inputs"):], iid="EXVEG" + str(k))
+            exxml.addProjectInput("Raster", "Existing Vegetation", evt[evt.find("01_Inputs"):], iid="EXVEG" + str(k), guid=getUUID())
             exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Vegetation", ref="EXVEG" + str(k))
             exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Riparian",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif",
+                              guid=getUUID())
             exxml.addRVDInput(exxml.RVDrealizations[0], "Existing Cover", "Existing Cover",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif")
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Cover.tif",
+                              guid=getUUID())
         nlist = []
         for j in rasterpath:
             if os.path.abspath(bps[bps.find("01_Inputs"):]) == os.path.abspath(j):
@@ -708,12 +742,14 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Raster", "Historic Vegetation", bps[bps.find("01_Inputs"):], iid="HISTVEG" + str(k))
+            exxml.addProjectInput("Raster", "Historic Vegetation", bps[bps.find("01_Inputs"):], iid="HISTVEG" + str(k), guid=getUUID())
             exxml.addRVDInput(exxml.RVDrealizations[0], "HistoricVegetation", ref="HISTVEG" + str(k))
             exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Riparian",
-                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
+                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif",
+                              guid=getUUID())
             exxml.addRVDInput(exxml.RVDrealizations[0], "Historic Cover", "Historic Cover",
-                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif")
+                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Cover.tif",
+                              guid=getUUID())
         del nlist
 
         vector = inputs.findall("Vector")
@@ -726,9 +762,21 @@ def main(
 
         for i in range(len(vectorpath)):
             if os.path.abspath(vectorpath[i]) == os.path.abspath(seg_network[seg_network.find("01_Inputs"):]):
+                DN = exxml.root.findall(".//Network")
+                for x in range(len(DN)):
+                    if DN[x].attrib['ref'] == vectorid[i]:
+                        r = DN[x].findall(".//ThiessenPolygons")
+                        thiessen_guid = r[0].attrib['guid']
+                    else:
+                        r = []
                 exxml.addRVDInput(exxml.RVDrealizations[0], "Network", ref=str(vectorid[i]))
-                exxml.addRVDInput(exxml.RVDrealizations[0], "Thiessen Polygons", "Thiessen Polygons",
-                                  path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
+                if len(r) > 0:
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                                      path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp",
+                                      guid=thiessen_guid)
+                else:
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                                      path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
             elif os.path.abspath(vectorpath[i]) == os.path.abspath(valley[valley.find("01_Inputs"):]):
                 exxml.addRVDInput(exxml.RVDrealizations[0], "Valley", ref=str(vectorid[i]))
             if lg_river is not None:
@@ -744,10 +792,11 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):], iid="NETWORK" + str(k))
+            exxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):], iid="NETWORK" + str(k), guid=getUUID())
             exxml.addRVDInput(exxml.RVDrealizations[0], "Network", ref="NETWORK" + str(k))
             exxml.addRVDInput(exxml.RVDrealizations[0], "Thiessen Polygons", "Thiessen Polygons",
-                              path=os.path.dirname(seg_network[seg_network.find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
+                              path=os.path.dirname(seg_network[seg_network.find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp",
+                              guid=getUUID())
         nlist = []
         for j in vectorpath:
             if os.path.abspath(valley[valley.find("01_Inputs"):]) == os.path.abspath(j):
@@ -757,7 +806,7 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Vector", "Valley Bottom", valley[valley.find("01_Inputs"):], iid="VALLEY" + str(k))
+            exxml.addProjectInput("Vector", "Valley Bottom", valley[valley.find("01_Inputs"):], iid="VALLEY" + str(k), guid=getUUID())
             exxml.addRVDInput(exxml.RVDrealizations[0], "Valley", ref="VALLEY" + str(k))
 
         if lg_river is not None:
@@ -770,15 +819,15 @@ def main(
             if "yes" in nlist:
                 pass
             else:
-                exxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP" + str(k))
+                exxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP" + str(k), guid=getUUID())
                 exxml.addRVDInput(exxml.RVDrealizations[0], "LRP", ref="LRP" + str(k))
 
         del nlist
 
-        exxml.addOutput("Analysis", "Vector", "RVD Output", fcOut[fcOut.find("02_Analyses"):], exxml.RVDrealizations[0])
+        exxml.addOutput("Analysis", "Vector", "RVD Output", fcOut[fcOut.find("02_Analyses"):], exxml.RVDrealizations[0], guid=getUUID())
         exxml.addOutput("Analysis", "Raster", "Conversion Raster",
                          os.path.dirname(fcOut[fcOut.find("02_Analyses"):]) + "/Converstion_Raster.tif",
-                         exxml.RVDrealizations[0])
+                         exxml.RVDrealizations[0], guid=getUUID())
 
         exxml.write()
 

@@ -10,10 +10,6 @@ class ProjectXML:
     def __init__(self, filepath, projType, name):
         self.logFilePath = filepath
 
-        # File exists. Delete it.
-        #if os.path.isfile(self.logFilePath):
-        #    os.remove(self.logFilePath)
-
         # Initialize the tree
         self.projectTree = ET.ElementTree(ET.Element("Project"))
         self.project = self.projectTree.getroot()
@@ -551,9 +547,11 @@ class ProjectXML:
             projectNode = ET.SubElement(typeNode, "Project")
             projectNode.text = str(project)
 
-    def addVBETRealization(self, name, promoted='', dateCreated='', productVersion='', guid=''):
+    def addVBETRealization(self, name, rid="", promoted="", dateCreated="", productVersion="", guid=""):
         """adds a VBET realization tag to the project xml document"""
         node = ET.SubElement(self.realizations, "VBET")
+        if rid is not "":
+            node.set("id", rid)
         if promoted is not "":
             node.set("promoted", promoted)
         if dateCreated is not "":
@@ -566,9 +564,11 @@ class ProjectXML:
         nameNode.text = str(name)
         self.VBETrealizations.append(node)
 
-    def addRVDRealization(self, name, promoted="", dateCreated="", productVersion="", guid=""):
+    def addRVDRealization(self, name, rid="", promoted="", dateCreated="", productVersion="", guid=""):
         """adds an RVD realization tag to the project xml document"""
         node = ET.SubElement(self.realizations, "RVD")
+        if rid is not "":
+            node.set("id", rid)
         if promoted is not "":
             node.set("promoted", promoted)
         if dateCreated is not "":
@@ -581,9 +581,11 @@ class ProjectXML:
         nameNode.text = str(name)
         self.RVDrealizations.append(node)
 
-    def addRCARealization(self, name, promoted="", dateCreated="", productVersion="", guid=""):
+    def addRCARealization(self, name, rid="", promoted="", dateCreated="", productVersion="", guid=""):
         """adds an RCA realization tag to the project xml document"""
         node = ET.SubElement(self.realizations, "RCA")
+        if rid is not "":
+            node.set("id", rid)
         if promoted is not "":
             node.set("promoted", promoted)
         if dateCreated is not "":
@@ -627,9 +629,11 @@ class ExistingXML:
         self.RVDrealizations = []
         self.RCArealizations = []
 
-    def addVBETRealization(self, name, promoted='', dateCreated='', productVersion='', guid=''):
+    def addVBETRealization(self, name, rid="", promoted="", dateCreated="", productVersion="", guid=""):
         """adds a VBET realization tag to the project xml document"""
         node = ET.SubElement(self.rz, "VBET")
+        if rid is not "":
+            node.set("id", rid)
         if promoted is not "":
             node.set("promoted", promoted)
         if dateCreated is not "":
@@ -642,9 +646,11 @@ class ExistingXML:
         nameNode.text = str(name)
         self.VBETrealizations.append(node)
 
-    def addRVDRealization(self, name, promoted="", dateCreated="", productVersion="", guid=""):
+    def addRVDRealization(self, name, rid="", promoted="", dateCreated="", productVersion="", guid=""):
         """adds an RVD realization tag to the project xml document"""
         node = ET.SubElement(self.rz, "RVD")
+        if rid is not "":
+            node.set("id", rid)
         if promoted is not "":
             node.set("promoted", promoted)
         if dateCreated is not "":
@@ -657,9 +663,11 @@ class ExistingXML:
         nameNode.text = str(name)
         self.RVDrealizations.append(node)
 
-    def addRCARealization(self, name, promoted="", dateCreated="", productVersion="", guid=""):
+    def addRCARealization(self, name, rid="", promoted="", dateCreated="", productVersion="", guid=""):
         """adds an RCA realization tag to the project xml document"""
         node = ET.SubElement(self.rz, "RCA")
+        if rid is not "":
+            node.set("id", rid)
         if promoted is not "":
             node.set("promoted", promoted)
         if dateCreated is not "":

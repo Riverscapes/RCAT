@@ -6,9 +6,10 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Latest Update: 01/18/2017
+# Latest Update: 02/08/2017
 # Copyright:   (c) Jordan Gilbert 2017
-# Licence:     <your licence>
+# Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+#              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
 # -------------------------------------------------------------------------------
 import arcpy
 from arcpy.sa import *
@@ -390,48 +391,46 @@ def main(
         if not hucName == None:
             newxml.addMeta("Watershed", hucName, newxml.project)
 
-        mainguid = getUUID()
-
-        newxml.addRCARealization("RCA Realization 1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0", guid=mainguid)
+        newxml.addRCARealization("RCA Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 productVersion="1.0.1", guid=getUUID())
 
         newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
 
         # add inputs and outputs to xml file
         newxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV1",
-                               guid=mainguid)
+                               guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Vegetation", ref="EXCOV1")
 
         newxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV1",
-                               guid=mainguid)
+                               guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Historic Vegetation", ref="HISTCOV1")
 
         newxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):], iid="NETWORK1",
-                               guid=mainguid)
+                               guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Network", ref="NETWORK1")
 
         newxml.addProjectInput("Vector", "Fragmented Valley Bottom", frag_valley[frag_valley.find("01_Inputs"):], iid="VALLEY1",
-                               guid=mainguid)
+                               guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Fragmented Valley", ref="VALLEY1")
 
         if lg_river is not None:
-            newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=mainguid)
+            newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=getUUID())
             newxml.addRCAInput(newxml.RCArealizations[0], "LRP", ref="LRP1")
 
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
-                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
-                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs")])) + "/Hist_Rasters/Hist_Veg_Cover.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs")])) + "/Hist_Rasters/Hist_Veg_Cover.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif", guid=mainguid)
+                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
-                           path=os.path.dirname(seg_network[seg_network.find("01_Inputs")]) + "/Thiessen/Thiessen_Valley.shp", guid=mainguid)
+                           path=os.path.dirname(seg_network[seg_network.find("01_Inputs")]) + "/Thiessen/Thiessen_Valley.shp", guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0])
+        newxml.addOutput("Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0], guid=getUUID())
 
         newxml.write()
 
@@ -447,8 +446,8 @@ def main(
         while rname.text == "RCA Realization " + str(k):
             k += 1
 
-        exxml.addRCARealization("RCA Realization " + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0")
+        exxml.addRCARealization("RCA Realization " + str(k), rid="RZ" + str(k),
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.1")
 
         exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
 
@@ -464,19 +463,55 @@ def main(
 
         for i in range(len(rasterpath)):
             if os.path.abspath(rasterpath[i]) == os.path.abspath(evt[evt.find("01_Inputs"):]):
+                EV = exxml.root.findall(".//ExistingVegetation")
+                for x in range(len(EV)):
+                    if EV[x].attrib['ref'] == rasterid[i]:
+                        r = EV[x].findall(".//Raster")
+                        exrip_guid = r[0].attrib['guid']
+                        excov_guid = r[1].attrib['guid']
+                        exlui_guid = r[2].attrib['guid']
+                    else:
+                        r = []
                 exxml.addRCAInput(exxml.RCArealizations[0], "Existing Vegetation", ref=str(rasterid[i]))
-                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
-                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif")
-                exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif")
+                if len(r) > 0:
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif",
+                                      guid=exrip_guid)
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif",
+                                      guid=excov_guid)
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif",
+                                      guid=exlui_guid)
+                else:
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif")
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif")
             elif os.path.abspath(rasterpath[i]) == os.path.abspath(bps[bps.find("01_Inputs"):]):
+                HV = exxml.root.findall(".//HistoricVegetation")
+                for x in range(len(HV)):
+                    if HV[x].attrib['ref'] == rasterid[i]:
+                        r = HV[x].findall(".//Raster")
+                        histrip_guid = r[0].attrib['guid']
+                        histcov_guid = r[1].attrib['guid']
+                    else:
+                        r = []
                 exxml.addRCAInput(exxml.RCArealizations[0], "Historic Vegetation", ref=str(rasterid[i]))
-                exxml.addRCAInput(exxml.RCArealizations[0], "Historic Cover", "Historic Riparian",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
-                exxml.addRVDInput(exxml.RCArealizations[0], "Historic Cover", "Historic Vegetation Cover",
-                                  path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif")
+                if len(r) > 0:
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif",
+                                      guid=histrip_guid)
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif",
+                                      guid=histcov_guid)
+                else:
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
+                                      path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif")
 
         nlist = []
         for j in rasterpath:
@@ -487,14 +522,17 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV" + str(k))
+            exxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV" + str(k), guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Vegetation", ref="EXCOV" + str(k))
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif")
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif",
+                              guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif")
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif",
+                              guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif")
+                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif",
+                              guid=getUUID())
         nlist2 = []
         for j in rasterpath:
             if os.path.abspath(bps[bps.find("01_Inputs"):]) == os.path.abspath(j):
@@ -504,12 +542,14 @@ def main(
         if "yes" in nlist2:
             pass
         else:
-            exxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV" + str(k))
+            exxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV" + str(k), guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Historic Vegetation", ref="HISTCOV" + str(k))
             exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
-                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif")
+                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif",
+                              guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
-                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif")
+                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif",
+                              guid=getUUID())
         del nlist, nlist2
 
         vector = inputs.findall("Vector")
@@ -522,9 +562,21 @@ def main(
 
         for i in range(len(vectorpath)):
             if os.path.abspath(vectorpath[i]) == os.path.abspath(seg_network[seg_network.find("01_Inputs"):]):
+                DN = exxml.root.findall(".//Network")
+                for x in range(len(DN)):
+                    if DN[x].attrib['ref'] == vectorid[i]:
+                        r = DN[x].findall(".//ThiessenPolygons")
+                        thiessen_guid = r[0].attrib['guid']
+                    else:
+                        r = []
                 exxml.addRCAInput(exxml.RCArealizations[0], "Network", ref=str(vectorid[i]))
-                exxml.addRCAInput(exxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
-                                  path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
+                if len(r) > 0:
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                                      path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp",
+                                      guid=thiessen_guid)
+                else:
+                    exxml.addRCAInput(exxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
+                                      path=os.path.dirname(vectorpath[i][vectorpath[i].find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
             elif os.path.abspath(vectorpath[i]) == os.path.abspath(frag_valley[frag_valley.find("01_Inputs"):]):
                 exxml.addRCAInput(exxml.RCArealizations[0], "Fragmented Valley", ref=str(vectorid[i]))
             if lg_river is not None:
@@ -541,10 +593,11 @@ def main(
             pass
         else:
             exxml.addProjectInput("Vector", "Segmented Network", seg_network[seg_network.find("01_Inputs"):],
-                                  iid="NETWORK" + str(k))
+                                  iid="NETWORK" + str(k), guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Network", ref="NETWORK" + str(k))
             exxml.addRCAInput(exxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
-                              path=os.path.dirname(seg_network[seg_network.find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp")
+                              path=os.path.dirname(seg_network[seg_network.find("01_Inputs"):]) + "/Thiessen/Thiessen_Valley.shp",
+                              guid=getUUID())
         nlist = []
         for j in vectorpath:
             if os.path.abspath(frag_valley[frag_valley.find("01_Inputs"):]) == os.path.abspath(j):
@@ -554,7 +607,8 @@ def main(
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Vector", "Valley Bottom", frag_valley[frag_valley.find("01_Inputs"):], iid="VALLEY" + str(k))
+            exxml.addProjectInput("Vector", "Valley Bottom", frag_valley[frag_valley.find("01_Inputs"):],
+                                  iid="VALLEY" + str(k), guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Fragmented Valley", ref="VALLEY" + str(k))
 
         if lg_river is not None:
@@ -568,12 +622,13 @@ def main(
                 pass
             else:
                 exxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):],
-                                      iid="LRP" + str(k))
+                                      iid="LRP" + str(k), guid=getUUID())
                 exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref="LRP" + str(k))
 
         del nlist
 
-        exxml.addOutput("Analysis", "Vector", "RCA Output", output[output.find("02_Analyses"):], exxml.RCArealizations[0])
+        exxml.addOutput("Analysis", "Vector", "RCA Output", output[output.find("02_Analyses"):],
+                        exxml.RCArealizations[0], guid=getUUID())
 
         exxml.write()
 
