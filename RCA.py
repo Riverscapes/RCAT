@@ -701,7 +701,7 @@ def score_landfire(evt, bps):
         elif row[0] == "Conifer-Hardwood":
             row[2] = 1
         elif row[0] == "Developed":
-            row[2] = 0.5
+            row[2] = 0.6
         elif row[0] == "Developed-High Intensity":
             row[2] = 0
         elif row[0] == "Developed-Low Intensity":
@@ -713,7 +713,7 @@ def score_landfire(evt, bps):
         elif row[0] == "Exotic Herbaceous":
             row[2] = 0.66
         elif row[0] == "Exotic Tree-Shrub":
-            row[2] = 0.66
+            row[2] = 1
         elif row[0] == "Grassland":
             row[2] = 1
         elif row[0] == "Hardwood":
@@ -1002,7 +1002,7 @@ def calc_lui(evt, thiessen_valley, scratch):
 
 def calc_connectivity(frag_valley, thiessen_valley, scratch):
     fp_conn = scratch + '/fp_conn'
-    arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 30)
+    arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
     fp_conn_zs = ZonalStatistics(thiessen_valley, "FID", fp_conn, "MEAN", "DATA")
     fp_conn_zs.save(scratch + '/Floodplain_Connectivity')
 
