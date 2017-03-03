@@ -23,7 +23,6 @@ import numpy as np
 import projectxml
 import uuid
 import datetime
-import xml.etree.ElementTree as ET
 
 
 def main(
@@ -44,12 +43,16 @@ def main(
 
     # create thiessen polygons from segmented network input
     arcpy.AddMessage("Creating thiessen polygons")
-    smooth_network = scratch + "/smooth_network"
-    arcpy.SmoothLine_cartography(seg_network, smooth_network, "PAEK", "500 Meters")
     midpoints = scratch + "/midpoints"
-    arcpy.FeatureVerticesToPoints_management(smooth_network, midpoints, "MID")
+    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
+    midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
+    midpoint_fields.remove("OBJECTID")
+    midpoint_fields.remove("Shape")
+    midpoint_fields.remove("ORIG_FID")
+    arcpy.DeleteField_management(midpoints, midpoint_fields)
+
     thiessen = scratch + "/thiessen"
-    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen)
+    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
     valley_buf = scratch + "/valley_buf"
     arcpy.Buffer_analysis(valley, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
     if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
@@ -70,70 +73,59 @@ def main(
         os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
     bps_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Riparian.tif")
 
+    # create output network
+    j = 1
+    while os.path.exists(projPath + "/02_Analyses/Output_" + str(j)):
+        j += 1
+
+    os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
+    fcOut = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
+    arcpy.CopyFeatures_management(seg_network, fcOut)
+
     # ----------------------------------------------###
     # RVD analysis for areas without large rivers   ###
     # ----------------------------------------------###
 
     if lg_river == None:
-        arcpy.AddMessage("calculating riparian vegetation departure")
-        evt_zs = ZonalStatistics(thiessen_valley, "FID", evt_lookup, "MEAN", "DATA")
-        bps_zs = ZonalStatistics(thiessen_valley, "FID", bps_lookup, "MEAN", "DATA")
-        evt_raster_calc = evt_zs*100
-        bps_raster_calc = bps_zs*100
-        evt_int = Int(evt_raster_calc)
-        bps_int = Int(bps_raster_calc)
-
-        evt_mean_poly = scratch + "/evt_mean_poly"
-        bps_mean_poly = scratch + "/bps_mean_poly"
-        arcpy.RasterToPolygon_conversion(evt_int, evt_mean_poly)
-        arcpy.RasterToPolygon_conversion(bps_int, bps_mean_poly)
-
-        diss_network = scratch + "/diss_network"
-        arcpy.Dissolve_management(seg_network, diss_network)
-        intersect1 = scratch + "/intersect1"
-        arcpy.Intersect_analysis([evt_mean_poly, diss_network], intersect1, "", "", "LINE")
-        arcpy.AddField_management(intersect1, "EVT_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(intersect1, ["GRIDCODE", "EVT_MEAN"])
+        arcpy.AddMessage("Calculating riparian vegetation departure")
+        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_lookup, "evt_zs", statistics_type="MEAN")
+        bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_lookup, "bps_zs", statistics_type="MEAN")
+        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
+            cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(intersect1, "GRIDCODE")
-
-        cursor2 = arcpy.da.UpdateCursor(intersect1, ["EVT_MEAN"])
-        for row in cursor2:
-            if row[0] == 0:
-                row[0] = 0.0001
-                cursor2.updateRow(row)
-        del row
-        del cursor2
-
-        intersect2 = scratch + "/intersect2"
-        arcpy.Intersect_analysis([intersect1, bps_mean_poly], intersect2, "", "", "LINE")
-        arcpy.AddField_management(intersect2, "BPS_MEAN", "DOUBLE")
-        cursor3 = arcpy.da.UpdateCursor(intersect2, ["GRIDCODE", "BPS_MEAN"])
-        for row in cursor3:
+        arcpy.DeleteField_management(fcOut, "MEAN")
+        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
+        for row in cursor:
             row[1] = row[0]
-            cursor3.updateRow(row)
-        arcpy.DeleteField_management(intersect2, "GRIDCODE")
-
-        cursor4 = arcpy.da.UpdateCursor(intersect2, ["BPS_MEAN"])
-        for row in cursor4:
-            if row[0] == 0:
-                row[0] = 0.0001
-                cursor4.updateRow(row)
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
+            cursor.updateRow(row)
         del row
-        del cursor4
+        del cursor
+        arcpy.DeleteField_management(fcOut, "MEAN")
 
-        arcpy.AddField_management(intersect2, "DEP_RATIO", "DOUBLE")
-        cursor5 = arcpy.da.UpdateCursor(intersect2, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
-        for row in cursor5:
+        arcpy.AddField_management(fcOut, "DEP_RATIO", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
+        for row in cursor:
             index = row[0]/row[1]
             row[2] = index
-            cursor5.updateRow(row)
+            cursor.updateRow(row)
+            if row[2] > 1 and row[1] == 0.0001:
+                row[2] = 1
+            cursor.updateRow(row)
         del row
-        del cursor5
+        del cursor
 
     # -------------------------------------------###
     # RVD analysis for areas with large rivers   ###
@@ -143,12 +135,12 @@ def main(
         arcpy.AddMessage("Calculating riparian vegetation departure")
         arcpy.env.extent = thiessen_valley
         lg_river_raster = ExtractByMask(evt, lg_river)
-        cursor6 = arcpy.UpdateCursor(lg_river_raster)
-        for row in cursor6:
+        cursor5 = arcpy.UpdateCursor(lg_river_raster)
+        for row in cursor5:
             row.setValue("VEG_SCORE", 8)
-            cursor6.updateRow(row)
+            cursor5.updateRow(row)
         del row
-        del cursor6
+        del cursor5
 
         river_lookup = Lookup(lg_river_raster, "VEG_SCORE")
         river_reclass = Reclassify(river_lookup, "VALUE", "8 8; NODATA 0")
@@ -157,64 +149,45 @@ def main(
         evt_wo_rivers = Reclassify(evt_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
         bps_wo_rivers = Reclassify(bps_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
 
-        evt_zs = ZonalStatistics(thiessen_valley, "FID", evt_wo_rivers, "MEAN", "DATA")
-        bps_zs = ZonalStatistics(thiessen_valley, "FID", bps_wo_rivers, "MEAN", "DATA")
-        evt_raster_calc = evt_zs*100
-        bps_raster_calc = bps_zs*100
-        evt_int = Int(evt_raster_calc)
-        bps_int = Int(bps_raster_calc)
-
-        evt_mean_poly = scratch + "/evt_mean_poly"
-        bps_mean_poly = scratch + "/bps_mean_poly"
-        arcpy.RasterToPolygon_conversion(evt_int, evt_mean_poly)
-        arcpy.RasterToPolygon_conversion(bps_int, bps_mean_poly)
-
-        diss_network = scratch + "/diss_network"
-        arcpy.Dissolve_management(seg_network, diss_network)
-        intersect1 = scratch + "/intersect1"
-        arcpy.Intersect_analysis([evt_mean_poly, diss_network], intersect1, "", "", "LINE")
-        arcpy.AddField_management(intersect1, "EVT_MEAN", "DOUBLE")
-        cursor7 = arcpy.da.UpdateCursor(intersect1, ["GRIDCODE", "EVT_MEAN"])
-        for row in cursor7:
+        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_wo_rivers, "evt_zs", statistics_type="MEAN")
+        bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_wo_rivers, "bps_zs", statistics_type="MEAN")
+        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "MEAN", "EVT_MEAN")
+        for row in cursor:
             row[1] = row[0]
-            cursor7.updateRow(row)
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
+            cursor.updateRow(row)
         del row
-        del cursor7
-        arcpy.DeleteField_management(intersect1, "GRIDCODE")
-        cursor8 = arcpy.da.UpdateCursor(intersect1, "EVT_MEAN")
-        for row in cursor8:
-            if row[0] == 0:
-                row[0] = 0.0001
-                cursor8.updateRow(row)
-        del row
-        del cursor8
+        del cursor
+        arcpy.DeleteField_management(fcOut, "MEAN")
 
-        intersect2 = scratch + "/intersect2"
-        arcpy.Intersect_analysis([intersect1, bps_mean_poly], intersect2, "", "", "LINE")
-        arcpy.AddField_management(intersect2, "BPS_MEAN", "DOUBLE")
-        cursor9 = arcpy.da.UpdateCursor(intersect2, ["GRIDCODE", "BPS_MEAN"])
-        for row in cursor9:
+        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "MEAN", "BPS_MEAN")
+        for row in cursor:
             row[1] = row[0]
-            cursor9.updateRow(row)
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
+            cursor.updateRow(row)
         del row
-        del cursor9
-        arcpy.DeleteField_management(intersect2, "GRIDCODE")
-        cursor10 = arcpy.da.UpdateCursor(intersect2, ["BPS_MEAN"])
-        for row in cursor10:
-            if row[0] == 0:
-                row[0] = 0.0001
-                cursor10.updateRow(row)
-        del row
-        del cursor10
+        del cursor
+        arcpy.DeleteField_management(fcOut, "MEAN")
 
-        arcpy.AddField_management(intersect2, "DEP_RATIO", "DOUBLE")
-        cursor11 = arcpy.da.UpdateCursor(intersect2, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
-        for row in cursor11:
+        arcpy.AddField_management(fcOut, "DEP_RATIO", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
+        for row in cursor:
             index = row[0]/row[1]
             row[2] = index
-            cursor11.updateRow(row)
+            cursor.updateRow(row)
+            if row[2] > 1 and row[1] == 0.0001:
+                row[2] = 1
+            cursor.updateRow(row)
         del row
-        del cursor11
+        del cursor
 
     # ------------------------------###
     # Riparian Conversion analysis  ###
@@ -251,150 +224,145 @@ def main(
 
     out_conversion_raster = ExtractByMask(final_conversion_raster, valley_buf)
 
-    j = 1
-    while os.path.exists(projPath + "/02_Analyses/Output_" + str(j)):
-        j += 1
-
-    os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
     out_conversion_raster.save(projPath + "/02_Analyses/Output_" + str(j) + "/Conversion_Raster.tif")
 
-    count_table = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", final_conversion_raster, "count_table", "", "VARIETY")
-    arcpy.JoinField_management(thiessen_valley, "Input_FID", count_table, "Input_FID", "COUNT")
+    count_table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", final_conversion_raster, "count_table", statistics_type="VARIETY")
+    arcpy.JoinField_management(fcOut, "FID", count_table, "ORIG_FID", "COUNT")
     if 0 in valueList:
-        table_0 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_0, "table_0", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_0, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_noch", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_noch"])
+        table_0 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_0, "table_0", "", "SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_0, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_noch", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_noch"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_noch", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_noch")
+        arcpy.AddField_management(fcOut, "sum_noch", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_noch")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
     if 50 in valueList:
-        table_50 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_50, "table_50", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_50, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_grsh", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_grsh"])
+        table_50 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_50, "table_50", statistics_type="SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_50, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_grsh", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_grsh"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_grsh", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_grsh")
+        arcpy.AddField_management(fcOut, "sum_grsh", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_grsh")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
     if 60 in valueList:
-        table_60 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_60, "table_60", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_60, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_deveg", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_deveg"])
+        table_60 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_60, "table_60", statistics_type="SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_60, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_deveg", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_deveg"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_deveg", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_deveg")
+        arcpy.AddField_management(fcOut, "sum_deveg", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_deveg")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
     if 80 in valueList:
-        table_80 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_80, "table_80", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_80, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_con", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_con"])
+        table_80 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_80, "table_80", statistics_type="SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_80, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_con", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_con"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_con", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_con")
+        arcpy.AddField_management(fcOut, "sum_con", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_con")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
     if 97 in valueList:
-        table_97 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_97, "table_97", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_97, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_inv", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_inv"])
+        table_97 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_97, "table_97", statistics_type="SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_97, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_inv", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_inv"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_inv", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_inv")
+        arcpy.AddField_management(fcOut, "sum_inv", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_inv")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
     if 98 in valueList:
-        table_98 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_98, "table_98", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_98, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_dev", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_dev"])
+        table_98 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_98, "table_98", statistics_type="SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_98, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_dev", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_dev"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_dev", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_dev")
+        arcpy.AddField_management(fcOut, "sum_dev", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_dev")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
     if 99 in valueList:
-        table_99 = ZonalStatisticsAsTable(thiessen_valley, "Input_FID", conversion_99, "table_99", "", "SUM")
-        arcpy.JoinField_management(thiessen_valley, "Input_FID", table_99, "Input_FID", "SUM")
-        arcpy.AddField_management(thiessen_valley, "sum_ag", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, ["SUM", "sum_ag"])
+        table_99 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_99, "table_99", statistics_type="SUM")
+        arcpy.JoinField_management(fcOut, "FID", table_99, "ORIG_FID", "SUM")
+        arcpy.AddField_management(fcOut, "sum_ag", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_ag"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(thiessen_valley, "SUM")
+        arcpy.DeleteField_management(fcOut, "SUM")
     else:
-        arcpy.AddField_management(thiessen_valley, "sum_ag", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(thiessen_valley, "sum_ag")
+        arcpy.AddField_management(fcOut, "sum_ag", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, "sum_ag")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
 
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, "COUNT")
+    cursor = arcpy.da.UpdateCursor(fcOut, "COUNT")
     for row in cursor:
         if row[0] == 0:
             row[0] = 1
@@ -402,56 +370,56 @@ def main(
     del row
     del cursor
 
-    arcpy.AddField_management(thiessen_valley, "prop_noch", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_noch", "prop_noch"])
+    arcpy.AddField_management(fcOut, "prop_noch", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_noch", "prop_noch"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(thiessen_valley, "prop_grsh", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_grsh", "prop_grsh"])
+    arcpy.AddField_management(fcOut, "prop_grsh", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_grsh", "prop_grsh"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(thiessen_valley, "prop_deveg", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_deveg", "prop_deveg"])
+    arcpy.AddField_management(fcOut, "prop_deveg", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_deveg", "prop_deveg"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(thiessen_valley, "prop_con", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_con", "prop_con"])
+    arcpy.AddField_management(fcOut, "prop_con", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_con", "prop_con"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(thiessen_valley, "prop_inv", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_inv", "prop_inv"])
+    arcpy.AddField_management(fcOut, "prop_inv", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_inv", "prop_inv"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(thiessen_valley, "prop_dev", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_dev", "prop_dev"])
+    arcpy.AddField_management(fcOut, "prop_dev", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_dev", "prop_dev"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(thiessen_valley, "prop_ag", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["COUNT", "sum_ag", "prop_ag"])
+    arcpy.AddField_management(fcOut, "prop_ag", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_ag", "prop_ag"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
@@ -459,19 +427,19 @@ def main(
     del row
     del cursor
 
-    prop0_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_noch")
+    prop0_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_noch")
     array0 = np.asarray(prop0_array, np.float64)
-    prop50_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_grsh")
+    prop50_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_grsh")
     array50 = np.asarray(prop50_array, np.float64)
-    prop60_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_deveg")
+    prop60_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_deveg")
     array60 = np.asarray(prop60_array, np.float64)
-    prop80_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_con")
+    prop80_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_con")
     array80 = np.asarray(prop80_array, np.float64)
-    prop97_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_inv")
+    prop97_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_inv")
     array97 = np.asarray(prop97_array, np.float64)
-    prop98_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_dev")
+    prop98_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_dev")
     array98 = np.asarray(prop98_array, np.float64)
-    prop99_array = arcpy.da.FeatureClassToNumPyArray(thiessen_valley, "prop_ag")
+    prop99_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_ag")
     array99 = np.asarray(prop99_array, np.float64)
 
     del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array
@@ -495,7 +463,7 @@ def main(
                     out_conv_code[i] = 22  # moderate devegetation
                 else:
                     out_conv_code[i] = 23  # significant devegetation
-            elif array80[i] > array50[i] and array80[i] > array60[i] and array80[i] > array97[i] and array80[i] > array98[i] and array80[i] > array99[i]:  # if conifer encoachment is next most dominant
+            elif array80[i] > array50[i] and array80[i] > array60[i] and array80[i] > array97[i] and array80[i] > array98[i] and array80[i] > array99[i]:  # if conifer encroachment is next most dominant
                 if array80[i] <= 0.25:
                     out_conv_code[i] = 31  # minor conifer encroachment
                 elif array80[i] > 0.25 and array80[i] <= 0.5:
@@ -533,11 +501,11 @@ def main(
 
     conv_code_table = scratch + "/conv_code_table"
     arcpy.CopyRows_management(out_table, conv_code_table)
-    arcpy.JoinField_management(thiessen_valley, "FID", conv_code_table, "FID", "conv_code")
+    arcpy.JoinField_management(fcOut, "FID", conv_code_table, "FID", "conv_code")
     arcpy.Delete_management(out_table)
 
-    arcpy.AddField_management(thiessen_valley, "conv_type", "text", "", "", 50)
-    cursor = arcpy.da.UpdateCursor(thiessen_valley, ["conv_code", "conv_type"])
+    arcpy.AddField_management(fcOut, "conv_type", "text", "", "", 50)
+    cursor = arcpy.da.UpdateCursor(fcOut, ["conv_code", "conv_type"])
     for row in cursor:
         if row[0] == 1:
             row[1] = "No Change"
@@ -582,13 +550,6 @@ def main(
         cursor.updateRow(row)
     del row
     del cursor
-
-    fcOut = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
-    arcpy.Intersect_analysis([intersect2, thiessen_valley], fcOut, "ALL", "", "LINE")
-
-    d_fields = [f.name for f in arcpy.ListFields(fcOut, "FID_*")]
-    arcpy.DeleteField_management(fcOut, d_fields)
-    arcpy.DeleteField_management(fcOut, ["Id_1", "Shape_Le_1", "Input_FID"])
 
     # # # Write xml file # # #
 

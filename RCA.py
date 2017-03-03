@@ -48,12 +48,10 @@ def main(
         raise Exception("Valley input has no field 'Connected'")
 
     # create thiessen polygons clipped to the extent of a buffered valley bottom
-    smooth_network = scratch + "/smooth_network"
-    arcpy.SmoothLine_cartography(seg_network, smooth_network, "PAEK", "500 Meters")
     midpoints = scratch + "/midpoints"
-    arcpy.FeatureVerticesToPoints_management(smooth_network, midpoints, "MID")
+    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
     thiessen = scratch + "/thiessen"
-    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen)
+    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
     buf_valley = scratch + "/buf_valley"
     arcpy.Buffer_analysis(frag_valley, buf_valley, "10 Meters", "FULL", "ROUND", "ALL")
     if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
@@ -61,7 +59,16 @@ def main(
     thiessen_valley = os.path.dirname(seg_network) + "/Thiessen/Thiessen_Valley.shp"
     arcpy.Clip_analysis(thiessen, buf_valley, thiessen_valley)
 
-    # Add width field to thiessen polygons
+    # create rca input network and output directory
+    j = 1
+    while os.path.exists(projPath + "/02_Analyses/Output_" + str(j)):
+        j += 1
+
+    os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
+    fcOut = projPath + "/02_Analyses/Output_" + str(j) + "/rca_table.shp"
+    arcpy.CopyFeatures_management(seg_network, fcOut)
+
+    # Add width field to thiessen polygons and then output network
     arcpy.AddField_management(thiessen_valley, "Perim", "DOUBLE")
     arcpy.AddField_management(thiessen_valley, "Area", "DOUBLE")
     arcpy.CalculateField_management(thiessen_valley, "Perim", "!SHAPE.LENGTH@METERS!", "PYTHON_9.3")
@@ -75,149 +82,31 @@ def main(
     del row
     del cur
 
-    # separate unconfined from confined portions of valley bottom
-    arcpy.MakeFeatureLayer_management(thiessen_valley, "thiessen_lyr")
-    arcpy.SelectLayerByAttribute_management("thiessen_lyr", "NEW_SELECTION", '"Width" > {0}'.format(width_thresh))
-    arcpy.FeatureClassToFeatureClass_conversion("thiessen_lyr", scratch, "wide_valley")
-    arcpy.SelectLayerByAttribute_management("thiessen_lyr", "NEW_SELECTION", '"Width" <= {0}'.format(width_thresh))
-    arcpy.FeatureClassToFeatureClass_conversion("thiessen_lyr", scratch, "narrow_valley")
+    arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "ORIG_FID", "Width")
+
+    # add model input attributes to input network
 
     arcpy.AddMessage("Classifying vegetation rasters")
     score_landfire(evt, bps)
 
     arcpy.AddMessage("Calculating riparian departure")
-    calc_rvd(evt, bps, thiessen_valley, lg_river, scratch)
+    calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, scratch)
 
     arcpy.AddMessage("Assessing land use intensity")
-    calc_lui(evt, thiessen_valley, scratch)
+    calc_lui(evt, thiessen_valley, fcOut)
 
     arcpy.AddMessage("Assessing floodplain connectivity")
-    calc_connectivity(frag_valley, thiessen_valley, scratch)
+    calc_connectivity(frag_valley, thiessen_valley, fcOut, scratch)
 
     arcpy.AddMessage("Calculating overall vegetation departure")
-    calc_veg(evt, bps, thiessen_valley, scratch)
+    calc_veg(evt, bps, thiessen_valley, fcOut)
 
-    # attribute the network with "RVD", "LUI", "CONNECT", and "VEG" fields
-    arcpy.AddMessage("Attributing stream network")
-    diss_network = scratch + "/diss_network"
-    arcpy.Dissolve_management(seg_network, diss_network)
-
-    rvd_final = Raster(scratch + "/RVD_final")
-    lui_final = Raster(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Land_Use_Intensity.tif")
-    fp_conn_final = Raster(scratch + "/Floodplain_Connectivity")
-    veg_final = Raster(scratch + "/veg_final")
-
-    rvd100 = rvd_final * 100
-    rvdint = Int(rvd100)
-    rvd_poly = scratch + "/rvd_poly"
-    arcpy.RasterToPolygon_conversion(rvdint, rvd_poly)
-
-    lui100 = lui_final * 100
-    luiint = Int(lui100)
-    lui_poly = scratch + "/lui_poly"
-    arcpy.RasterToPolygon_conversion(luiint, lui_poly)
-
-    fp_conn100 = fp_conn_final * 100
-    fp_connint = Int(fp_conn100)
-    fp_conn_poly = scratch + "/fp_conn_poly"
-    arcpy.RasterToPolygon_conversion(fp_connint, fp_conn_poly)
-
-    veg100 = veg_final * 100
-    veg_int = Int(veg100)
-    veg_poly = scratch + "/veg_poly"
-    arcpy.RasterToPolygon_conversion(veg_int, veg_poly)
-
-    intersect1 = scratch + "/intersect1"
-    arcpy.Intersect_analysis([diss_network, rvd_poly], intersect1, "", "", "LINE")
-    arcpy.AddField_management(intersect1, "GRID", "DOUBLE")
-    arcpy.AddField_management(intersect1, "RVD", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(intersect1, ["GRIDCODE", "GRID"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-    del row
-    del cursor
-    cursor = arcpy.da.UpdateCursor(intersect1, ["GRID", "RVD"])
-    for row in cursor:
-        row[1] = row[0]/100
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(intersect1, ["GRIDCODE", "GRID"])
-
-    intersect2 = scratch + "/intersect2"
-    arcpy.Intersect_analysis([intersect1, lui_poly], intersect2, "", "", "LINE")
-    arcpy.AddField_management(intersect2, "GRID", "DOUBLE")
-    arcpy.AddField_management(intersect2, "LUI", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(intersect2, ["GRIDCODE", "GRID"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-    del row
-    del cursor
-    cursor = arcpy.da.UpdateCursor(intersect2, ["GRID", "LUI"])
-    for row in cursor:
-        row[1] = row[0]/100
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(intersect2, ["GRIDCODE", "GRID"])
-
-    intersect3 = scratch + "/intersect3"
-    arcpy.Intersect_analysis([intersect2, fp_conn_poly], intersect3, "", "", "LINE")
-    arcpy.AddField_management(intersect3, "GRID", "DOUBLE")
-    arcpy.AddField_management(intersect3, "CONNECT", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(intersect3, ["GRIDCODE", "GRID"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-    del row
-    del cursor
-    cursor = arcpy.da.UpdateCursor(intersect3, ["GRID", "CONNECT"])
-    for row in cursor:
-        row[1] = row[0]/100
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(intersect3, ["GRIDCODE", "GRID"])
-
-    rca_input = scratch + "/rca_input"
-    arcpy.Intersect_analysis([intersect3, veg_poly], rca_input, "", "", "LINE")
-    arcpy.AddField_management(rca_input, "GRID", "DOUBLE")
-    arcpy.AddField_management(rca_input, "VEG", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(rca_input, ["GRIDCODE", "GRID"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-    del row
-    del cursor
-    cursor = arcpy.da.UpdateCursor(rca_input, ["GRID", "VEG"])
-    for row in cursor:
-        row[1] = row[0]/100
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(rca_input, ["GRIDCODE", "GRID"])
-
-    df = [f.name for f in arcpy.ListFields(rca_input, "FID_*")]
-    df2 = [f.name for f in arcpy.ListFields(rca_input, "Id_*")]
-    df.extend(df2)
-    arcpy.DeleteField_management(rca_input, df)
+    # # # calculate rca for segments in unconfined valleys # # #
 
     arcpy.AddMessage("Calculating riparian condition")
 
-    # set up output
-    j = 1
-    while os.path.exists(projPath + "/02_Analyses/Output_" + str(j)):
-        j += 1
-
-    os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
-    output = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
-
-    # # # calculate rca for segments in unconfined valleys # # #
-    arcpy.MakeFeatureLayer_management(rca_input, "rca_in_lyr")
-    wide_valley = scratch + "/wide_valley"
-    arcpy.SelectLayerByLocation_management("rca_in_lyr", "HAVE_THEIR_CENTER_IN", wide_valley)
+    arcpy.MakeFeatureLayer_management(fcOut, "rca_in_lyr")
+    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" >= {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_u")
     rca_u = scratch + "/rca_u"
 
@@ -322,7 +211,7 @@ def main(
         # save the output text file and merge to network
         fid = np.arange(0, len(out), 1)
         columns = np.column_stack((fid, out))
-        out_table = os.path.dirname(output) + "/RCA_Table.txt"
+        out_table = os.path.dirname(fcOut) + "/RCA_Table.txt"
         np.savetxt(out_table, columns, delimiter=",", header="ID, COND_VAL", comments="")
         arcpy.CopyRows_management(out_table, "final_table")
 
@@ -332,11 +221,11 @@ def main(
         arcpy.CopyFeatures_management(rca_u, rca_u_final)
 
     else:
-        pass
+        raise Exception("There are no 'unconfined' segments to assess using FIS. Lower width threshold parameter.")
 
     # # # calculate rca for segments in confined valleys # # #
-    narrow_valley = scratch + "/narrow_valley"
-    arcpy.SelectLayerByLocation_management("rca_in_lyr", "HAVE_THEIR_CENTER_IN", narrow_valley)
+
+    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" < {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c")
     rca_c = scratch + "/rca_c"
 
@@ -352,6 +241,8 @@ def main(
     del cursor
 
     # merge the results of the rca for confined and unconfined valleys
+    output = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
+
     arcpy.Merge_management([rca_u_final, rca_c], output)
 
     # add final condition category for each segment
@@ -372,6 +263,9 @@ def main(
         cursor.updateRow(row)
     del row
     del cursor
+
+    arcpy.Delete_management(fcOut)
+    arcpy.Delete_management(out_table)
 
     # # # Write xml file # # #
 
@@ -815,7 +709,7 @@ def score_landfire(evt, bps):
     del cursor5
 
 
-def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
+def calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, scratch):
     evt_lookup = Lookup(evt, "VEG_SCORE")
     if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
         os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
@@ -827,76 +721,46 @@ def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
 
     if lg_river == None:
         # create raster output of riparian vegetation departure for areas without large rivers
-        evt_zs = ZonalStatistics(thiessen_valley, "FID", evt_lookup, "MEAN", "DATA")
-        bps_zs = ZonalStatistics(thiessen_valley, "FID", bps_lookup, "MEAN", "DATA")
+        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_lookup, "evt_zs", statistics_type="MEAN")
+        bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_lookup, "bps_zs", statistics_type="MEAN")
 
-        evtx100 = evt_zs * 100
-        evt_int = Int(evtx100)
-
-        arcpy.AddField_management(evt_int, "NEWVALUE", "SHORT")
-        cursor = arcpy.UpdateCursor(evt_int)
+        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
         for row in cursor:
-            row.NEWVALUE = row.Value
+            row[1] = row[0]
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
             cursor.updateRow(row)
         del row
         del cursor
-        cursor2 = arcpy.UpdateCursor(evt_int)
-        for row in cursor2:
-            if row.Value == 0:
-                row.NEWVALUE = 1
-                cursor2.updateRow(row)
+        arcpy.DeleteField_management(fcOut, "MEAN")
+
+        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
+        for row in cursor:
+            row[1] = row[0]
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
+            cursor.updateRow(row)
         del row
-        del cursor2
+        del cursor
+        arcpy.DeleteField_management(fcOut, "MEAN")
 
-        evt_int_lookup = Lookup(evt_int, "NEWVALUE")
-        evt_float = Float(evt_int_lookup)
-        evt_final = evt_float/100
-
-        bpsx100 = bps_zs * 100
-        bps_int = Int(bpsx100)
-
-        arcpy.AddField_management(bps_int, "NEWVALUE", "SHORT")
-        cursor3 = arcpy.UpdateCursor(bps_int)
-        for row in cursor3:
-            row.NEWVALUE = row.Value
-            cursor3.updateRow(row)
+        arcpy.AddField_management(fcOut, "RVD", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "RVD"])
+        for row in cursor:
+            index = row[0] / row[1]
+            row[2] = index
+            cursor.updateRow(row)
+            if row[2] > 1 and row[1] == 0.0001:
+                row[2] = 1
+            cursor.updateRow(row)
         del row
-        del cursor3
-        cursor4 = arcpy.UpdateCursor(bps_int)
-        for row in cursor4:
-            if row.Value == 0:
-                row.NEWVALUE = 1
-                cursor4.updateRow(row)
-        del row
-        del cursor4
-
-        bps_int_lookup = Lookup(bps_int, "NEWVALUE")
-        bps_float = Float(bps_int_lookup)
-        bps_final = bps_float/100
-
-        rvd_init = evt_final/bps_final
-        rvdx100 = rvd_init * 100
-        rvd_int = Int(rvdx100)
-
-        arcpy.AddField_management(rvd_int, "NEWVALUE", "SHORT")
-        cursor5 = arcpy.UpdateCursor(rvd_int)
-        for row in cursor5:
-            row.NEWVALUE = row.Value
-            cursor5.updateRow(row)
-        del row
-        del cursor5
-        cursor6 = arcpy.UpdateCursor(rvd_int)
-        for row in cursor6:
-            if row.Value > 100:
-                row.NEWVALUE = 100
-                cursor6.updateRow(row)
-        del row
-        del cursor6
-
-        rvd_lookup = Lookup(rvd_int, "NEWVALUE")
-        rvd_float = Float(rvd_lookup)
-        rvd_final = rvd_float/100
-        rvd_final.save(scratch + "/RVD_final")
+        del cursor
 
     else:
         # create raster output of riparian vegetation departure for areas with large rivers
@@ -916,100 +780,90 @@ def calc_rvd(evt, bps, thiessen_valley, lg_river, scratch):
         evt_wo_rivers = Reclassify(evt_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
         bps_wo_rivers = Reclassify(bps_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
 
-        evt_zs = ZonalStatistics(thiessen_valley, "FID", evt_wo_rivers, "MEAN", "DATA")
-        bps_zs = ZonalStatistics(thiessen_valley, "FID", bps_wo_rivers, "MEAN", "DATA")
+        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_wo_rivers, "evt_zs", statistics_type="MEAN")
+        bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_wo_rivers, "bps_zs", statistics_type="MEAN")
 
-        evtx100 = evt_zs * 100
-        evt_int = Int(evtx100)
-
-        arcpy.AddField_management(evt_int, "NEWVALUE", "SHORT")
-        cursor = arcpy.UpdateCursor(evt_int)
+        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
         for row in cursor:
-            row.NEWVALUE = row.Value
+            row[1] = row[0]
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
             cursor.updateRow(row)
         del row
         del cursor
-        cursor2 = arcpy.UpdateCursor(evt_int)
-        for row in cursor2:
-            if row.Value == 0:
-                row.NEWVALUE = 1
-                cursor2.updateRow(row)
+        arcpy.DeleteField_management(fcOut, "MEAN")
+
+        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
+        for row in cursor:
+            row[1] = row[0]
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 0.0001
+            cursor.updateRow(row)
         del row
-        del cursor2
+        del cursor
+        arcpy.DeleteField_management(fcOut, "MEAN")
 
-        evt_int_lookup = Lookup(evt_int, "NEWVALUE")
-        evt_float = Float(evt_int_lookup)
-        evt_final = evt_float/100
-
-        bpsx100 = bps_zs * 100
-        bps_int = Int(bpsx100)
-
-        arcpy.AddField_management(bps_int, "NEWVALUE", "SHORT")
-        cursor3 = arcpy.UpdateCursor(bps_int)
-        for row in cursor3:
-            row.NEWVALUE = row.Value
-            cursor3.updateRow(row)
+        arcpy.AddField_management(fcOut, "RVD", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "RVD"])
+        for row in cursor:
+            index = row[0] / row[1]
+            row[2] = index
+            cursor.updateRow(row)
+            if row[2] > 1 and row[1] == 0.0001:
+                row[2] = 1
+            cursor.updateRow(row)
         del row
-        del cursor3
-        cursor4 = arcpy.UpdateCursor(bps_int)
-        for row in cursor4:
-            if row.Value == 0:
-                row.NEWVALUE = 1
-                cursor4.updateRow(row)
-        del row
-        del cursor4
+        del cursor
 
-        bps_int_lookup = Lookup(bps_int, "NEWVALUE")
-        bps_float = Float(bps_int_lookup)
-        bps_final = bps_float/100
-
-        rvd_init = evt_final/bps_final
-        rvdx100 = rvd_init * 100
-        rvd_int = Int(rvdx100)
-
-        arcpy.AddField_management(rvd_int, "NEWVALUE", "SHORT")
-        cursor5 = arcpy.UpdateCursor(rvd_int)
-        for row in cursor5:
-            row.NEWVALUE = row.Value
-            cursor5.updateRow(row)
-        del row
-        del cursor5
-        cursor6 = arcpy.UpdateCursor(rvd_int)
-        for row in cursor6:
-            if row.Value > 100:
-                row.NEWVALUE = 100
-                cursor6.updateRow(row)
-        del row
-        del cursor6
-
-        rvd_lookup = Lookup(rvd_int, "NEWVALUE")
-        rvd_float = Float(rvd_lookup)
-        rvd_final = rvd_float/100
-        rvd_final.save(scratch + "/RVD_final")
-
-    return rvd_final
+    return
 
 
-def calc_lui(evt, thiessen_valley, scratch):
+def calc_lui(evt, thiessen_valley, fcOut):
     lui_lookup = Lookup(evt, "LUI")
-    lui_zs = ZonalStatistics(thiessen_valley, "FID", lui_lookup, "MEAN", "DATA")
+    lui_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", lui_lookup, "lui_zs", statistics_type="MEAN")
     if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
         os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
-    lui_zs.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Land_Use_Intensity.tif")
+    lui_lookup.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Land_Use_Intensity.tif")
 
-    return lui_zs
+    arcpy.JoinField_management(fcOut, "FID", lui_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "LUI", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "LUI"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
+    return
 
 
-def calc_connectivity(frag_valley, thiessen_valley, scratch):
+def calc_connectivity(frag_valley, thiessen_valley, fcOut, scratch):
     fp_conn = scratch + '/fp_conn'
     arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
-    fp_conn_zs = ZonalStatistics(thiessen_valley, "FID", fp_conn, "MEAN", "DATA")
-    fp_conn_zs.save(scratch + '/Floodplain_Connectivity')
+    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", fp_conn, "fp_conn_zs", statistics_type="MEAN")
+    #fp_conn.save(scratch + '/Floodplain_Connectivity')
 
-    return fp_conn_zs
+    arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "CONNECT", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "CONNECT"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
+    return
 
 
-def calc_veg(evt, bps, thiessen_valley, scratch):
+def calc_veg(evt, bps, thiessen_valley, fcOut):
     exveg_lookup = Lookup(evt, "VEGETATED")
     if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
         os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
@@ -1019,78 +873,45 @@ def calc_veg(evt, bps, thiessen_valley, scratch):
         os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
     histveg_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Veg_Cover.tif")
 
-    exveg_zs = ZonalStatistics(thiessen_valley, "FID", exveg_lookup, "MEAN", "DATA")
-    histveg_zs = ZonalStatistics(thiessen_valley, "FID", histveg_lookup, "MEAN", "DATA")
+    exveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", exveg_lookup, "exveg_zs", statistics_type="MEAN")
+    histveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", histveg_lookup, "histveg_zs", statistics_type="MEAN")
 
-    exvegx100 = exveg_zs * 100
-    exveg_int = Int(exvegx100)
-
-    arcpy.AddField_management(exveg_int, "NEWVALUE", "SHORT")
-    cursor = arcpy.UpdateCursor(exveg_int)
+    arcpy.JoinField_management(fcOut, "FID", exveg_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "EX_VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EX_VEG"])
     for row in cursor:
-        row.NEWVALUE = row.Value
+        row[1] = row[0]
+        cursor.updateRow(row)
+        if row[1] == 0:
+            row[1] = 0.0001
         cursor.updateRow(row)
     del row
     del cursor
-    cursor2 = arcpy.UpdateCursor(exveg_int)
-    for row in cursor2:
-        if row.Value == 0:
-            row.NEWVALUE = 1
-            cursor2.updateRow(row)
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
+    arcpy.JoinField_management(fcOut, "FID", histveg_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "HIST_VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "HIST_VEG"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+        if row[1] == 0:
+            row[1] = 0.0001
+        cursor.updateRow(row)
     del row
-    del cursor2
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
 
-    exveg_int_lookup = Lookup(exveg_int, "NEWVALUE")
-    exveg_float = Float(exveg_int_lookup)
-    exveg_final = exveg_float/100
-
-    histvegx100 = histveg_zs * 100
-    histveg_int = Int(histvegx100)
-
-    arcpy.AddField_management(histveg_int, "NEWVALUE", "SHORT")
-    cursor3 = arcpy.UpdateCursor(histveg_int)
-    for row in cursor3:
-        row.NEWVALUE = row.Value
-        cursor3.updateRow(row)
+    arcpy.AddField_management(fcOut, "VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["EX_VEG", "HIST_VEG", "VEG"])
+    for row in cursor:
+        index = row[0] / row[1]
+        row[2] = index
+        cursor.updateRow(row)
     del row
-    del cursor3
-    cursor4 = arcpy.UpdateCursor(histveg_int)
-    for row in cursor4:
-        if row.Value == 0:
-            row.NEWVALUE = 1
-            cursor4.updateRow(row)
-    del row
-    del cursor4
+    del cursor
 
-    histveg_int_lookup = Lookup(histveg_int, "NEWVALUE")
-    histveg_float = Float(histveg_int_lookup)
-    histveg_final = histveg_float/100
-
-    veg_init = exveg_final/histveg_final
-    vegx100 = veg_init * 100
-    veg_int = Int(vegx100)
-
-    arcpy.AddField_management(veg_int, "NEWVALUE", "SHORT")
-    cursor5 = arcpy.UpdateCursor(veg_int)
-    for row in cursor5:
-        row.NEWVALUE = row.Value
-        cursor5.updateRow(row)
-    del row
-    del cursor5
-    cursor6 = arcpy.UpdateCursor(veg_int)
-    for row in cursor6:
-        if row.Value > 100:
-            row.NEWVALUE = 100
-            cursor6.updateRow(row)
-    del row
-    del cursor6
-
-    veg_lookup = Lookup(veg_int, "NEWVALUE")
-    veg_float = Float(veg_lookup)
-    veg_final = veg_float/100
-    veg_final.save(scratch + "/veg_final")
-
-    return veg_final
+    return
 
 def getUUID():
     return str(uuid.uuid4()).upper()

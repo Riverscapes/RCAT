@@ -65,7 +65,7 @@ def main(
 
     # calculate flow accumulation and convert to drainage area, or input drainage area raster
     if FlowAcc == None:
-        arcpy.AddMessage("calculating drainage area")
+        arcpy.AddMessage("Calculating drainage area")
         calc_drain_area(DEM)
     elif os.path.exists(os.path.dirname(DEM) + "/Flow"):
         pass
@@ -91,7 +91,7 @@ def main(
     else:
         raise Exception("low drainage area threshold is lower than lowest network drainage area value")
 
-    arcpy.AddMessage("segmenting stream network by drainage area")
+    arcpy.AddMessage("Segmenting stream network by drainage area")
 
     # This strange workflow extracts drainage area values from the raster to an attribute for each network segment.
     network_midpoints = scratch + "/network_midpoints"
@@ -104,14 +104,9 @@ def main(
 
     midpoint_buffer = scratch + "/midpoint_buffer"
     arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "NONE")
-    drarea_zs = ZonalStatistics(midpoint_buffer, "OBJECTID", inFlow, "MAXIMUM", "DATA")
-    drarea_int = Int(drarea_zs)
-    drarea_poly = scratch + "/drarea_poly"
-    arcpy.RasterToPolygon_conversion(drarea_int, drarea_poly)
-    poly_point_join = scratch + "/poly_point_join"
-    arcpy.SpatialJoin_analysis(drarea_poly, network_midpoints, poly_point_join, "JOIN_ONE_TO_MANY", "KEEP_COMMON", "", "INTERSECT")
-    arcpy.DeleteField_management(poly_point_join, ["Id", "JOIN_FID", "Join_Count", "TARGET_FID"])
-    arcpy.JoinField_management(fcNetwork, "FID", poly_point_join, "ORIG_FID")
+    drarea_zs = scratch + "/drarea_zs"
+    ZonalStatisticsAsTable(midpoint_buffer, "ORIG_FID", inFlow, drarea_zs, "MAXIMUM")
+    arcpy.JoinField_management(fcNetwork, "FID", drarea_zs, "ORIG_FID", "MAX")
 
     lf = arcpy.ListFields(fcNetwork, "DA_sqkm")
     if len(lf) is 1:
@@ -119,21 +114,20 @@ def main(
     else:
         pass
 
-    arcpy.AddField_management(fcNetwork, "DA_sqkm", "SHORT")
-    cursor = arcpy.da.UpdateCursor(fcNetwork, ["gridcode", "DA_sqkm"])
+    arcpy.AddField_management(fcNetwork, "DA_sqkm", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcNetwork, ["MAX", "DA_sqkm"])
     for row in cursor:
         row[1] = row[0]
         cursor.updateRow(row)
+        if row[1] < 0.1:
+            row[1] = 0.1
+        cursor.updateRow(row)
     del row
     del cursor
-
-    delete_fields = [f.name for f in arcpy.ListFields(fcNetwork, "*_1")]
-    other_fields = ["gridcode", "ORIG_FID"]
-    delete_fields.extend(other_fields)
-    arcpy.DeleteField_management(fcNetwork, delete_fields)
+    arcpy.DeleteField_management(fcNetwork, "MAX")
 
     # create buffers around the different network segments
-    arcpy.AddMessage("creating buffers")
+    arcpy.AddMessage("Creating buffers")
     if not os.path.exists(os.path.dirname(fcNetwork) + "/Buffers"):
         os.mkdir(os.path.dirname(fcNetwork) + '/Buffers')
     arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
@@ -150,26 +144,26 @@ def main(
     arcpy.Buffer_analysis(fcNetwork, min_buffer, min_buf_size, "FULL", "ROUND", "ALL")
 
     # Slope analysis
-    arcpy.AddMessage("creating slope raster")
+    arcpy.AddMessage("Creating slope raster")
     if not os.path.exists(os.path.dirname(DEM) + "/Slope"):
         os.mkdir(os.path.dirname(DEM) + "/Slope")
     slope_raster = Slope(DEM, "DEGREE", "")
     slope_raster.save(os.path.dirname(DEM) + "/Slope/slope.tif")
     inSlope = os.path.dirname(DEM) + "/Slope/slope.tif"
 
-    arcpy.AddMessage("clipping slope raster")
+    arcpy.AddMessage("Clipping slope raster")
     lg_buf_slope = ExtractByMask(slope_raster, lg_buffer)
     med_buf_slope = ExtractByMask(slope_raster, med_buffer)
     sm_buf_slope = ExtractByMask(slope_raster, sm_buffer)
 
     # reclassify slope rasters for each of the buffers
-    arcpy.AddMessage("reclassifying slope rasters")
+    arcpy.AddMessage("Reclassifying slope rasters")
     lg_valley_raster = Reclassify(lg_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(lg_slope_thresh), "NODATA")
     med_valley_raster = Reclassify(med_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(med_slope_thresh), "NODATA")
     sm_valley_raster = Reclassify(sm_buf_slope, "VALUE", "0 {0} 1; {0} 100 NODATA".format(sm_slope_thresh), "NODATA")
 
     # convert valley rasters into polygons
-    arcpy.AddMessage("converting valley rasters into polygons")
+    arcpy.AddMessage("Converting valley rasters into polygons")
     lg_polygon = scratch + "/lg_polygon"
     med_polygon = scratch + "/med_polygon"
     sm_polygon = scratch + "/sm_polygon"
@@ -181,7 +175,7 @@ def main(
     merged_polygon = scratch + "/merged_polygon"
     arcpy.Merge_management([lg_polygon, med_polygon, sm_polygon, min_buffer], merged_polygon)
 
-    arcpy.AddMessage("cleaning outputs for final valley bottom")
+    arcpy.AddMessage("Cleaning outputs for final valley bottom")
     cleaned_valley = scratch + "/cleaned_valley"
     arcpy.MakeFeatureLayer_management(merged_polygon, "merged_polygon_lyr")
     arcpy.SelectLayerByLocation_management("merged_polygon_lyr", "INTERSECT", fcNetwork)
@@ -313,7 +307,6 @@ def main(
         else:
             exxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM" + str(k), guid=getUUID())
             exxml.addVBETInput(exxml.VBETrealizations[0], "DEM", ref="DEM" + str(k))
-        del nlist
 
         vector = inputs.findall("Vector")
         dnid = range(len(vector))
@@ -326,9 +319,9 @@ def main(
         for i in range(len(dnpath)):
             if os.path.abspath(dnpath[i]) == os.path.abspath(fcNetwork[fcNetwork.find("01_Inputs"):]):
                 exxml.addVBETInput(exxml.VBETrealizations[0], "Network", ref=str(dnid[i]))
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
+                #exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
+                #exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
+                #exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
         nlist = []
         for j in dnpath:
             if os.path.abspath(fcNetwork[fcNetwork.find("01_Inputs"):]) == os.path.abspath(j):
@@ -344,6 +337,8 @@ def main(
             exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
             exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
         del nlist
+
+
 
         if FlowAcc == None:
             exxml.addVBETInput(exxml.VBETrealizations[0], "Flow", name="Drainage Area", path=DrAr[DrAr.find("01_Inputs"):], guid=getUUID())
@@ -368,8 +363,16 @@ def main(
             if "yes" in nlist:
                 pass
             else:
-                exxml.addProjectInput("Raster", "Drainage Area", DrAr[DrAr.find("01_Inputs"):], iid="DA" + str(k), guid=getUUID())
-                exxml.addVBETInput(exxml.VBETrealizations[0], "Flow", ref="DA" + str(k))
+                flows = exxml.rz.findall(".//Flow")
+                flowpath = range(len(flows))
+                for i in range(len(flows)):
+                    if flows[i].find("Path").text:
+                        flowpath[i] = flows[i].find("Path").text
+                        if os.path.abspath(flowpath[i]) == os.path.abspath(DrAr[DrAr.find("01_Inputs"):]):
+                            flowguid = flows[i].attrib['guid']
+                            exxml.addVBETInput(exxml.VBETrealizations[0], "Flow", "Drainage Area", path=DrAr[DrAr.find("01_Inputs"):], guid=flowguid)
+                    else:
+                        pass
 
         exxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0], guid=getUUID())
 
