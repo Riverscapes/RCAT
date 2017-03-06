@@ -104,8 +104,7 @@ def main(
 
     midpoint_buffer = scratch + "/midpoint_buffer"
     arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "NONE")
-    drarea_zs = scratch + "/drarea_zs"
-    ZonalStatisticsAsTable(midpoint_buffer, "ORIG_FID", inFlow, drarea_zs, "MAXIMUM")
+    drarea_zs = ZonalStatisticsAsTable(midpoint_buffer, "ORIG_FID", inFlow, "drarea_zs", statistics_type="MAXIMUM")
     arcpy.JoinField_management(fcNetwork, "FID", drarea_zs, "ORIG_FID", "MAX")
 
     lf = arcpy.ListFields(fcNetwork, "DA_sqkm")
@@ -128,16 +127,19 @@ def main(
 
     # create buffers around the different network segments
     arcpy.AddMessage("Creating buffers")
-    if not os.path.exists(os.path.dirname(fcNetwork) + "/Buffers"):
-        os.mkdir(os.path.dirname(fcNetwork) + '/Buffers')
+    h = 1
+    while os.path.exists(os.path.dirname(fcNetwork) + "/Buffers_" + str(h)):
+        h += 1
+    if not os.path.exists(os.path.dirname(fcNetwork) + "/Buffers_" + str(h)):
+        os.mkdir(os.path.dirname(fcNetwork) + "/Buffers_" + str(h))
     arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
-    lg_buffer = os.path.dirname(fcNetwork) + "/Buffers/lg_buffer.shp"
+    lg_buffer = os.path.dirname(fcNetwork) + "/Buffers_" + str(h) + "/lg_buffer.shp"
     arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" >= {0}'.format(high_da_thresh))
     arcpy.Buffer_analysis("network_lyr", lg_buffer, lg_buf_size, "FULL", "ROUND", "ALL")
-    med_buffer = os.path.dirname(fcNetwork) + "/Buffers/med_buf.shp"
+    med_buffer = os.path.dirname(fcNetwork) + "/Buffers_" + str(h) + "/med_buf.shp"
     arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" >= {0} AND "DA_sqkm" < {1}'.format(low_da_thresh, high_da_thresh))
     arcpy.Buffer_analysis("network_lyr", med_buffer, med_buf_size, "FULL", "ROUND", "ALL")
-    sm_buffer = os.path.dirname(fcNetwork) + "/Buffers/sm_buf.shp"
+    sm_buffer = os.path.dirname(fcNetwork) + "/Buffers_" + str(h) + "/sm_buf.shp"
     arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", '"DA_sqkm" < {0}'.format(low_da_thresh))
     arcpy.Buffer_analysis("network_lyr", sm_buffer, sm_buf_size, "FULL", "ROUND", "ALL")
     min_buffer = scratch + "/min_buffer"
@@ -319,9 +321,9 @@ def main(
         for i in range(len(dnpath)):
             if os.path.abspath(dnpath[i]) == os.path.abspath(fcNetwork[fcNetwork.find("01_Inputs"):]):
                 exxml.addVBETInput(exxml.VBETrealizations[0], "Network", ref=str(dnid[i]))
-                #exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
-                #exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
-                #exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
+                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Large Buffer", path=lg_buffer[lg_buffer.find("01_Inputs"):], guid=getUUID())
+                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
+                exxml.addVBETInput(exxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
         nlist = []
         for j in dnpath:
             if os.path.abspath(fcNetwork[fcNetwork.find("01_Inputs"):]) == os.path.abspath(j):
