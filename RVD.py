@@ -153,7 +153,7 @@ def main(
         bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_wo_rivers, "bps_zs", statistics_type="MEAN")
         arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
         arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "MEAN", "EVT_MEAN")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
@@ -166,7 +166,7 @@ def main(
 
         arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
         arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "MEAN", "BPS_MEAN")
+        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
@@ -570,7 +570,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addRVDRealization("RVD Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.1", guid=getUUID())
+                                 productVersion="1.0.4", guid=getUUID())
 
         # add inputs and outputs to xml file
         newxml.addProjectInput("Raster", "Existing Vegetation", evt[evt.find("01_Inputs"):], iid="EXVEG1", guid=getUUID())
@@ -619,7 +619,7 @@ def main(
             k += 1
 
         exxml.addRVDRealization("RVD Realization " + str(k), rid="RZ" + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.1", guid=getUUID())
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.4", guid=getUUID())
 
         inputs = exxml.root.find("Inputs")
 
@@ -803,33 +803,28 @@ def score_vegetation(evt, bps):
     if len(lf1) is not 1:
         arcpy.AddField_management(evt, "VEG_SCORE", "DOUBLE")
 
-    cursor = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "VEG_SCORE"])
+    cursor = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "EVT_GP", "VEG_SCORE"])
     for row in cursor:
         if row[0] == "Riparian":
-            row[1] = 1
+            row[2] = 1
         elif row[0] == "Open Water":
-            row[1] = 1
+            row[2] = 1
         elif row[0] == "Hardwood":
-            row[1] = 1
+            row[2] = 1
         elif row[0] == "Conifer-Hardwood":
-            row[1] = 1
+            row[2] = 1
+        cursor.updateRow(row)
+        if row[1] == "602":
+            row[2] = 1
+        elif row[1] == "701":
+            row[2] = 0
+        elif row[1] == "708":
+            row[2] = 0
+        elif row[1] == "709":
+            row[2] = 0
         cursor.updateRow(row)
     del row
     del cursor
-
-    cursor1 = arcpy.da.UpdateCursor(evt, ["EVT_GP", "VEG_SCORE"])
-    for row in cursor1:
-        if row[0] == "602":
-            row[1] = 1
-        elif row[0] == "701":
-            row[1] = 0
-        elif row[0] == "708":
-            row[1] = 0
-        elif row[0] == "709":
-            row[1] = 0
-        cursor1.updateRow(row)
-    del row
-    del cursor1
 
     lf2 = arcpy.ListFields(bps, "VEG_SCORE")
     if len(lf2) is not 1:
@@ -895,6 +890,8 @@ def score_vegetation(evt, bps):
             row[2] = 40
         elif row[0] == "Exotic Tree-Shrub":
             row[2] = 3
+        elif row[0] == "Exotic Herbaceous":
+            row[2] = 3
         elif row[1] == "708":
             row[2] = 3
         elif row[1] == "709":
@@ -913,8 +910,6 @@ def score_vegetation(evt, bps):
             row[2] = 3
         elif row[1] == "707":
             row[2] = 3
-        else:
-            row[2] = 50
         cursor3.updateRow(row)
     del row
     del cursor3
