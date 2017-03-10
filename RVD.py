@@ -553,9 +553,9 @@ def main(
 
     # # # Write xml file # # #
 
-    if not os.path.exists(projPath + "/rvd.xml"):
+    if not os.path.exists(projPath + "/project.rs.xml"):
         # xml file
-        xmlfile = projPath + "/rvd.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "RVD", projName)
@@ -600,14 +600,14 @@ def main(
         newxml.addRVDInput(newxml.RVDrealizations[0], "Thiessen Polygons", "Thiessen Polygons",
                            path=thiessen_valley[thiessen_valley.find("01_Inputs"):], guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "RVD", fcOut[fcOut.find("02_Analyses"):], newxml.RVDrealizations[0], guid=getUUID())
-        newxml.addOutput("Analysis", "Raster", "Conversion Raster",
+        newxml.addOutput("RVD Analysis", "Vector", "RVD", fcOut[fcOut.find("02_Analyses"):], newxml.RVDrealizations[0], guid=getUUID())
+        newxml.addOutput("RVD Analysis", "Raster", "Conversion Raster",
                          os.path.dirname(fcOut[fcOut.find("02_Analyses"):]) + "/Converstion_Raster.tif", newxml.RVDrealizations[0], guid=getUUID())
 
         newxml.write()
 
     else:
-        xmlfile = projPath + '/rvd.xml'
+        xmlfile = projPath + '/project.rs.xml'
 
         exxml = projectxml.ExistingXML(xmlfile)
 
@@ -785,8 +785,8 @@ def main(
 
         del nlist
 
-        exxml.addOutput("Analysis", "Vector", "RVD Output", fcOut[fcOut.find("02_Analyses"):], exxml.RVDrealizations[0], guid=getUUID())
-        exxml.addOutput("Analysis", "Raster", "Conversion Raster",
+        exxml.addOutput("RVD Analysis " + str(k), "Vector", "RVD Output", fcOut[fcOut.find("02_Analyses"):], exxml.RVDrealizations[0], guid=getUUID())
+        exxml.addOutput("RVD Analysis " + str(k), "Raster", "Conversion Raster",
                          os.path.dirname(fcOut[fcOut.find("02_Analyses"):]) + "/Converstion_Raster.tif",
                          exxml.RVDrealizations[0], guid=getUUID())
 

@@ -270,9 +270,9 @@ def main(
 
     # # # Write xml file # # #
 
-    if not os.path.exists(projPath + "/rca.xml"):
+    if not os.path.exists(projPath + "/project.rs.xml"):
         # xml file
-        xmlfile = projPath + "/rca.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "RCA", projName)
@@ -325,12 +325,12 @@ def main(
         newxml.addRCAInput(newxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
                            path=os.path.dirname(seg_network[seg_network.find("01_Inputs")]) + "/Thiessen/Thiessen_Valley.shp", guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0], guid=getUUID())
+        newxml.addOutput("RCA Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0], guid=getUUID())
 
         newxml.write()
 
     else:
-        xmlfile = projPath + "/rca.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         exxml = projectxml.ExistingXML(xmlfile)
 
@@ -522,7 +522,7 @@ def main(
 
         del nlist
 
-        exxml.addOutput("Analysis", "Vector", "RCA Output", output[output.find("02_Analyses"):],
+        exxml.addOutput("RCA Analysis " + str(k), "Vector", "RCA Output", output[output.find("02_Analyses"):],
                         exxml.RCArealizations[0], guid=getUUID())
 
         exxml.write()

@@ -200,10 +200,10 @@ def main(
 
     # # # Write xml file # # #
 
-    if not os.path.exists(projPath + "/vbet.xml"):
+    if not os.path.exists(projPath + "/project.rs.xml"):
 
         # xml file
-        xmlfile = projPath + "/vbet.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "VBET", projName)
@@ -252,13 +252,13 @@ def main(
         newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
         newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], newxml.VBETrealizations[0], guid=getUUID())
+        newxml.addOutput("VBET Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], newxml.VBETrealizations[0], guid=getUUID())
 
         newxml.write()
 
     else:
         # xml file
-        xmlfile = projPath + "/vbet.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         exxml = projectxml.ExistingXML(xmlfile)
 
@@ -376,7 +376,8 @@ def main(
                     else:
                         pass
 
-        exxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0], guid=getUUID())
+        exxml.addOutput("VBET Analysis " + str(k), "Vector", "Unedited Valley Bottom",
+                        fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0], guid=getUUID())
 
         exxml.write()
 

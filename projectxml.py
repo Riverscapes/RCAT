@@ -523,9 +523,12 @@ class ProjectXML:
 
     def addOutput(self, aname, otype, name, path, parentNode, project="", oid="", guid="", ref=""):
         """adds an output tag to an analysis tag in the project xml document"""
-        analysisNode = parentNode.find("Analysis")
+        analysesNode = parentNode.find("Analyses")
+        if analysesNode is None:
+            analysesNode = ET.SubElement(parentNode, "Analyses")
+        analysisNode = analysesNode.find("Analysis")
         if analysisNode is None:
-            analysisNode = ET.SubElement(parentNode, "Analysis")
+            analysisNode = ET.SubElement(analysesNode, "Analysis")
             ET.SubElement(analysisNode, "Name").text = str(aname)
         outputsNode = analysisNode.find("Outputs")
         if outputsNode is None:
@@ -1163,9 +1166,12 @@ class ExistingXML:
 
     def addOutput(self, aname, otype, name, path, parentNode, project="", oid="", guid="", ref=""):
         """adds an output tag to an analysis tag in the project xml document"""
-        analysisNode = parentNode.find("Analysis")
+        analysesNode = parentNode.find("Analyses")
+        if analysesNode is None:
+            analysesNode = ET.SubElement(parentNode, "Analyses")
+        analysisNode = analysesNode.find("Analysis")
         if analysisNode is None:
-            analysisNode = ET.SubElement(parentNode, "Analysis")
+            analysisNode = ET.SubElement(analysesNode, "Analysis")
             ET.SubElement(analysisNode, "Name").text = str(aname)
         outputsNode = analysisNode.find("Outputs")
         if outputsNode is None:
