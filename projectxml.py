@@ -25,6 +25,7 @@ class ProjectXML:
         self.projectType.text = projType
 
         # Add some containers we will fill out later
+        self.meta = ET.SubElement(self.project, "MetaData")
         self.Inputs = ET.SubElement(self.project, "Inputs")
         self.realizations = ET.SubElement(self.project, "Realizations")
         self.VBETrealizations = []
