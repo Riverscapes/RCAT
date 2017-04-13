@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ProjectResources">
-    <resource url="https://raw.githubusercontent.com/Riverscapes/Program/master/Project/XSD/V1/Project.xsd" location="$PROJECT_DIR$/../../program-riverscapes/Project/XSD/V1/Project.xsd" />
+    <resource url="https://raw.githubusercontent.com/Riverscapes/Program/master/Project/XSD/V1/Project.xsd" location="$PROJECT_DIR$/../../Program-riverscapes/Project/XSD/V1/Project.xsd" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 2.7.10 (C:\Python27\ArcGIS10.4\python.exe)" project-jdk-type="Python SDK" />
 </project>

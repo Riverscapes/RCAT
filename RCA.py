@@ -342,7 +342,8 @@ def main(
             k += 1
 
         exxml.addRCARealization("RCA Realization " + str(k), rid="RZ" + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.5")
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.5",
+                                guid=getUUID())
 
         exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
 
