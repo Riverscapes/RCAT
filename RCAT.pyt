@@ -981,7 +981,7 @@ class BankfullChannel(object):
 
     def execute(self, p, messages):
         """The source code of the tool."""
-        #reload(BankfullChannel)
+        reload(BankfullChannel)
         BankfullChannel.main(p[0].valueAsText,
                              p[1].valueAsText,
                              p[2].valueAsText,

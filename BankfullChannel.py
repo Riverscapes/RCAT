@@ -30,6 +30,7 @@ def main(
     arcpy.FeatureVerticesToPoints_management(network, midpoints, "MID")
     midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
     midpoint_fields.remove("OBJECTID")
+    midpoint_fields.remove("FID")
     midpoint_fields.remove("Shape")
     midpoint_fields.remove("ORIG_FID")
     arcpy.Delete_management(midpoint_fields)
@@ -168,11 +169,11 @@ def createbankfullpolygon(network, min_buf, output, scratch):
 
 
 if __name__ == '__main__':
-    main(
-        sys.argv[1],
-        sys.argv[2],
-        sys.argv[3],
-        sys.argv[4],
-        sys.argv[5],
-        sys.argv[6],
-        sys.argv[7])
+
+    main(sys.argv[1],
+         sys.argv[2],
+         sys.argv[3],
+         sys.argv[4],
+         sys.argv[5],
+         sys.argv[6],
+         sys.argv[7])
