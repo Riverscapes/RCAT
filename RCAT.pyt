@@ -7,6 +7,7 @@ import RVDProject
 import RVD
 import RCAProject
 import RCA
+import BankfullChannel
 
 
 class Toolbox(object):
@@ -17,7 +18,7 @@ class Toolbox(object):
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
-        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool]
+        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool, BankfullChannel]
 
 
 class VBETBuilder(object):
@@ -898,4 +899,94 @@ class RCAtool(object):
                   p[9].valueAsText,
                   p[10].valueAsText,
                   p[11].valueAsText)
+        return
+
+
+class BankfullChannel(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Bankfull Channel"
+        self.description = "Generates a polygon representing the bankfull channel"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Segmented Input Network",
+            name="network",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Drainage Area Raster",
+            name="drarea",
+            datatype="DERasterDataset",
+            parameterType="Required",
+            direction="Input")
+
+        param2 = arcpy.Parameter(
+            displayName="Precipitation Vector Dataset",
+            name="precip",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param3 = arcpy.Parameter(
+            displayName="Output Name and Location",
+            name="output",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Output")
+
+        param4 = arcpy.Parameter(
+            displayName="Minimum Stream Width",
+            name="min_buf",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Input")
+
+        param5 = arcpy.Parameter(
+            displayName="Percent Buffer",
+            name="percent_buf",
+            datatype="GPDouble",
+            parameterType="Optional",
+            direction="Input")
+
+        param6 = arcpy.Parameter(
+            displayName="Scratch Workspace",
+            name="scratch",
+            datatype="DEWorkspace",
+            parameterType="Required",
+            direction="Input")
+        param6.filter.list = ["Local Database"]
+        param6.value = arcpy.env.scratchWorkspace
+
+        return [param0, param1, param2, param3, param4, param5, param6]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        #reload(BankfullChannel)
+        BankfullChannel.main(p[0].valueAsText,
+                             p[1].valueAsText,
+                             p[2].valueAsText,
+                             p[3].valueAsText,
+                             p[4].valueAsText,
+                             p[5].valueAsText,
+                             p[6].valueAsText)
         return
