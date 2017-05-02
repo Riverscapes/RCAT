@@ -103,7 +103,7 @@ def main(
     arcpy.DeleteField_management(network_midpoints, midpoint_fields)
 
     midpoint_buffer = scratch + "/midpoint_buffer"
-    arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "NONE")
+    arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "LIST", "ORIG_FID")
     drarea_zs = ZonalStatisticsAsTable(midpoint_buffer, "ORIG_FID", inFlow, "drarea_zs", statistics_type="MAXIMUM")
     arcpy.JoinField_management(fcNetwork, "FID", drarea_zs, "ORIG_FID", "MAX")
 

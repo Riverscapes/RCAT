@@ -18,7 +18,7 @@ class Toolbox(object):
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
-        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool, BankfullChannel]
+        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool, BankfullChannelTool]
 
 
 class VBETBuilder(object):
@@ -902,7 +902,7 @@ class RCAtool(object):
         return
 
 
-class BankfullChannel(object):
+class BankfullChannelTool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "Bankfull Channel"

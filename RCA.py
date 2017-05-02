@@ -242,12 +242,13 @@ def main(
     del cursor
 
     # merge the results of the rca for confined and unconfined valleys
+    tempOut = projPath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
     output = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
 
-    arcpy.Merge_management([rca_u_final, rca_c], output)
+    arcpy.Merge_management([rca_u_final, rca_c], tempOut)
 
     # add final condition category for each segment
-    cursor = arcpy.da.UpdateCursor(output, ["COND_VAL", "CONDITION"])
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COND_VAL", "CONDITION"])
     for row in cursor:
         if row[0] == 0:
             pass
@@ -265,6 +266,11 @@ def main(
     del row
     del cursor
 
+    arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
+    arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", frag_valley)
+    arcpy.CopyFeatures_management("outlyr", output)
+
+    arcpy.Delete_management(tempOut)
     arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
 

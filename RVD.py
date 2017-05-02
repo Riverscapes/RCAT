@@ -80,7 +80,8 @@ def main(
 
     os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
     fcOut = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
-    arcpy.CopyFeatures_management(seg_network, fcOut)
+    tempOut = projpath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
+    arcpy.CopyFeatures_management(seg_network, tempOut)
 
     # ----------------------------------------------###
     # RVD analysis for areas without large rivers   ###
@@ -90,9 +91,9 @@ def main(
         arcpy.AddMessage("Calculating riparian vegetation departure")
         evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_lookup, "evt_zs", statistics_type="MEAN")
         bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_lookup, "bps_zs", statistics_type="MEAN")
-        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
+        arcpy.JoinField_management(tempOut, "FID", evt_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(tempOut, "EVT_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["MEAN", "EVT_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
@@ -101,10 +102,10 @@ def main(
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
-        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
+        arcpy.DeleteField_management(tempOut, "MEAN")
+        arcpy.JoinField_management(tempOut, "FID", bps_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(tempOut, "BPS_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["MEAN", "BPS_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
@@ -113,10 +114,10 @@ def main(
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
+        arcpy.DeleteField_management(tempOut, "MEAN")
 
-        arcpy.AddField_management(fcOut, "DEP_RATIO", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
+        arcpy.AddField_management(tempOut, "DEP_RATIO", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
         for row in cursor:
             index = row[0]/row[1]
             row[2] = index
@@ -151,9 +152,9 @@ def main(
 
         evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_wo_rivers, "evt_zs", statistics_type="MEAN")
         bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_wo_rivers, "bps_zs", statistics_type="MEAN")
-        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
+        arcpy.JoinField_management(tempOut, "FID", evt_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(tempOut, "EVT_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["MEAN", "EVT_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
@@ -162,11 +163,11 @@ def main(
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
+        arcpy.DeleteField_management(tempOut, "MEAN")
 
-        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
+        arcpy.JoinField_management(tempOut, "FID", bps_zs, "ORIG_FID", "MEAN")
+        arcpy.AddField_management(tempOut, "BPS_MEAN", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["MEAN", "BPS_MEAN"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
@@ -175,10 +176,10 @@ def main(
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
+        arcpy.DeleteField_management(tempOut, "MEAN")
 
-        arcpy.AddField_management(fcOut, "DEP_RATIO", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
+        arcpy.AddField_management(tempOut, "DEP_RATIO", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["EVT_MEAN", "BPS_MEAN", "DEP_RATIO"])
         for row in cursor:
             index = row[0]/row[1]
             row[2] = index
@@ -227,21 +228,21 @@ def main(
     out_conversion_raster.save(projPath + "/02_Analyses/Output_" + str(j) + "/Conversion_Raster.tif")
 
     count_table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", final_conversion_raster, "count_table", statistics_type="VARIETY")
-    arcpy.JoinField_management(fcOut, "FID", count_table, "ORIG_FID", "COUNT")
+    arcpy.JoinField_management(tempOut, "FID", count_table, "ORIG_FID", "COUNT")
     if 0 in valueList:
         table_0 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_0, "table_0", "", "SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_0, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_noch", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_noch"])
+        arcpy.JoinField_management(tempOut, "FID", table_0, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_noch", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_noch"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_noch", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_noch")
+        arcpy.AddField_management(tempOut, "sum_noch", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_noch")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
@@ -249,18 +250,18 @@ def main(
         del cursor
     if 50 in valueList:
         table_50 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_50, "table_50", statistics_type="SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_50, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_grsh", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_grsh"])
+        arcpy.JoinField_management(tempOut, "FID", table_50, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_grsh", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_grsh"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_grsh", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_grsh")
+        arcpy.AddField_management(tempOut, "sum_grsh", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_grsh")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
@@ -268,18 +269,18 @@ def main(
         del cursor
     if 60 in valueList:
         table_60 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_60, "table_60", statistics_type="SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_60, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_deveg", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_deveg"])
+        arcpy.JoinField_management(tempOut, "FID", table_60, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_deveg", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_deveg"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_deveg", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_deveg")
+        arcpy.AddField_management(tempOut, "sum_deveg", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_deveg")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
@@ -287,18 +288,18 @@ def main(
         del cursor
     if 80 in valueList:
         table_80 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_80, "table_80", statistics_type="SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_80, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_con", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_con"])
+        arcpy.JoinField_management(tempOut, "FID", table_80, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_con", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_con"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_con", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_con")
+        arcpy.AddField_management(tempOut, "sum_con", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_con")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
@@ -306,18 +307,18 @@ def main(
         del cursor
     if 97 in valueList:
         table_97 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_97, "table_97", statistics_type="SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_97, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_inv", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_inv"])
+        arcpy.JoinField_management(tempOut, "FID", table_97, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_inv", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_inv"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_inv", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_inv")
+        arcpy.AddField_management(tempOut, "sum_inv", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_inv")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
@@ -325,18 +326,18 @@ def main(
         del cursor
     if 98 in valueList:
         table_98 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_98, "table_98", statistics_type="SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_98, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_dev", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_dev"])
+        arcpy.JoinField_management(tempOut, "FID", table_98, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_dev", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_dev"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_dev", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_dev")
+        arcpy.AddField_management(tempOut, "sum_dev", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_dev")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
@@ -344,25 +345,25 @@ def main(
         del cursor
     if 99 in valueList:
         table_99 = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_99, "table_99", statistics_type="SUM")
-        arcpy.JoinField_management(fcOut, "FID", table_99, "ORIG_FID", "SUM")
-        arcpy.AddField_management(fcOut, "sum_ag", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["SUM", "sum_ag"])
+        arcpy.JoinField_management(tempOut, "FID", table_99, "ORIG_FID", "SUM")
+        arcpy.AddField_management(tempOut, "sum_ag", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, ["SUM", "sum_ag"])
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
         del row
         del cursor
-        arcpy.DeleteField_management(fcOut, "SUM")
+        arcpy.DeleteField_management(tempOut, "SUM")
     else:
-        arcpy.AddField_management(fcOut, "sum_ag", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, "sum_ag")
+        arcpy.AddField_management(tempOut, "sum_ag", "DOUBLE")
+        cursor = arcpy.da.UpdateCursor(tempOut, "sum_ag")
         for row in cursor:
             row[0] = 0
             cursor.updateRow(row)
         del row
         del cursor
 
-    cursor = arcpy.da.UpdateCursor(fcOut, "COUNT")
+    cursor = arcpy.da.UpdateCursor(tempOut, "COUNT")
     for row in cursor:
         if row[0] == 0:
             row[0] = 1
@@ -370,56 +371,56 @@ def main(
     del row
     del cursor
 
-    arcpy.AddField_management(fcOut, "prop_noch", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_noch", "prop_noch"])
+    arcpy.AddField_management(tempOut, "prop_noch", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_noch", "prop_noch"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(fcOut, "prop_grsh", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_grsh", "prop_grsh"])
+    arcpy.AddField_management(tempOut, "prop_grsh", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_grsh", "prop_grsh"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(fcOut, "prop_deveg", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_deveg", "prop_deveg"])
+    arcpy.AddField_management(tempOut, "prop_deveg", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_deveg", "prop_deveg"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(fcOut, "prop_con", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_con", "prop_con"])
+    arcpy.AddField_management(tempOut, "prop_con", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_con", "prop_con"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(fcOut, "prop_inv", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_inv", "prop_inv"])
+    arcpy.AddField_management(tempOut, "prop_inv", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_inv", "prop_inv"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(fcOut, "prop_dev", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_dev", "prop_dev"])
+    arcpy.AddField_management(tempOut, "prop_dev", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_dev", "prop_dev"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
         cursor.updateRow(row)
     del row
     del cursor
-    arcpy.AddField_management(fcOut, "prop_ag", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["COUNT", "sum_ag", "prop_ag"])
+    arcpy.AddField_management(tempOut, "prop_ag", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COUNT", "sum_ag", "prop_ag"])
     for row in cursor:
         index = row[1] / row[0]
         row[2] = index
@@ -427,19 +428,19 @@ def main(
     del row
     del cursor
 
-    prop0_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_noch")
+    prop0_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_noch")
     array0 = np.asarray(prop0_array, np.float64)
-    prop50_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_grsh")
+    prop50_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_grsh")
     array50 = np.asarray(prop50_array, np.float64)
-    prop60_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_deveg")
+    prop60_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_deveg")
     array60 = np.asarray(prop60_array, np.float64)
-    prop80_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_con")
+    prop80_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_con")
     array80 = np.asarray(prop80_array, np.float64)
-    prop97_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_inv")
+    prop97_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_inv")
     array97 = np.asarray(prop97_array, np.float64)
-    prop98_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_dev")
+    prop98_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_dev")
     array98 = np.asarray(prop98_array, np.float64)
-    prop99_array = arcpy.da.FeatureClassToNumPyArray(fcOut, "prop_ag")
+    prop99_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_ag")
     array99 = np.asarray(prop99_array, np.float64)
 
     del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array
@@ -501,11 +502,11 @@ def main(
 
     conv_code_table = scratch + "/conv_code_table"
     arcpy.CopyRows_management(out_table, conv_code_table)
-    arcpy.JoinField_management(fcOut, "FID", conv_code_table, "FID", "conv_code")
+    arcpy.JoinField_management(tempOut, "FID", conv_code_table, "FID", "conv_code")
     arcpy.Delete_management(out_table)
 
-    arcpy.AddField_management(fcOut, "conv_type", "text", "", "", 50)
-    cursor = arcpy.da.UpdateCursor(fcOut, ["conv_code", "conv_type"])
+    arcpy.AddField_management(tempOut, "conv_type", "text", "", "", 50)
+    cursor = arcpy.da.UpdateCursor(tempOut, ["conv_code", "conv_type"])
     for row in cursor:
         if row[0] == 1:
             row[1] = "No Change"
@@ -550,6 +551,11 @@ def main(
         cursor.updateRow(row)
     del row
     del cursor
+
+    arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
+    arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", valley)
+    arcpy.CopyFeatures_management("outlyr", fcOut)
+    arcpy.Delete_management(tempOut)
 
     # # # Write xml file # # #
 
