@@ -73,15 +73,18 @@ def main(
     arcpy.PolygonToRaster_conversion(precip, "CM", precip_cm, "", "", 30)
 
     # pull precip and da values on to the network
+    arcpy.AddMessage("Adding precipitation and drainage area values to network")
     precipandda(mp_buffer, drarea, precip_cm, network)
 
     # add the bankfull width and buffer width to network.
+    arcpy.AddMessage("Adding bankfull width value to network")
     if percent_buf == None:
         addbufwidth(network, min_width)
     else:
         addpercentbufwidth(network, min_width, percent_buf)
 
     # generate the bankfull polygon
+    arcpy.AddMessage("Generating bankfull polygon")
     createbankfullpolygon(network, output, scratch)
 
     arcpy.CheckInExtension("spatial")

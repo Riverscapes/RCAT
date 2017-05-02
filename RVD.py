@@ -80,7 +80,7 @@ def main(
 
     os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
     fcOut = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
-    tempOut = projpath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
+    tempOut = projPath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
     arcpy.CopyFeatures_management(seg_network, tempOut)
 
     # ----------------------------------------------###
