@@ -6,7 +6,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Latest Update: 02/08/2017
+# Latest Update: 03/20/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -242,12 +242,13 @@ def main(
     del cursor
 
     # merge the results of the rca for confined and unconfined valleys
+    tempOut = projPath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
     output = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
 
-    arcpy.Merge_management([rca_u_final, rca_c], output)
+    arcpy.Merge_management([rca_u_final, rca_c], tempOut)
 
     # add final condition category for each segment
-    cursor = arcpy.da.UpdateCursor(output, ["COND_VAL", "CONDITION"])
+    cursor = arcpy.da.UpdateCursor(tempOut, ["COND_VAL", "CONDITION"])
     for row in cursor:
         if row[0] == 0:
             pass
@@ -265,14 +266,19 @@ def main(
     del row
     del cursor
 
+    arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
+    arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", frag_valley)
+    arcpy.CopyFeatures_management("outlyr", output)
+
+    arcpy.Delete_management(tempOut)
     arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
 
     # # # Write xml file # # #
 
-    if not os.path.exists(projPath + "/rca.xml"):
+    if not os.path.exists(projPath + "/project.rs.xml"):
         # xml file
-        xmlfile = projPath + "/rca.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "RCA", projName)
@@ -287,7 +293,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addRCARealization("RCA Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.4", guid=getUUID())
+                                 productVersion="1.0.5", guid=getUUID())
 
         newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
 
@@ -325,12 +331,12 @@ def main(
         newxml.addRCAInput(newxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
                            path=os.path.dirname(seg_network[seg_network.find("01_Inputs")]) + "/Thiessen/Thiessen_Valley.shp", guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0], guid=getUUID())
+        newxml.addOutput("RCA Analysis", "Vector", "RCA", output[output.find("02_Analyses"):], newxml.RCArealizations[0], guid=getUUID())
 
         newxml.write()
 
     else:
-        xmlfile = projPath + "/rca.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         exxml = projectxml.ExistingXML(xmlfile)
 
@@ -342,7 +348,8 @@ def main(
             k += 1
 
         exxml.addRCARealization("RCA Realization " + str(k), rid="RZ" + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.4")
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.5",
+                                guid=getUUID())
 
         exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
 
@@ -522,7 +529,7 @@ def main(
 
         del nlist
 
-        exxml.addOutput("Analysis", "Vector", "RCA Output", output[output.find("02_Analyses"):],
+        exxml.addOutput("RCA Analysis " + str(k), "Vector", "RCA Output", output[output.find("02_Analyses"):],
                         exxml.RCArealizations[0], guid=getUUID())
 
         exxml.write()

@@ -5,7 +5,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     09/25/2015
-# Latest Update: 02/08/2017
+# Latest Update: 03/20/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -103,7 +103,7 @@ def main(
     arcpy.DeleteField_management(network_midpoints, midpoint_fields)
 
     midpoint_buffer = scratch + "/midpoint_buffer"
-    arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "NONE")
+    arcpy.Buffer_analysis(network_midpoints, midpoint_buffer, "100 Meters", "", "", "LIST", "ORIG_FID")
     drarea_zs = ZonalStatisticsAsTable(midpoint_buffer, "ORIG_FID", inFlow, "drarea_zs", statistics_type="MAXIMUM")
     arcpy.JoinField_management(fcNetwork, "FID", drarea_zs, "ORIG_FID", "MAX")
 
@@ -200,10 +200,10 @@ def main(
 
     # # # Write xml file # # #
 
-    if not os.path.exists(projPath + "/vbet.xml"):
+    if not os.path.exists(projPath + "/project.rs.xml"):
 
         # xml file
-        xmlfile = projPath + "/vbet.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "VBET", projName)
@@ -218,7 +218,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addVBETRealization("VBET Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  productVersion="1.0.4", guid=getUUID())
+                                  productVersion="1.0.5", guid=getUUID())
 
         newxml.addParameter("high_da", high_da_thresh, newxml.VBETrealizations[0])
         newxml.addParameter("low_da", low_da_thresh, newxml.VBETrealizations[0])
@@ -252,13 +252,13 @@ def main(
         newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Medium Buffer", path=med_buffer[med_buffer.find("01_Inputs"):], guid=getUUID())
         newxml.addVBETInput(newxml.VBETrealizations[0], "Buffer", name="Small Buffer", path=sm_buffer[sm_buffer.find("01_Inputs"):], guid=getUUID())
 
-        newxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], newxml.VBETrealizations[0], guid=getUUID())
+        newxml.addOutput("VBET Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], newxml.VBETrealizations[0], guid=getUUID())
 
         newxml.write()
 
     else:
         # xml file
-        xmlfile = projPath + "/vbet.xml"
+        xmlfile = projPath + "/project.rs.xml"
 
         exxml = projectxml.ExistingXML(xmlfile)
 
@@ -270,7 +270,7 @@ def main(
             k += 1
 
         exxml.addVBETRealization("VBET Realization " + str(k), rid="RZ" + str(k), dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.4", guid=getUUID())
+                                 productVersion="1.0.5", guid=getUUID())
 
         exxml.addParameter("high_da", high_da_thresh, exxml.VBETrealizations[0])
         exxml.addParameter("low_da", low_da_thresh, exxml.VBETrealizations[0])
@@ -376,7 +376,8 @@ def main(
                     else:
                         pass
 
-        exxml.addOutput("Analysis", "Vector", "Unedited Valley Bottom", fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0], guid=getUUID())
+        exxml.addOutput("VBET Analysis " + str(k), "Vector", "Unedited Valley Bottom",
+                        fcOutput[fcOutput.find("02_Analyses"):], exxml.VBETrealizations[0], guid=getUUID())
 
         exxml.write()
 
