@@ -268,6 +268,25 @@ def main(
 
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", frag_valley)
+    arcpy.SelectLayerByLocation_management("outlyr", selection_type="SWITCH_SELECTION")
+    cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "Width", "EVT_MEAN", "BPS_MEAN", "RVD", "LUI",
+                                              "CONNECT", "EX_VEG", "HIST_VEG", "VEG"])
+    for row in cursor:
+        row[0] = -9999
+        row[1] = "None"
+        row[2] = -9999
+        row[3] = -9999
+        row[4] = -9999
+        row[5] = -9999
+        row[6] = -9999
+        row[7] = -9999
+        row[8] = -9999
+        row[9] = -9999
+        row[10] = -9999
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.SelectLayerByAttribute_management("outlyr", "CLEAR_SELECTION")
     arcpy.CopyFeatures_management("outlyr", output)
 
     arcpy.Delete_management(tempOut)

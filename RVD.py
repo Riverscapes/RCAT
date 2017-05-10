@@ -554,6 +554,36 @@ def main(
 
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", valley)
+    arcpy.SelectLayerByLocation_management("outlyr", selection_type="SWITCH_SELECTION")
+    cursor = arcpy.da.UpdateCursor("outlyr", ["DEP_RATIO", "conv_code", "conv_type", "EVT_MEAN", "BPS_MEAN", "COUNT",
+                                              "sum_noch", "sum_grsh", "sum_deveg", "sum_con", "sum_inv", "sum_dev",
+                                              "sum_ag", "prop_noch", "prop_grsh", "prop_deveg", "prop_con", "prop_inv",
+                                              "prop_dev", "prop_ag"])
+    for row in cursor:
+        row[0] = -9999
+        row[1] = -9999
+        row[2] = "NA"
+        row[3] = -9999
+        row[4] = -9999
+        row[5] = -9999
+        row[6] = -9999
+        row[7] = -9999
+        row[8] = -9999
+        row[9] = -9999
+        row[10] = -9999
+        row[11] = -9999
+        row[12] = -9999
+        row[13] = -9999
+        row[14] = -9999
+        row[15] = -9999
+        row[16] = -9999
+        row[17] = -9999
+        row[18] = -9999
+        row[19] = -9999
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.SelectLayerByAttribute_management("outlyr", "CLEAR_SELECTION")
     arcpy.CopyFeatures_management("outlyr", fcOut)
     arcpy.Delete_management(tempOut)
 
