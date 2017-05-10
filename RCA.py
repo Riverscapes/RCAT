@@ -6,7 +6,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Latest Update: 03/20/2017
+# Latest Update: 05/10/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -312,7 +312,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addRCARealization("RCA Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.5", guid=getUUID())
+                                 productVersion="1.0.7", guid=getUUID())
 
         newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
 
@@ -367,7 +367,7 @@ def main(
             k += 1
 
         exxml.addRCARealization("RCA Realization " + str(k), rid="RZ" + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.5",
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.7",
                                 guid=getUUID())
 
         exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
