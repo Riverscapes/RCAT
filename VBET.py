@@ -5,7 +5,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     09/25/2015
-# Latest Update: 03/20/2017
+# Latest Update: 06/20/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -218,7 +218,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addVBETRealization("VBET Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  productVersion="1.0.7", guid=getUUID())
+                                  productVersion="1.0.8", guid=getUUID())
 
         newxml.addParameter("high_da", high_da_thresh, newxml.VBETrealizations[0])
         newxml.addParameter("low_da", low_da_thresh, newxml.VBETrealizations[0])
@@ -262,15 +262,23 @@ def main(
 
         exxml = projectxml.ExistingXML(xmlfile)
 
-        vb = exxml.rz.findall("VBET")
-        vbf = vb[-1]
-        rname = vbf.find("Name")
+        vbetr = exxml.rz.findall("VBET")
+
+        rname = []
+        for x in range(len(vbetr)):
+            name = vbetr[x].find("Name")
+            rname.append(name.text)
+        rnum = []
+        for y in range(len(rname)):
+            num = int(rname[y][-1])
+            rnum.append(num)
+
         k = 2
-        while rname.text == "VBET Realization " + str(k):
+        while k in rnum:
             k += 1
 
         exxml.addVBETRealization("VBET Realization " + str(k), rid="RZ" + str(k), dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.7", guid=getUUID())
+                                 productVersion="1.0.8", guid=getUUID())
 
         exxml.addParameter("high_da", high_da_thresh, exxml.VBETrealizations[0])
         exxml.addParameter("low_da", low_da_thresh, exxml.VBETrealizations[0])

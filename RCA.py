@@ -6,7 +6,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Latest Update: 05/10/2017
+# Latest Update: 06/20/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -312,7 +312,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addRCARealization("RCA Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.7", guid=getUUID())
+                                 productVersion="1.0.8", guid=getUUID())
 
         newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
 
@@ -360,14 +360,22 @@ def main(
         exxml = projectxml.ExistingXML(xmlfile)
 
         rcar = exxml.rz.findall("RCA")
-        rcarf = rcar[-1]
-        rname = rcarf.find("Name")
+
+        rname = []
+        for x in range(len(rcar)):
+            name = rcar[x].find("Name")
+            rname.append(name.text)
+        rnum = []
+        for y in range(len(rname)):
+            num = int(rname[y][-1])
+            rnum.append(num)
+
         k = 2
-        while rname.text == "RCA Realization " + str(k):
+        while k in rnum:
             k += 1
 
         exxml.addRCARealization("RCA Realization " + str(k), rid="RZ" + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.7",
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.8",
                                 guid=getUUID())
 
         exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])

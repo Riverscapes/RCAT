@@ -8,6 +8,7 @@ import RVD
 import RCAProject
 import RCA
 import BankfullChannel
+import Promoter
 
 
 class Toolbox(object):
@@ -18,7 +19,8 @@ class Toolbox(object):
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
-        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool, BankfullChannelTool]
+        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool,
+                      BankfullChannelTool, Promotertool]
 
 
 class VBETBuilder(object):
@@ -989,4 +991,62 @@ class BankfullChannelTool(object):
                              p[4].valueAsText,
                              p[5].valueAsText,
                              p[6].valueAsText)
+        return
+
+
+class Promotertool(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Realization Promoter"
+        self.description = "Promotes a selected realization within a RCAT project"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select Project Folder",
+            name="projPath",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Select Project Type",
+            name="type",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Input")
+        param1.filter.type = "ValueList"
+        param1.filter.list = ["VBET", "RVD", "RCA"]
+
+        param2 = arcpy.Parameter(
+            displayName="Enter Realization Number",
+            name="realization",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+
+        return [param0, param1, param2]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(Promoter)
+        Promoter.main(p[0].valueAsText,
+                      p[1].valueAsText,
+                      p[2].valueAsText)
         return
