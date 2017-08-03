@@ -1026,7 +1026,15 @@ class Promotertool(object):
             parameterType="Required",
             direction="Input")
 
-        return [param0, param1, param2]
+        param3 = arcpy.Parameter(
+            displayName="Edited VBET Output",
+            name="vbetOut",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input")
+        param3.filter.list = ["Polygon"]
+
+        return [param0, param1, param2, param3]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -1036,6 +1044,12 @@ class Promotertool(object):
         """Modify the values and properties of parameters before internal
         validation is performed.  This method is called whenever a parameter
         has been changed."""
+
+        if parameters[1].value == "VBET":
+            parameters[3].enabled = True
+        else:
+            parameters[3].enabled = False
+
         return
 
     def updateMessages(self, parameters):
@@ -1048,5 +1062,6 @@ class Promotertool(object):
         reload(Promoter)
         Promoter.main(p[0].valueAsText,
                       p[1].valueAsText,
-                      p[2].valueAsText)
+                      p[2].valueAsText,
+                      p[3].valueAsText)
         return

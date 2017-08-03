@@ -218,7 +218,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addVBETRealization("VBET Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  productVersion="1.0.9", guid=getUUID())
+                                  productVersion="1.0.10", guid=getUUID())
 
         newxml.addParameter("high_da", high_da_thresh, newxml.VBETrealizations[0])
         newxml.addParameter("low_da", low_da_thresh, newxml.VBETrealizations[0])
@@ -278,7 +278,7 @@ def main(
             k += 1
 
         exxml.addVBETRealization("VBET Realization " + str(k), rid="RZ" + str(k), dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.9", guid=getUUID())
+                                 productVersion="1.0.10", guid=getUUID())
 
         exxml.addParameter("high_da", high_da_thresh, exxml.VBETrealizations[0])
         exxml.addParameter("low_da", low_da_thresh, exxml.VBETrealizations[0])
