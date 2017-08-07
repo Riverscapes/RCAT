@@ -16,8 +16,6 @@ The Riparian Vegetation Departure from historic condition output is a line netwo
 
  *Figure 1 - The default symbolization for the Riparian Vegetation Departure from historic condition output*
 
-**
-
 The 'DEP_RATIO' field that is symbolized by default is not the only field in the output table, however. The following table lists and explains relevant fields in the Riparian Vegetation Departure output.
 
 *Table 1 - Relevant Riparian Vegetation Departure output fields*
