@@ -10,3 +10,22 @@ In the Utah application, we used vegetation data from LANDFIRE, a nationwide 30 
 
 ![fig1.1right](/assets/images/fig1.1right.PNG)
 
+Figure 1 - Green depicts the modeled historic riparian vegetation from BpS, and pink depicts the current riparian vegetation based on Landsat 
+classification. The right panel demonstrates an area where a thin riparian band is modelled in the LANDFIRE BpS, but is not significantly
+wide to be picked up in the EVT, resulting in an underestimation of condition.
+
+### Invasive Riparian Vegetation Is Underestimated In The LANDFIRE EVT Layer
+
+Within the Colorado Plateau, many riparian areas have been completely overtaken by invasive tamarisk. The LANDFIRE EVT layer picks up some of this invasive vegetation on tributary streams within the region (e.g. Dirty Devil, San Rafael), but does not capture it well in the mainstem Colorado and Green Rivers. Consequently, the modeled riparian condition of these two rivers is overestimated. 
+
+### Incision and Entrenchment Are Not Considered in the Riparian Condition Assessment
+
+The Riparian Condition Assessment (RCA) tool assesses riparian condition based on the departure of current riparian vegetation cover from historic, floodplain fragmentation due to transportation infrastructure and land use intensity within the surrounding valley bottom, all indicative of floodplain condition. Nevertheless, the model does not provide a measure of channel incision or entrenchment which are important indicators for floodplain health. Such information could only be generated using high resolution topographic data (1 m LiDAR data), which is not yet available statewide in Utah.
+
+### Grazing Pressure Is Not Considered in the Riparian Condition Assessment
+
+Grazing pressure can have a large impact on riparian zones. Spatial data depicting grazing is lacking, and is difficult to model or estimate using the land cover classification data that R-CAT utilizes. For future versions of the tool, we intend to work on modelling both grazing pressure and eventually incision. Areas where grazing pressure and/or incision are present are generally modeled to be in better condition than they actually are in the RCA output.
+
+### References
+
+- Macfarlane, W.W., C.M. McGinty, B.G. Laub and S.J. Gifford. 2016. High resolution riparian vegetation mapping to prioritize conservation and restoration in a degraded desert river. Restoration Ecology
