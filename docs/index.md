@@ -2,8 +2,18 @@
 
 
 
-
 **NEEDS UPDATING**
+
+[R-CAT Applications]({{ site.baseurl }}/R-CATApplications)
+
+- [Columbia River Basin (CRB) Implementation]({{ site.baseurl }}/CRBImplementation)
+  - [CRB R-CAT Map Atlas]({{ site.baseurl }}/CRBR-CATMapAtlas)
+- [Utah Implementation]({{ site.baseurl }}/UtahImplementation)
+  - [LANDFIRE Data Limitations]({{ site.baseurl }}/Landfire)
+  - [Utah R-CAT Map Atlas]({{ site.baseurl }}/UtahR-CATMapAtlas)
+  - [Weber River Styles Comparison]({{ site.baseurl }}/WeberRiverStylesComparison)
+
+
 
 Welcome to the R-CAT website. The Riparian Condition Assessment Tool ([R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/)) is a suite of stream network assessment tools. These tools are designed to delineate valley bottoms, assess riparian vegetation, evaluate floodplain condition and estimate recovery potential of riparian areas. The stream network models consist of the following: the Valley Bottom Extraction Tool ([V-BET](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/VBET)), Riparian Vegetation Departure ([RVD](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RVD)) tool, Riparian Condition Assessment ([RCA](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RCA)) tool and Riparian Recovery Potential (RRP) tool. These tools are intended to help researchers and managers assess riparian condition and recovery potential over large regions and watersheds.
 
