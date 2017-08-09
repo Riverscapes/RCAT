@@ -181,9 +181,9 @@ While high resolution imagery and topography are sometimes available, they are n
 
 #### More Products:
 
-- [LANDFIRE Data Limitations](http://etal.joewheaton.org/rcat/r-cat-applications/utah/data-limitations)
-- [Utah R-CAT Map Atlas](http://etal.joewheaton.org/rcat/r-cat-applications/utah/map-atlas)
-- [Weber River Styles Comparison](http://etal.joewheaton.org/rcat/r-cat-applications/utah/weber-river-styles-comparison)
+- [LANDFIRE Data Limitations]({{ site.baseurl }}/Landfire)
+- [Utah R-CAT Map Atlas]({{ site.baseurl }}/UtahR-CATMapAtlas)
+- [Weber River Styles Comparison]({{ site.baseurl }}/WeberRiverStylesComparison)
 
 
 
