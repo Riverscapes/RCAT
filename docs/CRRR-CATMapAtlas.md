@@ -66,3 +66,31 @@ This page contains static map images for all of the data products produced using
 
 [![UGR__RVCT_12_16]({{ site.baseurl }}/assets/images/UGR__RVCT_12_16.png)]({{ site.baseurl }}/assets/images/hr/UGR__RVCT_12_16.png)
 
+
+
+**Riparian Condition Assessment (RCA)**
+
+[![Wenatchee_RCA_website_12_16]({{ site.baseurl }}/assets/images/Wenatchee_RCA_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Wenatchee_RCA_website_12_16.png)
+
+[![entiat_RCA_website_12_16]({{ site.baseurl }}/assets/images/entiat_RCA_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/entiat_RCA_website_12_16.png)
+
+[![Tucannon_RCA_12_16]({{ site.baseurl }}/assets/images/Tucannon_RCA_12_16.png)]({{ site.baseurl }}/assets/images/hr/Tucannon_RCA_12_16.png)
+
+[![Asotin_RCA_website_12_16]({{ site.baseurl }}/assets/images/Asotin_RCA_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Asotin_RCA_website_12_16.png)
+
+[![LCWandLolo_RCA_12_16]({{ site.baseurl }}/assets/images/LCWandLolo_RCA_12_16.png)]({{ site.baseurl }}/assets/images/hr/LCWandLolo_RCA_12_16.png)
+
+[![Lochsa_RCA_website_12_16]({{ site.baseurl }}/assets/images/Lochsa_RCA_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Lochsa_RCA_website_12_16.png)
+
+[![SFCW_RCA_webmap_12_16]({{ site.baseurl }}/assets/images/SFCW_RCA_webmap_12_16.png)]({{ site.baseurl }}/assets/images/hr/SFCW_RCA_webmap_12_16.png)
+
+[![Lemhi_RCA_website_12_16]({{ site.baseurl }}/assets/images/Lemhi_RCA_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Lemhi_RCA_website_12_16.png)
+
+[![YF_RCA_webmap_12_16]({{ site.baseurl }}/assets/images/YF_RCA_webmap_12_16.png)]({{ site.baseurl }}/assets/images/hr/YF_RCA_webmap_12_16.png)
+
+[![Upper_Salmon_RCA_website_12_16]({{ site.baseurl }}/assets/images/Upper_Salmon_RCA_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Upper_Salmon_RCA_website_12_16.png)
+
+[![John_day_RCA_12_16]({{ site.baseurl }}/assets/images/John_day_RCA_12_16.png)]({{ site.baseurl }}/assets/images/hr/John_day_RCA_12_16.png)
+
+[![UGR__RCA_12_16]({{ site.baseurl }}/assets/images/UGR__RCA_12_16.png)]({{ site.baseurl }}/assets/images/hr/UGR__RCA_12_16.png)
+
