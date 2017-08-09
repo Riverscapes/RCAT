@@ -42,3 +42,27 @@ This page contains static map images for all of the data products produced using
 
 **Riparian Vegetation Conversion Type (RVCT)**
 
+[![Wenatchee_RVCT_website_12_16]({{ site.baseurl }}/assets/images/Wenatchee_RVCT_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Wenatchee_RVCT_website_12_16.png)
+
+[![entiat_RVCT_website10]({{ site.baseurl }}/assets/images/entiat_RVCT_website10.png)]({{ site.baseurl }}/assets/images/hr/entiat_RVCT_website10.png)
+
+[![TucannonRVCT_12_16]({{ site.baseurl }}/assets/images/TucannonRVCT_12_16.png)]({{ site.baseurl }}/assets/images/hr/TucannonRVCT_12_16.png)
+
+[![Asotin_RVCT_website_12_16]({{ site.baseurl }}/assets/images/Asotin_RVCT_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Asotin_RVCT_website_12_16.png)
+
+[![LCWandLolo_RVCT_12_16]({{ site.baseurl }}/assets/images/LCWandLolo_RVCT_12_16.png)]({{ site.baseurl }}/assets/images/hr/LCWandLolo_RVCT_12_16.png)
+
+[![Lochsa_RVCT_website_12_16]({{ site.baseurl }}/assets/images/Lochsa_RVCT_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Lochsa_RVCT_website_12_16.png)
+
+[![SFCW_RVCT_webmap_12_16]({{ site.baseurl }}/assets/images/SFCW_RVCT_webmap_12_16.png)]({{ site.baseurl }}/assets/images/hr/SFCW_RVCT_webmap_12_16.png)
+
+[![Lemhi_RVCT_website_12_16]({{ site.baseurl }}/assets/images/Lemhi_RVCT_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Lemhi_RVCT_website_12_16.png)
+
+[![YF_RVCT_webmap_12_16]({{ site.baseurl }}/assets/images/YF_RVCT_webmap_12_16.png)]({{ site.baseurl }}/assets/images/hr/YF_RVCT_webmap_12_16.png)
+
+[![Upper_Salmon_RVCT_website_12_16]({{ site.baseurl }}/assets/images/Upper_Salmon_RVCT_website_12_16.png)]({{ site.baseurl }}/assets/images/hr/Upper_Salmon_RVCT_website_12_16.png)
+
+[![John_day_RVCT_12_16]({{ site.baseurl }}/assets/images/John_day_RVCT_12_16.png)]({{ site.baseurl }}/assets/images/hr/John_day_RVCT_12_16.png)
+
+[![UGR__RVCT_12_16]({{ site.baseurl }}/assets/images/UGR__RVCT_12_16.png)]({{ site.baseurl }}/assets/images/hr/UGR__RVCT_12_16.png)
+
