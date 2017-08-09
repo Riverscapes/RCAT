@@ -199,3 +199,87 @@ When recovery potential is specifically considered for the potential to improve 
 
 Current and future watershed management decisions directly influence the recovery rate. Regulations related to riparian grazing could significantly influence the recovery potential in some heavily grazed areas. Low cost solutions like riparian fencing and/or seasonal riders on horseback preventing intensive grazing of the riparian areas have been shown to benefit riparian and stream health (Keller & Burnham, 1982; Stuber, 1985). Additionally, beaver-assisted restoration within the Weber watershed could significantly increase recovery potential in appropriate areas within the watershed. Perhaps the biggest influence that managers have over the geomorphic and riparian recovery potential within the Weber watershed is through flow regulations. If dam operators are better able to coordinate their operations with land managers this could allow for flow releases to be timed with biologically relevant life stages of species of concern (e.g., BCT, or cottonwood establishment). A scaled down version of a natural hydrograph could be mimicked with strategic dam operations leading to a significant increase in stream health and water quality (Bayley & H.W., 1994; Hesse & Mestl, 1993; Poff et al., 1997).
 
+[![Recovery_Potential_Map](/assets/images/Recovery_Potential_Map.png)](/assets/images/hr/Recovery_Potential_Map.png)
+
+Figure 13 - Geomorphic recovery potential of the perennial stream network of the Weber watershed summarized by UDWR planning units.
+
+![Rec_Potential_Prop_Summary](/assets/images/Rec_Potential_Prop_Summary.png)
+
+Figure 14 - Distribution of recovery potential classes within the Weber watershed organized by UDWR planning units.
+
+### River Styles Recovery Potential Compared to Riparian Recovery Potential (RRP) Tool
+
+Across the entire Weber River watershed we compared the RRP tool outputs to the RS based geomorphic recovery potential assessment. The RRP tool assesses riparian recovery potential based on the same inputs used by the RCA tool (riparian vegetation departure from historic condition, land use intensity and floodplain fragmentation), as well as a proxy for geomorphic condition derived from the LANDFIRE land cover classification based on different land cover types, and the assumption that, in general, certain land cover types are associated with better or poorer geomorphic condition (e.g. streams that pass through urbanized areas are generally in poor geomorphic condition). The RRP tool is explained in detail on the RCAT website (https://sites.google.com/a/joewheaton.org/et-al/rcat/interpreting-rcat-outputs). The RS approach to assess recovery potential is explained in detail in Stage 3: Recovery Potential but essentially relies on the same data sources as the rest of the RS assessment. This consists of on-the-ground data collection and remotely sensed data to determine recovery potential at reference sites, which are then extrapolated to the rest of the stream network. Table 11 summarizes the differences in the two approaches.
+
+#### Results
+
+We performed the same comparison described above in the condition section and the data is shown in Figure 16 and Table 13. Similar to the results from the condition comparison, the distribution of recovery potential outputs is significantly different between the RRP outputs and the RS outputs.
+
+[![Recovery_Potential_Comparison](/assets/images/Recovery_Potential_Comparison.png)](/assets/images/hr/Recovery_Potential_Comparison.png)
+
+Figure 15 - Comparison of River Styles recovery potential outputs to the Riparian Recovery Potential (RRP) tool outputs.
+
+Table 13 - Results of Person’s Chi-Square statistical tests comparing the outputs from the Riparian Condition Assessment Tool.
+
+| **Comparison**          | **RCA VS River Style Condition** | **RRP VS River Style Recovery Potential** |
+| ----------------------- | -------------------------------- | ---------------------------------------- |
+| X-Squared (df = 3)      | 241.9672                         | 606.4407                                 |
+| P-value                 | < 2.2e-16                        | < 2.2e-16                                |
+| Significantly Different | Yes                              | Yes                                      |
+
+#### Discussion
+
+Though statistically different, the distributions of the output categories (conservation, protection, high, moderate, low) for both methods show similarities. Similar to the condition comparison, both approaches show that low order, headwater streams are typically in good or intact condition and should be conserved or protected, and both approaches show that larger tributaries and mainstem rivers in alluvial valleys are typically in more degraded conditions (Figure 13) and have low recovery potential (Figure 16). Additionally when comparing individual categories there are strong similarities. For example, the high recovery potential categories are equal between the methods (RRP high = 10%, RS high = 10%) and the moderate category is nearly equal (RRP moderate = 10%, RS moderate = 8%). The general trends are very similar but with a few exceptions. For example, the RRP output, shows significantly more conservation/protection areas (RRP conservation/protection= 63%, RS conservation/protection= 53%) with less low recovery potential areas (RRP low = 18%) compared to the RS output (RS low = 29%). These differences are likely due to the same overestimation of intact areas (explained in more detail in the condition comparison), and inability of the current RCA model to consider dewatering data as a model parameter. 
+
+The major limitation in the current version of RRP is that there is not yet a remote, automated approach to take into account important river flow information such as seasonal or chronic dewatering, which has a profound effect on the ability of a stream and the associated riparian zone to recover. As with RCA, the current RRP tool does not estimate incision or entrenchment potential which have important implications for recovery potential. In the RS approach, this information can be incorporated directly into the recovery potential assessment, though it may still suffer from limitations associated with extrapolation and professional judgement explained in the condition comparison section. 
+
+Though the RRP tool is a first iteration for remotely assessing recovery potential, comparing it to the River Styles method shows that despite its limitations, it produces results that are cohesive and logical. The patterns that exist in both outputs are that higher elevation, lower order streams generally have no need to recover, and should simply be conserved or protected. Downstream of these areas there is a general continuum of higher recovery potentials higher in the watershed where land use has been less intense, and lower recovery potential lower in the watershed in the broad, flat valleys where development is more prevalent. 
+
+#### Changes/Updates to the RRP Tool Based on Results of Comparison
+
+Insights from the RS based geomorphic recovery potential assessment were used to refine and calibrate the RRP outputs and future refinements are planned. As discussed previously, flow alteration plays a huge part in the recovery potential of riparian zones, and within the Weber River watershed, dewatering occurs along the majority of the mainstem, as well as most of the tributaries yet this is not incorporated in the current model. This limitation could be addressed by modelling flow alteration using broadly available spatial data to be incorporated into the RRP model. Like the RCA model, we would also like to incorporate an incision and entrenchment potential parameter once high resolution terrain data becomes more widely available. By doing so, the significance of the RRP outputs could be greatly increased, and the model would more closely resemble the RS approach. 
+
+### River Styles Deliverables
+
+Pitman-Robertson funded products (as maps, KMZ, shapefiles) include:
+
+- Independent assessment of riparian/geomorphic condition and recovery potential using a River Styles Framework. PDF of Weber River Styles Report also available at [https://usu.box.com/RiverStyles](https://usu.box.com/RiverStyles)
+
+
+
+## References
+
+- Abbe, T. B., Montgomery, D.R. (1996). Large woody debris jams, channel hydraulics and habitat formation in large rivers. Regulated Rivers Research & Management, 12(23), 201-221. 
+- Bayley, P. B., & H.W., L. (Eds.). (1994). The Rivers Handbook (Vol. 1). London: Blackwell Scientific Publications.
+- Bisson, P., R. Bilby, M. Bryant, C. Dolloff, G. Grette, R. House, M. Murphy,, & K. Koski, a. J. S. (1987). Large woody debris in forested streams in the Pacific Northwest: past, present, and future. In E. O. Salo, Cundy T.W. (Ed.), Streamside management: forestry and fisheries interactions. (pp. 143-190). University of Washington, Seattle.
+- Brierley, G., Reid, H., Fryirs, K., & Trahan, N. (2010). What are we monitoring and why? Using geomorphic principles to frame eco-hydrological assessments of river condition. Science of The Total Environment, 408(9), 2025-2033. doi: 10.1016/j.scitotenv.2010.01.038
+- Brierley, G. J., & Fryirs, K. A. (2005). Geomorphology and river management: Blackwell.
+- Buffington, J. M., & Montgomery, D. R. (2013). Geomorphic Classification of Rivers (Elseiver Ed.).
+- Bunn, S. E., & Arthington, A. H. (2002). Basic principles and ecological consequences of altered flow regimes for aquatic biodiversity. Environmental Management, 30(4), 492-507. 
+- Camp, R. (2015). Short Term Effectiveness of High Density Large Woody Debris in Asotin Creek as a Cheap and Cheerful Restoration Action. (MS Thesis), Utah State University. 
+- Chambers, P., Prepas, E., Hamilton, H., & Bothwell, M. (1991). Current velocity and its effect on aquatic macrophytes in flowing waters. Ecological Applications, 249-257. 
+- Collins, B. D., Montgomery, D. R., Fetherston, K. L., & Abbe, T. B. (2012). The floodplain large-wood cycle hypothesis: a mechanism for the physical and biotic structuring of temperate forested alluvial valleys in the North Pacific coastal ecoregion. Geomorphology, 139, 460-470. 
+- DeVries, P., Fetherston, K. L., Vitale, A., & Madsen, S. (2012). Emulating riverine landscape controls of beaver in stream restoration. Fisheries, 37(6), 246-255. 
+- Döll, P., Fiedler, K., & Zhang, J. (2009). Global-scale analysis of river flow alterations due to water withdrawals and reservoirs. Hydrology and Earth System Sciences, 13(12), 2413-2432. 
+- Fetherston, K. L., Naiman, R. J., & Bilby, R. E. (1995). Large woody debris, physical process, and riparian forest development in montane river networks of the Pacific Northwest. Geomorphology, 13(1), 133-144. 
+- Fryirs, K. A., & Brierley, G. J. (2012). Geomorphic analysis of river systems: an approach to reading the landscape: John Wiley & Sons.
+- Gilbert et al. ((in preparation)). V-BET: A GIS tool for delineating valley bottoms across entire drainage networks. Computers and Geosciences. 
+- Hesse, L. W., & Mestl, G. E. (1993). An alternative hydrograph for the Missouri River based on the precontrol condition. North American Journal of Fisheries Management, 13(2), 360-366. 
+- House, R. A., & Boehne, P. L. (1986). Effects of instream structures on salmonid habitat and populations in Tobe Creek, Oregon. North American Journal of Fisheries Management, 6(1), 38-46. 
+- Keller, C. R., & Burnham, K. P. (1982). Riparian fencing, grazing, and trout habitat preference on Summit Creek, Idaho. North American Journal of Fisheries Management, 2(1), 53-59. 
+- Macfarlane et al. ((in preparation)-a). Assessing riverine riparian vegetation departure from historic condition across entire drainage networks. Riparian Ecology and Conservation. 
+- Macfarlane et al. ((in preparation)-b). Region wide riparian and floodplain condition assessment for sustainable river management. Journal of environmental management. 
+- McBride, M., Hession, W. C., & Rizzo, D. M. (2010). Riparian reforestation and channel change: How long does it take? Geomorphology, 116(3), 330-340. 
+- Montgomery, D. R., & Buffington, J. M. (1998). Channel processes, classification, and response. River Ecology and Management. Springer-Verlag, New York, 13-42. 
+- O'Brien, G. O., & Wheaton, J. M. (2014 ). River Styles Report for the Middle Fork John Day Watershed, Oregon (pp. 215 pp). Logan, Utah: Ecogeomorphology and Topographic Analysis Lab, Utah State University, Prepared for Eco Logical Research, and Bonneville Power Administration.
+- Poff, N. L., Allan, J. D., Bain, M. B., Karr, J. R., Prestegaard, K. L., Richter, B. D., . . . Stromberg, J. C. (1997). The natural flow regime. BioScience, 47(11), 769-784. 
+- Pollock, M. M., Beechie, T. J., Wheaton, J. M., Jordan, C. E., Bouwes, N., Weber, N., & Volk, C. (2014). Using Beaver Dams to Restore Incised Stream Ecosystems. BioScience, 64(4), 279-290. 
+- Polvi, L. E., & Wohl, E. (2013). Biotic Drivers of Stream Planform Implications for Understanding the Past and Restoring the Future. BioScience, 63(6), 439-452. 
+- Poole, G. C., & Berman, C. H. (2001). An ecological perspective on in-stream temperature: natural heat dynamics and mechanisms of human-causedthermal degradation. Environmental Management, 27(6), 787-802. 
+- Portugal, E., Wheaton, J., & Bouwes, N. (2015). Pine Creek Design Report for Pilot Restoration: Using Deaver Dam Analogs and High-Density Large Woody Debris to Initiate Process-Based Stream Recovery. In P. f. t. C. T. o. W. Springs (Ed.), (pp. 35 pgs). Logan, Utah.
+- Portugal, E., Wheaton, J., Bouwes, N., 2015. Pine Creek Watershed Scoping Plan for Restoration. Prepared for the Confederated Tribes of Warm Springs, Logan, UT.
+- Smith, R., Sidle, R., & Porter, P. (1993). Effects on bedload transport of experimental removal of woody debris from a forest gravel‐bed stream. Earth Surface Processes and Landforms, 18(5), 455-468. 
+- Stuber, R. J. (1985). Trout habitat, abundance, and fishing opportunities in fenced vs. unfenced riparian habitat along Sheep Creek, Colorado. Riparian ecosystems and their management: reconciling conflicting uses. USDA Forest Service Gen. Tech. Rep. RM-120, 310-314. 
+- Thorson, T., Bryce, S., Lammers, D., Woods, A., Omernik, J., Kagan, J., . . . Comstock, J. (2003). Ecoregions of Oregon (color poster with map, descriptive text, summary tables, and photographs): Reston, Virginia. US Geological Survey (map scale 1: 1,500,000). 
+- Wheaton, J., Bennett, S., Bouwes, N., Camp, R.,. (2012). Asotin Creek Intensively Monitored Watershed: Restoration Plan for North Fork Asotin, South Fork Asotin and Charlie Creeks: Eco Logical Research Inc., Logan UT.
+- Yarnell, S. M., Mount, J. F., & Larsen, E. W. (2006). The influence of relative sediment supply on riverine habitat heterogeneity. Geomorphology, 80(3), 310-324.
