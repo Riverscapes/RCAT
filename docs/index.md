@@ -1,6 +1,7 @@
 ### R-CAT: Riparian Condition Assessment Tool
 
-[TOC]
+
+
 
 **NEEDS UPDATING**
 
