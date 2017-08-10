@@ -5,6 +5,8 @@
 
 ![RCAT_Banner_Web]({{ site.baseurl }}/assets/Images/RCAT_Banner_Web.png)
 
+![RCAT_Banner_Web](assets/images/RCAT_Banner_Web.png)
+
 **NEEDS UPDATING**
 
 [R-CAT Applications]({{ site.baseurl }}/R-CATApplications)
