@@ -68,3 +68,4 @@ Subsequent funding and support for application of these products in the Columbia
 
 RCAT is fully documented for those looking to apply the scripts or coders looking to extend the scripts. The current Python source code is open source and we have developed ArcGIS tool boxes. Source code is available at [https://github.com/Riverscapes/RCAT](https://github.com/Riverscapes/RCAT).
 
+<div>RCAT FavIcon made from icons from <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
