@@ -3,8 +3,6 @@
 
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
-![RCAT_Banner_Web]({{ site.baseurl }}/assets/Images/RCAT_Banner_Web.png)
-
 ![RCAT_Banner_Web](assets/images/RCAT_Banner_Web.png)
 
 **NEEDS UPDATING**
