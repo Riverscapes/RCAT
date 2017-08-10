@@ -92,7 +92,7 @@ The following data was used to support the geomorphic and riparian condition ass
 - Primary Remote Sensing Data: Aerial imagery visual analysis, annual stream-reach dewatering data, watershed slope rasters, surficial geology maps, precipitation, distribution of Bonneville cutthroat trout within Weber watershed layer.
 - Field Assessments: 2015: April 20, July 1-3rd – Initial reconnaissance/ field validation of river styles, October 26- November 5 – Detailed proforma mapping and condition/recovery potential assessments.
 
-[![Explaining_geomorphic%20condition_PC_Meandering_DF]({{ site.baseurl }}/assets/images/Explaining_geomorphic%20condition_PC_Meandering_DF.png)](/assets/images/hr/Explaining_geomorphic%20condition_PC_Meandering_DF.png)
+[![Explaining_geomorphic20condition_PC_Meandering_DF]({{ site.baseurl }}/assets/images/Explaining_geomorphic20condition_PC_Meandering_DF.png)](/assets/images/hr/Explaining_geomorphic20condition_PC_Meandering_DF.png)
 
 Figure 10 - Explanation of geomorphic condition for variants of the Meandering Planform Controlled Discontinuous Floodplain reach type. Check boxes are the same as Table 11.
 
