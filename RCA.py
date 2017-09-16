@@ -6,7 +6,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Latest Update: 06/20/2017
+# Latest Update: 08/31/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -269,23 +269,26 @@ def main(
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", frag_valley)
     arcpy.SelectLayerByLocation_management("outlyr", selection_type="SWITCH_SELECTION")
-    cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "Width", "EVT_MEAN", "BPS_MEAN", "RVD", "LUI",
-                                              "CONNECT", "EX_VEG", "HIST_VEG", "VEG"])
-    for row in cursor:
-        row[0] = -9999
-        row[1] = "None"
-        row[2] = -9999
-        row[3] = -9999
-        row[4] = -9999
-        row[5] = -9999
-        row[6] = -9999
-        row[7] = -9999
-        row[8] = -9999
-        row[9] = -9999
-        row[10] = -9999
-        cursor.updateRow(row)
-    del row
-    del cursor
+    getcount = arcpy.GetCount_management("outlyr")
+    count = int(getcount.getOutput(0))
+    if count != 0:
+        cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "Width", "EVT_MEAN", "BPS_MEAN", "RVD", "LUI",
+                                                  "CONNECT", "EX_VEG", "HIST_VEG", "VEG"])
+        for row in cursor:
+            row[0] = -9999
+            row[1] = "None"
+            row[2] = -9999
+            row[3] = -9999
+            row[4] = -9999
+            row[5] = -9999
+            row[6] = -9999
+            row[7] = -9999
+            row[8] = -9999
+            row[9] = -9999
+            row[10] = -9999
+            cursor.updateRow(row)
+        del row
+        del cursor
     arcpy.SelectLayerByAttribute_management("outlyr", "CLEAR_SELECTION")
     arcpy.CopyFeatures_management("outlyr", output)
 
@@ -312,7 +315,7 @@ def main(
             newxml.addMeta("Watershed", hucName, newxml.project)
 
         newxml.addRCARealization("RCA Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                 productVersion="1.0.10", guid=getUUID())
+                                 productVersion="1.0.11", guid=getUUID())
 
         newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
 
@@ -375,7 +378,7 @@ def main(
             k += 1
 
         exxml.addRCARealization("RCA Realization " + str(k), rid="RZ" + str(k),
-                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.10",
+                                dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.11",
                                 guid=getUUID())
 
         exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
