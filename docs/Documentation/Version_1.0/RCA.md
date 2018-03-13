@@ -21,7 +21,7 @@ To run this tool, one of the required inputs is a valley bottom polygon that has
 - Click on the "Split Polygons" tool and split the valley bottom using the transportation network.
 - Go through the split valley and manually fix polygons that need to be enclosed. (Areas where the stream does not intersect a polygon will be considered disconnected from the floodplain. See figure below.)
 
-![manual](({{ site.baseurl }}/assets/images/fragvalley.png)
+![manual]({{ site.baseurl }}/assets/images/fragvalley.png)
 
 - Add a field (type short int) to the split valley bottom feature and name it "Connected".
 - Make sure you are still editing the split valley bottom.
@@ -51,18 +51,18 @@ NOTE: In the current version of the tool, if the stream network contains too man
 
 - The RCA output symbolized using the default symbology of the `CONDITION` field.
 
-![RCAoutput](({{ site.baseurl }}/assets/images/RCAoutput.png)
+![RCAoutput]({{ site.baseurl }}/assets/images/RCAoutput.png)
 
 Additionally the `VEG` field may be of interest, and simply represents the proportion of historic vegetation cover (riparian and non-riparian) that exists on the landscape today.
 
 - The RCA output symbolized using the `VEG` field to show the proportion of historic vegetation cover that exists now.
 
-![RCAveg](({{ site.baseurl }}/assets/images/RCA_veg.png)
+![RCAveg]({{ site.baseurl }}/assets/images/RCA_veg.png)
 
 ### Additional RCA Output Fields
 
 `RVD`: The riparian vegetation departure score (proportion of historic riparian vegetation) for the given stream segment. `LUI`: The Land Use Intensity index, on a scale from 0 (high) to 3 (low). `CONNECT`: The proportion of the polygon (floodplain) associated with stream segment that is accessible to the stream. `COND_VAL`: A value on a continuous index from 0 to 1 that represents the condition of the riparian area for unconfined streams. (a value of 0 means that the stream is confined and the value is not relevant.)
 
-![rca_workflow](({{ site.baseurl }}/assets/images/RCA_workflow.png)
+![rca_workflow]({{ site.baseurl }}/assets/images/RCA_workflow.png)
 
 Conceptual diagram showing how riparian condition assessment is calculated
