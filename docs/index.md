@@ -37,7 +37,7 @@ The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton
 
  If you are interested in helping us improve R-CAT please contact us. We view these [R-CAT products ](http://etal.joewheaton.org/rcat/r-cat-applications/utah)as a first iteration and as better input data is available the output products will improve proportionally.
 
-###R-CAT products Financial Support
+### R-CAT products Financial Support
 
 The development of R-CAT was primarily initially funded by:
 
@@ -61,7 +61,7 @@ Subsequent funding and support for application of these products in the Columbia
 
 RCAT is fully documented for those looking to apply the scripts or coders looking to extend the scripts. The current Python source code is open source and we have developed ArcGIS tool boxes. Source code is available at [https://github.com/Riverscapes/RCAT](https://github.com/Riverscapes/RCAT).
 
-<div>RCAT FavIcon made from icons from <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
+
 
 ### Some R-CAT Outputs
 [R-CAT Applications]({{ site.baseurl }}/R-CATApplications)
