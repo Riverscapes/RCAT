@@ -20,7 +20,7 @@ The V-BET output is simply an output polygon that represents the extent of the v
 
 The Riparian Vegetation Departure from historic condition output is a line network, that is symbolized by default departure (in percent) of existing riparian vegetation cover from modeled historic riparian vegetation cover.
 
-![Legend_BRAT_ConflictProb]({{ site.baseurl }}/docs/assets/Images/Legend_BRAT_ConflictProb.png)
+![Legend_BRAT_ConflictProb]({{ site.baseurl }}/assets/Images/Legend_BRAT_ConflictProb.png)
 
  *Figure 1 - The default symbolization for the Riparian Vegetation Departure from historic condition output*
 
@@ -44,7 +44,7 @@ The 'CONV_TYPE' field is the other field which can be meaningfully symbolized. I
 
 *Figure 2 - Symbolization used for the Riparian Vegetation Conversion Type output, which is the 'CONV_TYPE' field in the Riparian Vegetation Departure output*
 
-![rvct_legend]({{ site.baseurl }}/docs/assets/images/rvct_legend.PNG)
+![rvct_legend]({{ site.baseurl }}/assets/images/rvct_legend.PNG)
 
 
 
@@ -68,7 +68,7 @@ The 'CONV_TYPE' field is the other field which can be meaningfully symbolized. I
 
 The Riparian Condition Assessment output is a line network that is symbolized by a field that represents overall riparian area condition (based on Riparian Vegetation Departure, land use intensity, and floodplain fragmentation) on a continuous scale from 0 (poor) to 1 (intact) in a field called 'CONDITION'. These values are broken into four bins: poor, moderate, good and intact.
 
-![rca_legend]({{ site.baseurl }}/docs/assets/images/rca_legend.PNG)
+![rca_legend]({{ site.baseurl }}/assets/images/rca_legend.PNG)
 
 *Figure 3 - Layer symbolization for the Riparian Condition Assessment output*
 
@@ -88,7 +88,7 @@ As with Riparian Vegetation Departure, there are other meaningful fields in the 
 
 The Riparian Recovery Potential uses the Riparian Condition Assessment outputs as an input and builds upon it using another model to come up with intrinsic Riparian Recovery Potential. In other words, the output represents the ability of the riparian area associated with a reach to recover if it was simply left alone without any further management or impacts. This layer is symbolized based on the 'IRP' field, which stands for Intrinsic Recovery Potential.
 
-![rrp_legend]({{ site.baseurl }}/docs/assets/images/rrp_legend.PNG)
+![rrp_legend]({{ site.baseurl }}/assets/images/rrp_legend.PNG)
 
 
 
