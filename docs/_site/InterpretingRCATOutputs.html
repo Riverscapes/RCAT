@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>RCAT</title>
+
+      <meta name="viewport" content="width=device-width">
+      <link rel="stylesheet" href="/RCAT/assets/css/app.css">
+      <link rel="stylesheet" href="/RCAT/assets/css/custom.css">
+      <script src="https://use.fontawesome.com/586b1e1322.js"></script>
+      <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+
+      <link rel="apple-touch-icon" sizes="57x57" href="/RCAT/assets/images/favicons/apple-icon-57x57.png">
+      <link rel="apple-touch-icon" sizes="60x60" href="/RCAT/assets/images/favicons/apple-icon-60x60.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="/RCAT/assets/images/favicons/apple-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="76x76" href="/RCAT/assets/images/favicons/apple-icon-76x76.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="/RCAT/assets/images/favicons/apple-icon-114x114.png">
+      <link rel="apple-touch-icon" sizes="120x120" href="/RCAT/assets/images/favicons/apple-icon-120x120.png">
+      <link rel="apple-touch-icon" sizes="144x144" href="/RCAT/assets/images/favicons/apple-icon-144x144.png">
+      <link rel="apple-touch-icon" sizes="152x152" href="/RCAT/assets/images/favicons/apple-icon-152x152.png">
+      <link rel="apple-touch-icon" sizes="180x180" href="/RCAT/assets/images/favicons/apple-icon-180x180.png">
+      <link rel="icon" type="image/png" sizes="192x192"  href="/RCAT/assets/images/favicons/android-icon-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/RCAT/assets/images/favicons/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="96x96" href="/RCAT/assets/images/favicons/favicon-96x96.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/RCAT/assets/images/favicons/favicon-16x16.png">
+      <link rel="manifest" href="/RCAT/assets/images/favicons/manifest.json">
+      <meta name="msapplication-TileColor" content="#ffffff">
+      <meta name="msapplication-TileImage" content="/RCAT/assets/images/favicons/ms-icon-144x144.png">
+      <meta name="theme-color" content="#ffffff">
+
+      <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <![endif]-->
+  </head>
+
+  <body>
+
+  <header>
+    <div id="topbarnav"></div>
+    <div class="text-center callout large">
+      
+
+      
+      <h4 class="subheader show-for-medium"><a href="/RCAT/">RCAT</a></h4>   
+      <h1>Interpreting RCAT Outputs</h1>
+            
+      
+    </div>
+  </header>
+
+  <div id="inner" class="row">
+    <div id="main" class="large-8 columns large-push-4">
+      <section><p><a href="http://localhost:4001"><img src="assets/images/RCAT_Banner_Web.png" alt="RCAT_Banner_Web" /></a></p>
+
+<p><a href="http://etal.joewheaton.org/rcat">R-CAT: Riparian Condition Assessment Tool</a>‎ &gt; ‎</p>
+
+<h3 id="interpreting-rcat-outputs">Interpreting RCAT Outputs</h3>
+
+<p>[TOC]</p>
+
+<h3 id="valley-bottom-extraction-tool-v-bet">Valley Bottom Extraction Tool (V-BET)</h3>
+
+<p>The V-BET output is simply an output polygon that represents the extent of the valley bottom for associated stream networks.</p>
+
+<h3 id="riparian-vegetation-departure-rvd">Riparian Vegetation Departure (RVD)</h3>
+
+<p>The Riparian Vegetation Departure from historic condition output is a line network, that is symbolized by default departure (in percent) of existing riparian vegetation cover from modeled historic riparian vegetation cover.</p>
+
+<p><img src="/RCAT/docs/assets/Images/Legend_BRAT_ConflictProb.png" alt="Legend_BRAT_ConflictProb" /></p>
+
+<p><em>Figure 1 - The default symbolization for the Riparian Vegetation Departure from historic condition output</em></p>
+
+<p>The ‘DEP_RATIO’ field that is symbolized by default is not the only field in the output table, however. The following table lists and explains relevant fields in the Riparian Vegetation Departure output.</p>
+
+<p><em>Table 1 - Relevant Riparian Vegetation Departure output fields</em></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>EVT_MEAN</td>
+      <td>Represents approximate percent of existing riparian cover within the valley bottom associated with the given stream segment.  Based off of LANDFIRE EVT.</td>
+    </tr>
+    <tr>
+      <td>BPS_MEAN</td>
+      <td>Represents approximate percent of historic riparian cover within the valley bottom associated with the given stream segment.  Based off of LANDFIRE BpS.</td>
+    </tr>
+    <tr>
+      <td>DEP_RATIO</td>
+      <td>Equal to EVT_MEAN/BPS_MEAN.  Represents the proportion of historic riparian cover that currently exists within the valley bottom associated with the given stream segment.  The default symbolization for ‘departure’ is equal to 1 - DEP_RATIO.</td>
+    </tr>
+    <tr>
+      <td>CONV_CODE</td>
+      <td>Conversion Code.  Each landcover type in both the EVT and BpS layers are given a unique value.  The EVT values are then subtracted from the BpS values, creating a ‘Conversion Code’ which has an associated ‘Conversion Type.’  (See table 2)</td>
+    </tr>
+    <tr>
+      <td>CONV_TYPE</td>
+      <td>Conversion Type.  For all ‘Conversion Codes,’ there is a corresponding conversion type, which gives a likely cause for riparian reduction or degradation.  (See table 2)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>On rare occasions, the existing vegetation layer will show an increase in riparian vegetation from the historic vegetation layer, resulting in a ‘dep_ratio’ of greater than one.  This causes the departure to be a negative value.  Because the accuracy of existing vegetation data is generally not high enough to determine that such increases are real, these are lumped into the ‘negligible departure’ output category.</p>
+
+<p>The ‘CONV_TYPE’ field is the other field which can be meaningfully symbolized. If there has been a reduction in riparian vegetation for a given stream segment, the ‘CONV_TYPE’ field describes what the likely cause for the degradation is. The ‘CONV_TYPE’ field is the extension of the original Riparian Vegetation Departure that we refer to as Riparian Vegetation Conversion Type.</p>
+
+<p><em>Figure 2 - Symbolization used for the Riparian Vegetation Conversion Type output, which is the ‘CONV_TYPE’ field in the Riparian Vegetation Departure output</em></p>
+
+<p><img src="/RCAT/docs/assets/images/rvct_legend.PNG" alt="rvct_legend" /></p>
+
+<p><em>Table 2 - Conversion codes and associated conversion types in the Riparian Vegetation Conversion Type.</em></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Conversion Type</th>
+      <th>Conversion Code(s)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Conifer Encroachment</td>
+      <td>80</td>
+    </tr>
+    <tr>
+      <td>Conversion to Agriculture</td>
+      <td>99</td>
+    </tr>
+    <tr>
+      <td>Devegetated</td>
+      <td>60</td>
+    </tr>
+    <tr>
+      <td>Development</td>
+      <td>98</td>
+    </tr>
+    <tr>
+      <td>Conversion to Invasive Vegetation</td>
+      <td>97</td>
+    </tr>
+    <tr>
+      <td>No Change</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Conversion to Grass/Shrubland</td>
+      <td>50</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="riparian-condition-assessment-rca">Riparian Condition Assessment (RCA)</h3>
+
+<p>The Riparian Condition Assessment output is a line network that is symbolized by a field that represents overall riparian area condition (based on Riparian Vegetation Departure, land use intensity, and floodplain fragmentation) on a continuous scale from 0 (poor) to 1 (intact) in a field called ‘CONDITION’. These values are broken into four bins: poor, moderate, good and intact.</p>
+
+<p><img src="/RCAT/docs/assets/images/rca_legend.PNG" alt="rca_legend" /></p>
+
+<p><em>Figure 3 - Layer symbolization for the Riparian Condition Assessment output</em></p>
+
+<p>As with Riparian Vegetation Departure, there are other meaningful fields in the output table. In addition to the condition field, there are fields which contain information for each of the inputs into the condition model. The table below lists and describes these additional fields.</p>
+
+<p><em>Table 2 - Relevant Riparian Condition Assessment output fields</em></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RVD</td>
+      <td>The value for riparian vegetation departure as calculated using the RVD tool.</td>
+    </tr>
+    <tr>
+      <td>LUI</td>
+      <td>A score for land use intensity (for the floodplain associated with each stream segment) on a continuous scale from 0 to 3 where 0 is completely urbanized and 3 is completely undisturbed.  Derived from LANDFIRE EVT.</td>
+    </tr>
+    <tr>
+      <td>CONNECT</td>
+      <td>A value from 0 to 1 that represents the proportion of the floodplain associated with each stream segment that has not been cut off by transportation infrastructure.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="riparian-recovery-potential">Riparian Recovery Potential</h3>
+
+<p>The Riparian Recovery Potential uses the Riparian Condition Assessment outputs as an input and builds upon it using another model to come up with intrinsic Riparian Recovery Potential. In other words, the output represents the ability of the riparian area associated with a reach to recover if it was simply left alone without any further management or impacts. This layer is symbolized based on the ‘IRP’ field, which stands for Intrinsic Recovery Potential.</p>
+
+<p><img src="/RCAT/docs/assets/images/rrp_legend.PNG" alt="rrp_legend" /></p>
+
+<p><em>Figure 4 - Layer symbolization for the Riparian Recovery Potential output</em></p>
+
+<p>In addition to the ‘IRP’ field, the output of Riparian Recovery Potential contains a field called ‘GEO_RP,’ which is a continuous output on a scale from 0 (poor geomorphic condition) to 3 (intact) that serves as a proxy for geomorphic recovery potential derived again from the LANDFIRE EVT layer. This field serves as a model input for the rule-based final Riparian Recovery Potential output.</p>
+
+</section>
+    </div>
+    <div id="sidebar" class="large-4 columns large-pull-8">
+        
+	
+	<div class="title-bar">
+		<div class="title-bar-title"><i class="fa fa-file-text"></i> Page Contents</div>		
+	</div>
+	<div id="toc"></div>
+	
+
+
+<div class="title-bar">
+	<div class="title-bar-title"><i class="fa fa-sitemap"></i> Site Contents
+		<div id="menuCtls" class="button-group tiny show-for-medium">
+				<span id="expand" class="button primary fa fa-plus has-tip top" data-tooltip title="Expand all items" aria-haspopup="true" data-disable-hover="false" ></span>
+				<span id="contract" class="button primary fa fa-minus has-tip top" data-tooltip title="Contract all items" aria-haspopup="true" data-disable-hover="false" ></span>
+			</div>	
+	</div>
+</div>
+<div id="sidenav">
+			<ul id='HTMLOnlyNav'>							<li><a href='/RCAT/CRBImplementation.html'>Columbia River Basin (CRB) Implementation</a></li>							<li><a href='/RCAT/CRBR-CATMapAtlas.html'>CRB R-CAT Map Atlas</a></li>							<li><a href='/RCAT/InterpretingRCATOutputs.html'>Interpreting RCAT Outputs</a></li>							<li><a href='/RCAT/Landfire.html'>LANDFIRE Data Limitations</a></li>							<li><a href='/RCAT/R-CATApplications.html'>R-CAT Applications</a></li>							<li><a href='/RCAT/UtahImplementation.html'>Utah Implementation</a></li>							<li><a href='/RCAT/UtahR-CATMapAtlas.html'>Utah R-CAT Map Atlas</a></li>							<li><a href='/RCAT/WeberRiverStylesComparison.html'>Weber River Styles Comparison</a></li>		</ul>	
+</div>
+
+      </div>
+  </div>
+
+    <footer class="row">
+    <div class="large-12 columns">
+© Copyright <script>var year = new Date();document.write(year.getFullYear());</script>
+    <a href="http://www.northarrowresearch.com" target="_blank">North Arrow Research</a>
+    </div>
+</footer>
+    <script type="text/javascript">var NAVTitle = "RCAT";var NAVHome = "/RCAT";var NAVPages = [{url: "/CRBImplementation.html",absurl: "/RCAT/CRBImplementation.html",slug: "CRBImplementation.html",title: "Columbia River Basin (CRB) Implementation",weight: ""},{url: "/CRBR-CATMapAtlas.html",absurl: "/RCAT/CRBR-CATMapAtlas.html",slug: "CRBR-CATMapAtlas.html",title: "CRB R-CAT Map Atlas",weight: ""},{url: "/InterpretingRCATOutputs.html",absurl: "/RCAT/InterpretingRCATOutputs.html",slug: "InterpretingRCATOutputs.html",title: "Interpreting RCAT Outputs",weight: ""},{url: "/Landfire.html",absurl: "/RCAT/Landfire.html",slug: "Landfire.html",title: "LANDFIRE Data Limitations",weight: ""},{url: "/R-CATApplications.html",absurl: "/RCAT/R-CATApplications.html",slug: "R-CATApplications.html",title: "R-CAT Applications",weight: ""},{url: "/UtahImplementation.html",absurl: "/RCAT/UtahImplementation.html",slug: "UtahImplementation.html",title: "Utah Implementation",weight: ""},{url: "/UtahR-CATMapAtlas.html",absurl: "/RCAT/UtahR-CATMapAtlas.html",slug: "UtahR-CATMapAtlas.html",title: "Utah R-CAT Map Atlas",weight: ""},{url: "/WeberRiverStylesComparison.html",absurl: "/RCAT/WeberRiverStylesComparison.html",slug: "WeberRiverStylesComparison.html",title: "Weber River Styles Comparison",weight: ""},];var SiteSettings = {"autoPageContents":{"active":true,"onHome":false},"sideMenu":{"homeItem":true,"startExpanded":false},"topmenu":[{"title":"About","url":"ThingsA"},{"title":"Submenu","children":[{"title":"subsub","url":"ThingsB/subpageB.html"},{"title":"SubSUBmenu","children":[{"title":"Google","url":"https://google.com"}]}]},{"title":"Config","url":"index.html"},{"title":"Deploy","url":"index.html"}]};</script>
+
+    <script src="/RCAT/assets/js/dist.js"></script>
+
+  </body>
+
+</html>
