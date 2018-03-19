@@ -44,7 +44,7 @@
 
 
       <h4 class="subheader show-for-medium"><a href="/RCAT/">RCAT</a></h4>
-      <h1>CRB R-CAT Map Atlas</h1>
+      <h1></h1>
         
       
     </div>
@@ -52,98 +52,62 @@
 
   <div id="inner" class="row">
     <div id="main" class="large-8 columns large-push-4">
-      <section><p><a href="http://localhost:4001"><img src="assets/images/RCAT_Banner_Web.png" alt="RCAT_Banner_Web" /></a></p>
+      <section><h2 id="introduction">Introduction</h2>
 
-<p><a href="http://localhost:4001">R-CAT: Riparian Condition Assessment Tool</a>‎ &gt; ‎<a href="/RCAT/R-CATApplications">R-CAT Applications</a>‎ &gt; ‎‎<a href="/RCAT/CRBImplementation">Columbia River Basin (CRB) Implementation</a>‎ &gt; ‎</p>
+<p>The Riparian Condition Assessment Tools is an ArcGIS python toolbox created to remotely assess the condition of riparian and floodplain areas over fairly large spatial scales (e.g. HUC8 watersheds) using relatively coarse, nationally avialable datasets as inputs.</p>
 
-<h3 id="crb-r-cat-map-atlas">CRB R-CAT Map Atlas</h3>
+<h2 id="dependencies">Dependencies</h2>
 
-<p>This page contains static map images for all of the data products produced using R-CAT for the Columbia River Basin (CRB).  The watersheds assessed include the John Day and Upper Grand Ronde, Oregon, the Tucannon, Entiat, Wenatchee, and Asotin in Washington, and the Upper Salmon, Yankee Fork, Lemhi, Lochsa, Lower Clearwater, and South Fork Clearwater, Idaho (totaling ≈27,565 km of streams). Click on individual maps to enlarge, or navigate to the bottom of the page to download full resolution map collections.</p>
+<ul>
+  <li>ArcPy Python module (included with ArcGIS installation)</li>
+  <li>“Spatial Analyst” extension in ArcMap</li>
+  <li><a href="https://pypi.python.org/pypi/scikit-fuzzy">scikit-fuzzy</a> Python module (RCA Tool only)</li>
+  <li>In order for the scikit-fuzzy module to work properly, this <a href="https://github.com/scikit-fuzzy/scikit-fuzzy/commit/1c62c00fd218d47d7b15be021d6b65045ade958e">fix</a> is required.</li>
+</ul>
 
-<h3 id="atlas-by-r-cat-output-type">Atlas By R-CAT Output Type</h3>
+<h2 id="tool-documentation">Tool Documentation</h2>
 
-<p><strong>Area of Analysis</strong></p>
+<p><strong>Version 1.0</strong></p>
 
-<p><a href="/RCAT/assets/images/hr/CRB_studyarea2.png"><img src="/RCAT/assets/images/CRB_studyarea2.png" alt="CRB_studyarea2" /></a></p>
+<ul>
+  <li><a href="/RCAT/Documentation/Version_1.0/NHD">NHD Network Builder</a></li>
+  <li><a href="/RCAT/Documentation/Version_1.0/VBET">Valley Bottom Extraction Tool (VBET)</a></li>
+  <li><a href="/RCAT/Documentation/Version_1.0/RVD">Riparian Vegetation Departure (RVD)</a></li>
+  <li><a href="/RCAT/Documentation/Version_1.0/RCA">Riparian Condition Assessment (RCA)</a></li>
+</ul>
 
-<p><strong>Riparian Vegetation Departure (RVD)</strong></p>
+<h2 id="download">Download</h2>
 
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RVD_website_8_16.png"><img src="/RCAT/assets/images/Wenatchee_RVD_website_8_16.png" alt="Wenatchee_RVD_website_8_16" /></a></p>
+<p><a href="https://github.com/Riverscapes/RCAT/releases/latest"><img src="/RCAT/assets/images/Riverscapes_DownloadGITHUB.png" alt="Riverscapes_DownloadGITHUB" /></a></p>
 
-<p><a href="/RCAT/assets/images/hr/entiat_RVD_website.png"><img src="/RCAT/assets/images/entiat_RVD_website.png" alt="entiat_RVD_website" /></a></p>
+<p><a href="https://github.com/Riverscapes/RCAT/releases/latest"><strong>Download</strong></a> the Riparian Condition Assessment Tools (RCAT) Latest Release (including VBET)</p>
 
-<p><a href="/RCAT/assets/images/hr/TucannonRVD_fullextent.png"><img src="/RCAT/assets/images/TucannonRVD_fullextent.png" alt="TucannonRVD_fullextent" /></a></p>
+<h3 id="update-history">Update History</h3>
+<p>Update prior to GitHUB: 01/25/2017 - Version 1.0 released. The primary difference between 1.0 and previous versions is that the tools are now “project” structured. Before running the tools, the projects are prepared using the “Build Project” tools that allow you to gather all inputs and structures them before running the tools. An xml file is also produced containing some metadata.</p>
 
-<p><a href="/RCAT/assets/images/hr/Asotin_RVD_website.png"><img src="/RCAT/assets/images/Asotin_RVD_website.png" alt="Asotin_RVD_website" /></a></p>
+<p>02/14/2017 - RCAT Version 1.0.2 - Updates to RCA tool</p>
 
-<p><a href="/RCAT/assets/images/hr/LCW_Lolo_RVD.png"><img src="/RCAT/assets/images/LCW_Lolo_RVD.png" alt="LCW_Lolo_RVD" /></a></p>
+<p>03/06/2017 - RCAT Version 1.0.3 - Minor improvements</p>
 
-<p><a href="/RCAT/assets/images/hr/Lochsa_RVD_website.png"><img src="/RCAT/assets/images/Lochsa_RVD_website.png" alt="Lochsa_RVD_website" /></a></p>
+<p>03/07/2017 - RCAT Version 0.2 and VBET Versions 0.2 and 1.0.2 - Minor improvements</p>
 
-<p><a href="/RCAT/assets/images/hr/SFCW_RVD_website.png"><img src="/RCAT/assets/images/SFCW_RVD_website.png" alt="SFCW_RVD_website" /></a></p>
+<p>03/08/2017 - RCAT Version 1.0.4 - fixed bug in RVD with large river polygon</p>
 
-<p><a href="/RCAT/assets/images/hr/Lemhi_RVD_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RVD_website_12_16.png" alt="Lemhi_RVD_website_12_16" /></a></p>
+<p>03/20/2017 - RCAT and VBET Version 1.0.5 - updated xml format and matched current VBET version to current RCAT version</p>
 
-<p><a href="/RCAT/assets/images/hr/YF_RVD_webmap.png"><img src="/RCAT/assets/images/YF_RVD_webmap.png" alt="YF_RVD_webmap" /></a></p>
+<p>05/02/2017 - RCAT and VBET Versions 0.2.1 and 1.0.6 - added Bankfull Channel tool to RCAT 1.0.6. Outputs no longer include any segments not in valley bottom.</p>
 
-<p><a href="/RCAT/assets/images/hr/Upper_salmon_RVD_webmap.png"><img src="/RCAT/assets/images/Upper_salmon_RVD_webmap.png" alt="Upper_salmon_RVD_webmap" /></a></p>
+<p>05/10/2017 - RCAT and VBET Versions 1.0.7 - retains networks segments in open water but attributes them with NoData values. RCAT 0.2.2 - same update.</p>
 
-<p><a href="/RCAT/assets/images/hr/John_day_RVD_website.png"><img src="/RCAT/assets/images/John_day_RVD_website.png" alt="John_day_RVD_website" /></a></p>
+<p>06/20/2017 - RCAT and VBET Versions 1.0.8 - fixed problem with realization numbers and IDs, added Realization Promoter tool.</p>
 
-<p><a href="/RCAT/assets/images/hr/UGR_RVD_website.png"><img src="/RCAT/assets/images/UGR_RVD_website.png" alt="UGR_RVD_website" /></a></p>
+<p>07/25/2017 - RCAT Version 1.0.9 - fixed bug with RVD tool.</p>
 
-<p><strong>Riparian Vegetation Conversion Type (RVCT)</strong></p>
+<p>08/03/2017 - RCAT Version 1.0.10 - When using the Realization Promoter Tool, you can now add in the edited VBET output to the VBET realization being promoted.</p>
 
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Wenatchee_RVCT_website_12_16.png" alt="Wenatchee_RVCT_website_12_16" /></a></p>
+<p>09/12/2017 - RCAT Versions 1.0.11 and 0.2.3 - fixed same bug that RVD tool had (fixed 1.0.9) in RCA tool.</p>
 
-<p><a href="/RCAT/assets/images/hr/entiat_RVCT_website10.png"><img src="/RCAT/assets/images/entiat_RVCT_website10.png" alt="entiat_RVCT_website10" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/TucannonRVCT_12_16.png"><img src="/RCAT/assets/images/TucannonRVCT_12_16.png" alt="TucannonRVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Asotin_RVCT_website_12_16.png" alt="Asotin_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCWandLolo_RVCT_12_16.png"><img src="/RCAT/assets/images/LCWandLolo_RVCT_12_16.png" alt="LCWandLolo_RVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Lochsa_RVCT_website_12_16.png" alt="Lochsa_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RVCT_webmap_12_16.png"><img src="/RCAT/assets/images/SFCW_RVCT_webmap_12_16.png" alt="SFCW_RVCT_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RVCT_website_12_16.png" alt="Lemhi_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RVCT_webmap_12_16.png"><img src="/RCAT/assets/images/YF_RVCT_webmap_12_16.png" alt="YF_RVCT_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_Salmon_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Upper_Salmon_RVCT_website_12_16.png" alt="Upper_Salmon_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RVCT_12_16.png"><img src="/RCAT/assets/images/John_day_RVCT_12_16.png" alt="John_day_RVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR__RVCT_12_16.png"><img src="/RCAT/assets/images/UGR__RVCT_12_16.png" alt="UGR__RVCT_12_16" /></a></p>
-
-<p><strong>Riparian Condition Assessment (RCA)</strong></p>
-
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RCA_website_12_16.png"><img src="/RCAT/assets/images/Wenatchee_RCA_website_12_16.png" alt="Wenatchee_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/entiat_RCA_website_12_16.png"><img src="/RCAT/assets/images/entiat_RCA_website_12_16.png" alt="entiat_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Tucannon_RCA_12_16.png"><img src="/RCAT/assets/images/Tucannon_RCA_12_16.png" alt="Tucannon_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RCA_website_12_16.png"><img src="/RCAT/assets/images/Asotin_RCA_website_12_16.png" alt="Asotin_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCWandLolo_RCA_12_16.png"><img src="/RCAT/assets/images/LCWandLolo_RCA_12_16.png" alt="LCWandLolo_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RCA_website_12_16.png"><img src="/RCAT/assets/images/Lochsa_RCA_website_12_16.png" alt="Lochsa_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RCA_webmap_12_16.png"><img src="/RCAT/assets/images/SFCW_RCA_webmap_12_16.png" alt="SFCW_RCA_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RCA_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RCA_website_12_16.png" alt="Lemhi_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RCA_webmap_12_16.png"><img src="/RCAT/assets/images/YF_RCA_webmap_12_16.png" alt="YF_RCA_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_Salmon_RCA_website_12_16.png"><img src="/RCAT/assets/images/Upper_Salmon_RCA_website_12_16.png" alt="Upper_Salmon_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RCA_12_16.png"><img src="/RCAT/assets/images/John_day_RCA_12_16.png" alt="John_day_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR__RCA_12_16.png"><img src="/RCAT/assets/images/UGR__RCA_12_16.png" alt="UGR__RCA_12_16" /></a></p>
-
+<p><img src="/RCAT/assets/images/CC_Watermarks_Riverscapes.png" alt="CC_Watermarks_Riverscapes" /> This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">http://creativecommons.org/licenses/by-nc-sa/4.0/</a>.</p>
 </section>
     </div>
     <div id="sidebar" class="large-4 columns large-pull-8">

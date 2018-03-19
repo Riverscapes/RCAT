@@ -44,7 +44,7 @@
 
 
       <h4 class="subheader show-for-medium"><a href="/RCAT/">RCAT</a></h4>
-      <h1>CRB R-CAT Map Atlas</h1>
+      <h1>Riparian Vegetation Departure (RVD)</h1>
         
       
     </div>
@@ -52,98 +52,50 @@
 
   <div id="inner" class="row">
     <div id="main" class="large-8 columns large-push-4">
-      <section><p><a href="http://localhost:4001"><img src="assets/images/RCAT_Banner_Web.png" alt="RCAT_Banner_Web" /></a></p>
+      <section><p>The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to determine the departure of riparian vegetation from pre-settlement conditions. Current riparian vegetation cover is modeled using the LANDFIRE Existing Vegetation Type (EVT) layer. Historic (pre-European settlement) vegetation is modeled using the LANDFIRE Bio-physical Setting (BpS) layer. For more information on these layers see LANDFIRE’s <a href="http://landfire.gov/vegetation.php">website</a>. In both of these layers, all native, riparian vegetation is given a value of 1, and all other vegetation is given a value of 0. The valley bottom is broken into polygons that correspond to approximately 500 meter segments of stream network, and within each polygon, the number of existing riparian cells is divided by the number of modeled historic riparian cells. The result is a ratio that represents the proportion of historic riparian vegetation that currently exists on the landscape. This value is then applied to the network. In addition, an analysis is performed that looks at types of riparian conversion and quantifies each type within each stream segment to determine possible causes of riparian degradation.</p>
 
-<p><a href="http://localhost:4001">R-CAT: Riparian Condition Assessment Tool</a>‎ &gt; ‎<a href="/RCAT/R-CATApplications">R-CAT Applications</a>‎ &gt; ‎‎<a href="/RCAT/CRBImplementation">Columbia River Basin (CRB) Implementation</a>‎ &gt; ‎</p>
+<h2 id="pre-processing">Pre-Processing</h2>
 
-<h3 id="crb-r-cat-map-atlas">CRB R-CAT Map Atlas</h3>
+<ul>
+  <li>Prepare a network using the <a href="/RCAT/Documentation/Version_0.1/NHD">NHD Network Builder</a></li>
+  <li>Dissolve and segment the network. (~500 meter segments work well.)</li>
+  <li>Produce a valley bottom using <a href="/RCAT/Documentation/Version_0.1/VBET">VBET</a>, and manually edit to desired accuracy.</li>
+  <li>Download the LANDFIRE EVT and BpS layers from the LANDFIRE <a href="http://www.landfire.gov/">website</a> (for US Only; Equivalent vegetation layers may exist in other countries)</li>
+</ul>
 
-<p>This page contains static map images for all of the data products produced using R-CAT for the Columbia River Basin (CRB).  The watersheds assessed include the John Day and Upper Grand Ronde, Oregon, the Tucannon, Entiat, Wenatchee, and Asotin in Washington, and the Upper Salmon, Yankee Fork, Lemhi, Lochsa, Lower Clearwater, and South Fork Clearwater, Idaho (totaling ≈27,565 km of streams). Click on individual maps to enlarge, or navigate to the bottom of the page to download full resolution map collections.</p>
+<h2 id="parameters">Parameters</h2>
 
-<h3 id="atlas-by-r-cat-output-type">Atlas By R-CAT Output Type</h3>
+<ul>
+  <li><strong>Existing Vegetation layer</strong>: select the LANDFIRE EVT layer for the area of interest.</li>
+  <li><strong>Historic Vegetation layer</strong>: select the LANDFIRE BPS layer for the area of interest.</li>
+  <li><strong>Input Segmented Stream Network</strong>: select the stream network that was dissolved and segmented.</li>
+  <li><strong>Input Valley Bottom Polygon</strong>: select the valley bottom polygon that was created using VBET and manually edited.</li>
+  <li><strong>Large River Polygon</strong> (optional): In areas with large rivers (ie Green, Colorado, Snake, Columbia), all landcover cells within these large river polygons are coded as no data. In smaller rivers, the open water landcover class is coded as riparian. In development, we found that coding open water in large rivers as riparian skewed them to appear to be in better condition than they are. In small rivers, if open water was <em>not</em> coded as riparian, they appeared to be in worse condition than they were. The “Area” shapefile that was downloaded with NHD data can generally be used as this large river polygon.</li>
+  <li><strong>RVD Output</strong>: select a location and name to store the final polyline output.</li>
+  <li><strong>Scratch Workspace</strong>: Select a geodatabase as a workspace to store temporary files. The default is the Arc default geodatabase.</li>
+</ul>
 
-<p><strong>Area of Analysis</strong></p>
+<h2 id="outputs">Outputs</h2>
 
-<p><a href="/RCAT/assets/images/hr/CRB_studyarea2.png"><img src="/RCAT/assets/images/CRB_studyarea2.png" alt="CRB_studyarea2" /></a></p>
+<ul>
+  <li>Riparian Vegetation Departure ratio <code class="highlighter-rouge">DEP_RATIO</code></li>
+</ul>
 
-<p><strong>Riparian Vegetation Departure (RVD)</strong></p>
+<p><img src="/RCAT/assets/images/RVDoutput.png" alt="RVDoutput" /></p>
 
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RVD_website_8_16.png"><img src="/RCAT/assets/images/Wenatchee_RVD_website_8_16.png" alt="Wenatchee_RVD_website_8_16" /></a></p>
+<ul>
+  <li>Riparian Vegetation Conversion Type <code class="highlighter-rouge">CONV_TYPE</code></li>
+</ul>
 
-<p><a href="/RCAT/assets/images/hr/entiat_RVD_website.png"><img src="/RCAT/assets/images/entiat_RVD_website.png" alt="entiat_RVD_website" /></a></p>
+<p><img src="/RCAT/assets/images/RCToutput.png" alt="RCToutput" /></p>
 
-<p><a href="/RCAT/assets/images/hr/TucannonRVD_fullextent.png"><img src="/RCAT/assets/images/TucannonRVD_fullextent.png" alt="TucannonRVD_fullextent" /></a></p>
+<h3 id="additional-rca-output-fields">Additional RCA Output Fields</h3>
 
-<p><a href="/RCAT/assets/images/hr/Asotin_RVD_website.png"><img src="/RCAT/assets/images/Asotin_RVD_website.png" alt="Asotin_RVD_website" /></a></p>
+<p><code class="highlighter-rouge">EVT_MEAN</code>: proportion of polygon corresponding to stream segment with existing riparian cover. <code class="highlighter-rouge">BPS_MEAN</code>: proportion of polygon corresponding to stream segment with historic riparian cover. <code class="highlighter-rouge">COUNT</code>: the number of cells within the polygon corresponding to stream segment that were historically riparian. <code class="highlighter-rouge">sum_noch</code>: the number of cells within the polygon corresponding to stream segment whose conversion type is ‘no change.’ <code class="highlighter-rouge">sum_grsh</code>: the number of cells within the polygon corresponding to stream segment whose conversion type is ‘conversion to grass/shrubland.’ <code class="highlighter-rouge">sum_deveg</code>: the number of cells within the polygon corresponding to stream segment whose coversion type is ‘devegetate.’ <code class="highlighter-rouge">sum_con</code>: the number of cells within the polygon corresponding to stream segment whose conversion type is ‘conifer encroachment.’ <code class="highlighter-rouge">sum_inv</code>: the number of cells within the polygon corresponding to stream segment whose conversion type is ‘coversion to invasive.’ <code class="highlighter-rouge">sum_dev</code>: the number of cells within the polygon corresponding to stream segment whose conversion type is ‘developed.’ <code class="highlighter-rouge">sum_ag</code>: the number of cells within the polygon corresponding to stream segment whose conversion type is ‘conversion to agriculture.’ <code class="highlighter-rouge">prop_noch</code>: proportion of polygon corresponding to stream segment where riparian remained riparian (<code class="highlighter-rouge">sum_noch</code>/<code class="highlighter-rouge">COUNT</code>). <code class="highlighter-rouge">prop_grsh</code>: proportion of polygon corresponding to stream segment in which riparian was converted to grassland or shrubland(<code class="highlighter-rouge">sum_grsh</code>/<code class="highlighter-rouge">COUNT</code>). <code class="highlighter-rouge">prop_deveg</code>: proportion of polygon corresponding to stream segment in which riparian was removed and no vegetation took it’s place (ie remained dirt or rock) (<code class="highlighter-rouge">sum_deveg</code>/<code class="highlighter-rouge">COUNT</code>). <code class="highlighter-rouge">prop_con</code>: proportion of polygon corresponding to stream segment in which riparian was converted to conifer forest (<code class="highlighter-rouge">sum_con</code>/<code class="highlighter-rouge">COUNT</code>). <code class="highlighter-rouge">prop_inv</code>: proportion of polygon corresponding to stream segment in which riparian was converted to invasive vegetation (<code class="highlighter-rouge">sum_inv</code>/<code class="highlighter-rouge">COUNT</code>). <code class="highlighter-rouge">prop_dev</code>: proportion of polygon corresponding to stream segment in which riparian was converted to developed areas (<code class="highlighter-rouge">sum_dev</code>/<code class="highlighter-rouge">COUNT</code>). <code class="highlighter-rouge">prop_ag</code>: proportion of polygon corresponding to stream segment in which riparian was converted to agriculture (<code class="highlighter-rouge">sum_ag</code>/<code class="highlighter-rouge">COUNT</code>).</p>
 
-<p><a href="/RCAT/assets/images/hr/LCW_Lolo_RVD.png"><img src="/RCAT/assets/images/LCW_Lolo_RVD.png" alt="LCW_Lolo_RVD" /></a></p>
+<p><img src="/RCAT/assets/images//rvd_workflow.png" alt="rvd_workflow" /></p>
 
-<p><a href="/RCAT/assets/images/hr/Lochsa_RVD_website.png"><img src="/RCAT/assets/images/Lochsa_RVD_website.png" alt="Lochsa_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RVD_website.png"><img src="/RCAT/assets/images/SFCW_RVD_website.png" alt="SFCW_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RVD_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RVD_website_12_16.png" alt="Lemhi_RVD_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RVD_webmap.png"><img src="/RCAT/assets/images/YF_RVD_webmap.png" alt="YF_RVD_webmap" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_salmon_RVD_webmap.png"><img src="/RCAT/assets/images/Upper_salmon_RVD_webmap.png" alt="Upper_salmon_RVD_webmap" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RVD_website.png"><img src="/RCAT/assets/images/John_day_RVD_website.png" alt="John_day_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR_RVD_website.png"><img src="/RCAT/assets/images/UGR_RVD_website.png" alt="UGR_RVD_website" /></a></p>
-
-<p><strong>Riparian Vegetation Conversion Type (RVCT)</strong></p>
-
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Wenatchee_RVCT_website_12_16.png" alt="Wenatchee_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/entiat_RVCT_website10.png"><img src="/RCAT/assets/images/entiat_RVCT_website10.png" alt="entiat_RVCT_website10" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/TucannonRVCT_12_16.png"><img src="/RCAT/assets/images/TucannonRVCT_12_16.png" alt="TucannonRVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Asotin_RVCT_website_12_16.png" alt="Asotin_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCWandLolo_RVCT_12_16.png"><img src="/RCAT/assets/images/LCWandLolo_RVCT_12_16.png" alt="LCWandLolo_RVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Lochsa_RVCT_website_12_16.png" alt="Lochsa_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RVCT_webmap_12_16.png"><img src="/RCAT/assets/images/SFCW_RVCT_webmap_12_16.png" alt="SFCW_RVCT_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RVCT_website_12_16.png" alt="Lemhi_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RVCT_webmap_12_16.png"><img src="/RCAT/assets/images/YF_RVCT_webmap_12_16.png" alt="YF_RVCT_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_Salmon_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Upper_Salmon_RVCT_website_12_16.png" alt="Upper_Salmon_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RVCT_12_16.png"><img src="/RCAT/assets/images/John_day_RVCT_12_16.png" alt="John_day_RVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR__RVCT_12_16.png"><img src="/RCAT/assets/images/UGR__RVCT_12_16.png" alt="UGR__RVCT_12_16" /></a></p>
-
-<p><strong>Riparian Condition Assessment (RCA)</strong></p>
-
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RCA_website_12_16.png"><img src="/RCAT/assets/images/Wenatchee_RCA_website_12_16.png" alt="Wenatchee_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/entiat_RCA_website_12_16.png"><img src="/RCAT/assets/images/entiat_RCA_website_12_16.png" alt="entiat_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Tucannon_RCA_12_16.png"><img src="/RCAT/assets/images/Tucannon_RCA_12_16.png" alt="Tucannon_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RCA_website_12_16.png"><img src="/RCAT/assets/images/Asotin_RCA_website_12_16.png" alt="Asotin_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCWandLolo_RCA_12_16.png"><img src="/RCAT/assets/images/LCWandLolo_RCA_12_16.png" alt="LCWandLolo_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RCA_website_12_16.png"><img src="/RCAT/assets/images/Lochsa_RCA_website_12_16.png" alt="Lochsa_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RCA_webmap_12_16.png"><img src="/RCAT/assets/images/SFCW_RCA_webmap_12_16.png" alt="SFCW_RCA_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RCA_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RCA_website_12_16.png" alt="Lemhi_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RCA_webmap_12_16.png"><img src="/RCAT/assets/images/YF_RCA_webmap_12_16.png" alt="YF_RCA_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_Salmon_RCA_website_12_16.png"><img src="/RCAT/assets/images/Upper_Salmon_RCA_website_12_16.png" alt="Upper_Salmon_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RCA_12_16.png"><img src="/RCAT/assets/images/John_day_RCA_12_16.png" alt="John_day_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR__RCA_12_16.png"><img src="/RCAT/assets/images/UGR__RCA_12_16.png" alt="UGR__RCA_12_16" /></a></p>
-
+<p>Conceptual diagram showing how vegetation departure from historic and riparian vegetation conversion type are calculated</p>
 </section>
     </div>
     <div id="sidebar" class="large-4 columns large-pull-8">

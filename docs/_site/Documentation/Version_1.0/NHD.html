@@ -44,7 +44,7 @@
 
 
       <h4 class="subheader show-for-medium"><a href="/RCAT/">RCAT</a></h4>
-      <h1>CRB R-CAT Map Atlas</h1>
+      <h1>NHD Network Builder Tool</h1>
         
       
     </div>
@@ -52,98 +52,44 @@
 
   <div id="inner" class="row">
     <div id="main" class="large-8 columns large-push-4">
-      <section><p><a href="http://localhost:4001"><img src="assets/images/RCAT_Banner_Web.png" alt="RCAT_Banner_Web" /></a></p>
+      <section><p>The outputs of several of the tools in this toolbox are summarized onto a stream network. We have found the most accurate nationally available stream network to be the 24k NHD (National Hydrography Dataset) provided by the USGS. Using the NHD Network Builder Tool, a subset of the complete network can be selected to represent only the portion of the network that the user is interested in (the perennial network for example).</p>
 
-<p><a href="http://localhost:4001">R-CAT: Riparian Condition Assessment Tool</a>‎ &gt; ‎<a href="/RCAT/R-CATApplications">R-CAT Applications</a>‎ &gt; ‎‎<a href="/RCAT/CRBImplementation">Columbia River Basin (CRB) Implementation</a>‎ &gt; ‎</p>
+<h2 id="pre-processing">Pre-Processing</h2>
 
-<h3 id="crb-r-cat-map-atlas">CRB R-CAT Map Atlas</h3>
+<p>First, the NHD network must be downloaded. The data can be downloaded from the USGS <a href="http://viewer.nationalmap.gov/basic/">here</a>. Extract the file containing all NHD data to a location on your machine.</p>
 
-<p>This page contains static map images for all of the data products produced using R-CAT for the Columbia River Basin (CRB).  The watersheds assessed include the John Day and Upper Grand Ronde, Oregon, the Tucannon, Entiat, Wenatchee, and Asotin in Washington, and the Upper Salmon, Yankee Fork, Lemhi, Lochsa, Lower Clearwater, and South Fork Clearwater, Idaho (totaling ≈27,565 km of streams). Click on individual maps to enlarge, or navigate to the bottom of the page to download full resolution map collections.</p>
+<h2 id="parameters">Parameters</h2>
 
-<h3 id="atlas-by-r-cat-output-type">Atlas By R-CAT Output Type</h3>
+<ul>
+  <li><strong>Input NHD Flowline</strong>: in the folder containing the NHD data, select the flowline feature class. This is the complete network from which the subset will be extracted.</li>
+  <li><strong>Input NHD Waterbody</strong> (optional): if you want to remove flowlines from within waterbodies (lakes, reservoirs, etc), select the Waterbody feature class from the folder containing the NHD data (See ‘subset artificial paths parameter).</li>
+  <li><strong>Input NHD Area</strong> (optional): in areas with large rivers, the flowlines are coded as ‘artificial paths’ within these area files, which are polygons representing the large rivers. If you are subsetting the artificial path flowlines when running the tool (see next parameter), select the Area feature class from the folder containing the NHD data in order to keep these flowlines.</li>
+  <li><strong>Check to subset artificial paths</strong> (optional): if you want to keep some artificial paths, but not all of them, check this box. Many portions of the perennial network are coded as artificial paths, but if you do not check this box, and consequently keep all of them, you may end up with flowlines that you do not want to be part of the final network. For example, flowlines that cross reservoirs and stock ponds. By checking this box, the artificial paths are subset to keep all artificial paths representing rivers, while removing those that cross waterbodies larger than a size specified in the next parameter.</li>
+  <li><strong>Waterbody threshold size</strong> (optional): if subsetting the artificial paths, this is the waterbody threshold size (in square kilometers) above which the flowlines will be removed from the waterbody.
+The default value is 0.001, which is the size of a large beaver dam. Using the default value will keep the flowlines in beaver ponds and other small ponds along the network, and remove them from larger lakes and reservoirs. If you want a continuous network, either do not subset the artificial paths, or choose a very large value for the threshold size (this has the advantage of still removing artifical paths in stock ponds and other locations that aren’t part of the network of interest).</li>
+  <li><strong>Remove Artifical Paths</strong> (optional): check this box if you wish to remove all artificial paths from the final network.</li>
+  <li><strong>Remove Canals</strong> (optional): check this box if you wish to remove all canals from the final network.</li>
+  <li><strong>Remove Aqueducts</strong> (optional): check this box if you wish to remove all aqueducts from the final network.</li>
+  <li><strong>Remove Stormwater</strong> (optional): check this box if you wish to remove stormwater conveyence infrastructure from the final network.</li>
+  <li><strong>Remove Connectors</strong> (optional): check this box if you wish to remove connectors from the final network. If you choose to keep connectors which are sometimes used to ‘connect’ the perennial network, a subset will also be selected to get rid of those that are likely not of interest.</li>
+  <li><strong>Remove General Streams</strong> (optional): check this box if you wish to remove general streams from the final network. Occasionally in the NHD coding if it is unknown if the stream is perennial, intermittent, or ephemeral it is given a general code. These streams are generally ephemeral.</li>
+  <li><strong>Remove Intermittent Streams</strong> (optional): check this box if you wish to remove all streams coded as intermittent. (In current NHD coding, most ephemerals are also coded as intermittent. Update: this has been corrected in the Utah NHD 24k layer.)</li>
+  <li><strong>Remove Perennial Streams</strong> (optional): check this box if you wish to remove all streams coded as perennial.</li>
+  <li><strong>Remove Ephemeral Streams</strong> (optional): check this box to remove all streams coded as ephemeral. (In current NHD coding there are very few of these. Update: this has been corrected in the Utah NHD 24k layer.)</li>
+  <li><strong>Output Stream Network</strong>: select a location and name for the final network.</li>
+  <li><strong>Select a Projection</strong>: choose a projected coordinate system for the final network.</li>
+  <li><strong>Scratch Workspace</strong>: select a scratch workspace. This must be a folder (<em>not a geodatabase</em>) for this tool. Temporary files will be stored and then deleted from this location.</li>
+</ul>
 
-<p><strong>Area of Analysis</strong></p>
+<h2 id="outputs">Outputs</h2>
 
-<p><a href="/RCAT/assets/images/hr/CRB_studyarea2.png"><img src="/RCAT/assets/images/CRB_studyarea2.png" alt="CRB_studyarea2" /></a></p>
+<p><img src="https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/pics/flowline.png" alt="flowline" /></p>
 
-<p><strong>Riparian Vegetation Departure (RVD)</strong></p>
+<p>Raw NHD Flowline Input for a HUC 8 Watershed</p>
 
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RVD_website_8_16.png"><img src="/RCAT/assets/images/Wenatchee_RVD_website_8_16.png" alt="Wenatchee_RVD_website_8_16" /></a></p>
+<p><img src="https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/pics/network.png" alt="network" /></p>
 
-<p><a href="/RCAT/assets/images/hr/entiat_RVD_website.png"><img src="/RCAT/assets/images/entiat_RVD_website.png" alt="entiat_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/TucannonRVD_fullextent.png"><img src="/RCAT/assets/images/TucannonRVD_fullextent.png" alt="TucannonRVD_fullextent" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RVD_website.png"><img src="/RCAT/assets/images/Asotin_RVD_website.png" alt="Asotin_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCW_Lolo_RVD.png"><img src="/RCAT/assets/images/LCW_Lolo_RVD.png" alt="LCW_Lolo_RVD" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RVD_website.png"><img src="/RCAT/assets/images/Lochsa_RVD_website.png" alt="Lochsa_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RVD_website.png"><img src="/RCAT/assets/images/SFCW_RVD_website.png" alt="SFCW_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RVD_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RVD_website_12_16.png" alt="Lemhi_RVD_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RVD_webmap.png"><img src="/RCAT/assets/images/YF_RVD_webmap.png" alt="YF_RVD_webmap" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_salmon_RVD_webmap.png"><img src="/RCAT/assets/images/Upper_salmon_RVD_webmap.png" alt="Upper_salmon_RVD_webmap" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RVD_website.png"><img src="/RCAT/assets/images/John_day_RVD_website.png" alt="John_day_RVD_website" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR_RVD_website.png"><img src="/RCAT/assets/images/UGR_RVD_website.png" alt="UGR_RVD_website" /></a></p>
-
-<p><strong>Riparian Vegetation Conversion Type (RVCT)</strong></p>
-
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Wenatchee_RVCT_website_12_16.png" alt="Wenatchee_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/entiat_RVCT_website10.png"><img src="/RCAT/assets/images/entiat_RVCT_website10.png" alt="entiat_RVCT_website10" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/TucannonRVCT_12_16.png"><img src="/RCAT/assets/images/TucannonRVCT_12_16.png" alt="TucannonRVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Asotin_RVCT_website_12_16.png" alt="Asotin_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCWandLolo_RVCT_12_16.png"><img src="/RCAT/assets/images/LCWandLolo_RVCT_12_16.png" alt="LCWandLolo_RVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Lochsa_RVCT_website_12_16.png" alt="Lochsa_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RVCT_webmap_12_16.png"><img src="/RCAT/assets/images/SFCW_RVCT_webmap_12_16.png" alt="SFCW_RVCT_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RVCT_website_12_16.png" alt="Lemhi_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RVCT_webmap_12_16.png"><img src="/RCAT/assets/images/YF_RVCT_webmap_12_16.png" alt="YF_RVCT_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_Salmon_RVCT_website_12_16.png"><img src="/RCAT/assets/images/Upper_Salmon_RVCT_website_12_16.png" alt="Upper_Salmon_RVCT_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RVCT_12_16.png"><img src="/RCAT/assets/images/John_day_RVCT_12_16.png" alt="John_day_RVCT_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR__RVCT_12_16.png"><img src="/RCAT/assets/images/UGR__RVCT_12_16.png" alt="UGR__RVCT_12_16" /></a></p>
-
-<p><strong>Riparian Condition Assessment (RCA)</strong></p>
-
-<p><a href="/RCAT/assets/images/hr/Wenatchee_RCA_website_12_16.png"><img src="/RCAT/assets/images/Wenatchee_RCA_website_12_16.png" alt="Wenatchee_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/entiat_RCA_website_12_16.png"><img src="/RCAT/assets/images/entiat_RCA_website_12_16.png" alt="entiat_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Tucannon_RCA_12_16.png"><img src="/RCAT/assets/images/Tucannon_RCA_12_16.png" alt="Tucannon_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Asotin_RCA_website_12_16.png"><img src="/RCAT/assets/images/Asotin_RCA_website_12_16.png" alt="Asotin_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/LCWandLolo_RCA_12_16.png"><img src="/RCAT/assets/images/LCWandLolo_RCA_12_16.png" alt="LCWandLolo_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lochsa_RCA_website_12_16.png"><img src="/RCAT/assets/images/Lochsa_RCA_website_12_16.png" alt="Lochsa_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/SFCW_RCA_webmap_12_16.png"><img src="/RCAT/assets/images/SFCW_RCA_webmap_12_16.png" alt="SFCW_RCA_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Lemhi_RCA_website_12_16.png"><img src="/RCAT/assets/images/Lemhi_RCA_website_12_16.png" alt="Lemhi_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/YF_RCA_webmap_12_16.png"><img src="/RCAT/assets/images/YF_RCA_webmap_12_16.png" alt="YF_RCA_webmap_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/Upper_Salmon_RCA_website_12_16.png"><img src="/RCAT/assets/images/Upper_Salmon_RCA_website_12_16.png" alt="Upper_Salmon_RCA_website_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/John_day_RCA_12_16.png"><img src="/RCAT/assets/images/John_day_RCA_12_16.png" alt="John_day_RCA_12_16" /></a></p>
-
-<p><a href="/RCAT/assets/images/hr/UGR__RCA_12_16.png"><img src="/RCAT/assets/images/UGR__RCA_12_16.png" alt="UGR__RCA_12_16" /></a></p>
-
+<p>Final Network Output from the NHD Network Builder</p>
 </section>
     </div>
     <div id="sidebar" class="large-4 columns large-pull-8">

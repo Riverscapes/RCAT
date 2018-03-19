@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>RCAT</title>
+
+      <meta name="viewport" content="width=device-width">
+      <link rel="stylesheet" href="/RCAT/assets/css/app.css">
+      <link rel="stylesheet" href="/RCAT/assets/css/custom.css">
+      <script src="https://use.fontawesome.com/586b1e1322.js"></script>
+      <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+
+      <link rel="apple-touch-icon" sizes="57x57" href="/assets/images/favicons/apple-icon-57x57.png">
+      <link rel="apple-touch-icon" sizes="60x60" href="/assets/images/favicons/apple-icon-60x60.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="/assets/images/favicons/apple-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="76x76" href="/assets/images/favicons/apple-icon-76x76.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="/assets/images/favicons/apple-icon-114x114.png">
+      <link rel="apple-touch-icon" sizes="120x120" href="/assets/images/favicons/apple-icon-120x120.png">
+      <link rel="apple-touch-icon" sizes="144x144" href="/assets/images/favicons/apple-icon-144x144.png">
+      <link rel="apple-touch-icon" sizes="152x152" href="/assets/images/favicons/apple-icon-152x152.png">
+      <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/favicons/apple-icon-180x180.png">
+      <link rel="icon" type="image/png" sizes="192x192"  href="/assets/images/favicons/android-icon-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicons/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicons/favicon-96x96.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicons/favicon-16x16.png">
+      <link rel="manifest" href="/assets/images/favicons/manifest.json">
+      <meta name="msapplication-TileColor" content="#ffffff">
+      <meta name="msapplication-TileImage" content="/assets/images/favicons/ms-icon-144x144.png">
+      <meta name="theme-color" content="#ffffff">
+
+      <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <![endif]-->
+  </head>
+
+  <body>
+
+  <header>
+    <div id="topbarnav"></div>
+    <div class="text-center callout large">
+      
+
+
+      <h4 class="subheader show-for-medium"><a href="/RCAT/">RCAT</a></h4>
+      <h1>Valley Bottom Extraction Tool (VBET)</h1>
+        
+      
+    </div>
+  </header>
+
+  <div id="inner" class="row">
+    <div id="main" class="large-8 columns large-push-4">
+      <section><p>A valley bottom is a low lying area of a valley comprised of both the stream channel and contemporary floodplain. This area also represents the maximum possible extent of riparian areas of the streams associated with the valley bottom. VBET uses a minimum of two input datasets, a Digital Elevation Model (DEM) and a stream network to create a polygon representing the valley bottom. This valley bottom polygon is then used as an extent for the riparian condition analyses in this toolbox.</p>
+
+<h2 id="pre-processing">Pre-Processing</h2>
+<p>Stream network preparation: a stream network for the area of interest must first be prepared. See NHD Network Builder Tool.
+DEM preparation: A DEM should be downloaded and clipped to the extent of the analysis area (ie match the extent of the stream network). The DEM should have a projected coordinate system that matches the selected coordinate system for the stream network.
+Drainage area raster: optionally, a flow accumulation raster can be derived, and converted to a drainage area raster (units of square kilometers) to be used in the VBET tool. If this is not done beforehand, it will be performed automatically upon running the tool.
+Once the inputs are prepared, you should organize them into a project structure by running the Build VBET Project tool in the toolbox. You will be prompted to select a “project folder,” which is a location to store all inputs, outputs and metadata related to the VBET project. You may then select the inputs you plan to use. You may select multiple of any input. For example, you may wish to derive one valley bottom using a 10 m DEM, and another using 1 m LiDAR. Both datasets can be added to the project at this point. Later, when running the VBET tool, you can run the tool multiple times selecting different input datasets. At least one of each required input must be added to the project using this tool. Important: when setting up the project, there cannot be any spaces in any path names. Make sure underscores are used instead of spaces.</p>
+
+<h2 id="vbet-tool-parameters">VBET Tool Parameters</h2>
+<ul>
+  <li><strong>Project Name (optional)</strong>: you may name the project. This will be recorded in the metadata xml.</li>
+  <li><strong>Watershed HUC ID (optional)</strong>: you may add the USGS Hydrologic Unit Code if you are using these watershed boundaries. This will be recorded in the metadata xml.</li>
+  <li><strong>Watershed Name (optional)</strong>: you may add the name of the project watershed. If you are using Hydrologic Unit Codes, this should be the HUC Name that corresponds to the HUC ID. This will be recorded in the metadata xml.</li>
+  <li><strong>Select Project Folder</strong>: select the project folder that was populated using the Build VBET Project tool. <em>Note</em> - We suggest running the tool in a folder path with no spaces in the name (e.g. <code class="highlighter-rouge">c:\0_VBET\MyVBETOutput</code> 
+as opposed to <code class="highlighter-rouge">c:\0 VBET\My V-BET Output\</code>
+, which can cause ArcGIS geoprocessing problems during write to disc operations).</li>
+  <li><strong>Input DEM</strong>: select the desired DEM within the project folder.</li>
+  <li><strong>Input Stream Network</strong>: select the desired stream network within the project folder. This network must consist of many segments (ie it cannot be a single dissolved feature). NHD layers are naturally segmented.</li>
+  <li><strong>Input Drainage Area Raster</strong> (optional): if you opted to create a drainage area raster beforehand and added it to the project, select it from within the project folder.
+Name Valley Bottom Output: choose a name for the valley bottom output (which will be stored in the Analyses in the project file).
+-** High Drainage Area Threshold**: enter a drainage area value (square km). Streams whose upstream drainage area is greater than this value will be considered the “large” portion of the network, whose maximum valley bottom width will be represented with the “Large Buffer Size” parameter. The default value is 250.</li>
+  <li><strong>Low Drainage Area Threshold</strong>: enter a drainage area value (square km). Streams whose upstream drainage area is less than this value will be considered the “small” portion of the network, whose maximum valley bottom width will be represented with the “Small Buffer Size” parameter. Streams whose upstream drainage area is between the high and low drainage area thresholds will be considered the “medium” portion of the network and their maximum valley bottom width represented by the “Medium Buffer Width” parameter. The default value is 25.</li>
+  <li><strong>Large Buffer Size</strong>: the large buffer size represents half of the width of the widest portions of the valley (generally broader alluvial valleys) in the lower portion of the area of analysis. This number can be obtained using the measure tool in either ArcMap or Google Earth prior to running the tool.</li>
+  <li><strong>Medium Buffer Size</strong>: the medium buffer size represents half of the width of the valley in areas where confined headwater streams transition to slightly wider valleys where they become partly confined.
+Again, this number can be obtained beforehand in a GIS. Look for areas in the area of analysis where confined headwaters transition into partly confined valleys to make the measurement.</li>
+  <li><strong>Small Buffer Size</strong>: the small buffer size represents half the width of the valley in confined headwater type settings. Measurements can be made prior to running the tool to obtain this value. A value of around 25 meters seems to work well in most cases.</li>
+  <li><strong>Minimum Buffer Size</strong>: in some areas the slope is to steep or channel too confined to pick up the valley bottom. To ensure a continous valley bottom polygon as an output, the minimum buffer fills in these gaps.
+A value of ~8 to 10 meters is generally appropriate.</li>
+</ul>
+
+<p>NOTE: the buffers represent the maximum extent of the valley bottom for each of the given settings. If the output is going to be manually edited to achieve higher accuracy, it is generally better to slightly underestimate the valley bottom and add to it than it is to overestimate the valley bottom and trim off of it. The small buffer and minimum buffer (headwaters) are the exceptions to this rule. Generally in these areas, the stream network is not accurate enough to perfectly delineate the valley bottom, and in order to capture everything a small degree of over exaggeration is necessary.</p>
+
+<ul>
+  <li><strong>Large Slope Threshold</strong>: enter a value that represents the upper limit of slopes that will be included in the valley bottom for the ‘large’ portions of the network. The default value is 5 degrees.</li>
+  <li><strong>Medium Slope Threshold</strong>: enter a value that represents the upper limit of slopes that will be included in the valley bottom for the ‘medium’ portions of the network. The default is 7 degrees.</li>
+  <li><strong>Small Slope Threshold</strong>: enter a value that represents the upper limit of slopes that will be included in the valley bottoms for the “small” portions of the network. The default value is 12 degrees.</li>
+  <li><strong>Scratch Workspace</strong>: a file geodatabase where temporary files are stored. The default is the default geodatabase in Arc.</li>
+  <li><strong>Aggregation Distance</strong>: in areas where the network is not continuous, there will be multiple valley bottom polygons as output. This distance is the distance below which two polygons will be aggregated together. The dafault value is 150 meters.</li>
+  <li><strong>Minimum Polygon Area</strong> to Keep in Output: any polygon in the output that is smaller than this size (square meters) will be removed from the final output. The default value is 30,000 square meters.</li>
+  <li><strong>Minimum Hole Area</strong> to Keep in Output: holes in the output polygons (generally caused by elevated areas in the middle of low lying areas) smaller than the specified size (in square meters) will be removed from the output. The default value is 50,000 square meters.</li>
+</ul>
+
+<p>After the tool has been run, it can be rerun using any combination of input data from within the project. Each subsequent output will be stored in a new folder.</p>
+
+<p>A 10 meter DEM clipped to an area of analysis (HUC 8 Watershed)
+<img src="/RCAT/assets/images/VBET_dem.png" alt="vbetoutput" /></p>
+
+<p>A perennial network prepared using the NHD Network Builder Tool
+<img src="/RCAT/assets/images/vbetnetwork.png" alt="vbetoutput" /></p>
+
+<h2 id="output">Output</h2>
+
+<p>Initial output of the VBET tool for the entire area of analysis</p>
+
+<p><img src="/RCAT/assets/images/vbetoutput.png" alt="vbetoutput" /></p>
+
+<p>Zoomed in view of the VBET output</p>
+
+<p><img src="/RCAT/assets/images/vbetzoom.png" alt="vbetoutput" /></p>
+</section>
+    </div>
+    <div id="sidebar" class="large-4 columns large-pull-8">
+        
+	
+	<div class="title-bar">
+		<div class="title-bar-title"><i class="fa fa-file-text"></i> Page Contents</div>		
+	</div>
+	<div id="toc"></div>
+	
+
+
+<div class="title-bar">
+	<div class="title-bar-title"><i class="fa fa-sitemap"></i> Site Contents
+		<div id="menuCtls" class="button-group tiny show-for-medium">
+				<span id="expand" class="button primary fa fa-plus has-tip top" data-tooltip title="Expand all items" aria-haspopup="true" data-disable-hover="false" ></span>
+				<span id="contract" class="button primary fa fa-minus has-tip top" data-tooltip title="Contract all items" aria-haspopup="true" data-disable-hover="false" ></span>
+			</div>	
+	</div>
+</div>
+<div id="sidenav">
+			<ul id='HTMLOnlyNav'>							<li><a href='/RCAT/CRBImplementation.html'>Columbia River Basin (CRB) Implementation</a></li>							<li><a href='/RCAT/CRBR-CATMapAtlas.html'>CRB R-CAT Map Atlas</a></li>							<li><a href='/RCAT/Documentation/RCAT.html'></a></li>							<li><a href='/RCAT/Documentation/Version_1.0/NHD.html'>NHD Network Builder Tool</a></li>							<li><a href='/RCAT/Documentation/Version_1.0/RCA.html'>Riparian Condition Assessment (RCA)</a></li>							<li><a href='/RCAT/Documentation/Version_1.0/RVD.html'>Riparian Vegetation Departure (RVD)</a></li>							<li><a href='/RCAT/Documentation/Version_1.0/VBET.html'>Valley Bottom Extraction Tool (VBET)</a></li>							<li><a href='/RCAT/InterpretingRCATOutputs.html'>Interpreting RCAT Outputs</a></li>							<li><a href='/RCAT/Landfire.html'>LANDFIRE Data Limitations</a></li>							<li><a href='/RCAT/R-CATApplications.html'>R-CAT Applications</a></li>							<li><a href='/RCAT/UtahImplementation.html'>Utah Implementation</a></li>							<li><a href='/RCAT/UtahR-CATMapAtlas.html'>Utah R-CAT Map Atlas</a></li>							<li><a href='/RCAT/WeberRiverStylesComparison.html'>Weber River Styles Comparison</a></li>		</ul>	
+</div>
+
+      </div>
+  </div>
+
+    <footer class="row">
+    <div class="large-12 columns">
+© Copyright <script>var year = new Date();document.write(year.getFullYear());</script>
+    <a href="http://www.northarrowresearch.com" target="_blank">North Arrow Research</a>
+    </div>
+</footer>
+    <script type="text/javascript">var NAVTitle = "RCAT";var NAVHome = "/RCAT";var NAVPages = [{url: "/CRBImplementation.html",absurl: "/RCAT/CRBImplementation.html",slug: "CRBImplementation.html",title: "Columbia River Basin (CRB) Implementation",weight: ""},{url: "/CRBR-CATMapAtlas.html",absurl: "/RCAT/CRBR-CATMapAtlas.html",slug: "CRBR-CATMapAtlas.html",title: "CRB R-CAT Map Atlas",weight: ""},{url: "/Documentation/RCAT.html",absurl: "/RCAT/Documentation/RCAT.html",slug: "RCAT.html",title: "",weight: ""},{url: "/Documentation/Version_1.0/NHD.html",absurl: "/RCAT/Documentation/Version_1.0/NHD.html",slug: "NHD.html",title: "NHD Network Builder Tool",weight: ""},{url: "/Documentation/Version_1.0/RCA.html",absurl: "/RCAT/Documentation/Version_1.0/RCA.html",slug: "RCA.html",title: "Riparian Condition Assessment (RCA)",weight: ""},{url: "/Documentation/Version_1.0/RVD.html",absurl: "/RCAT/Documentation/Version_1.0/RVD.html",slug: "RVD.html",title: "Riparian Vegetation Departure (RVD)",weight: ""},{url: "/Documentation/Version_1.0/VBET.html",absurl: "/RCAT/Documentation/Version_1.0/VBET.html",slug: "VBET.html",title: "Valley Bottom Extraction Tool (VBET)",weight: ""},{url: "/InterpretingRCATOutputs.html",absurl: "/RCAT/InterpretingRCATOutputs.html",slug: "InterpretingRCATOutputs.html",title: "Interpreting RCAT Outputs",weight: ""},{url: "/Landfire.html",absurl: "/RCAT/Landfire.html",slug: "Landfire.html",title: "LANDFIRE Data Limitations",weight: ""},{url: "/R-CATApplications.html",absurl: "/RCAT/R-CATApplications.html",slug: "R-CATApplications.html",title: "R-CAT Applications",weight: ""},{url: "/UtahImplementation.html",absurl: "/RCAT/UtahImplementation.html",slug: "UtahImplementation.html",title: "Utah Implementation",weight: ""},{url: "/UtahR-CATMapAtlas.html",absurl: "/RCAT/UtahR-CATMapAtlas.html",slug: "UtahR-CATMapAtlas.html",title: "Utah R-CAT Map Atlas",weight: ""},{url: "/WeberRiverStylesComparison.html",absurl: "/RCAT/WeberRiverStylesComparison.html",slug: "WeberRiverStylesComparison.html",title: "Weber River Styles Comparison",weight: ""},];var SiteSettings = {"autoPageContents":{"active":true,"onHome":false},"sideMenu":{"homeItem":true,"startExpanded":false},"topmenu":[{"title":"About","url":"ThingsA"},{"title":"Submenu","children":[{"title":"subsub","url":"ThingsB/subpageB.html"},{"title":"SubSUBmenu","children":[{"title":"Google","url":"https://google.com"}]}]},{"title":"Config","url":"index.html"},{"title":"Deploy","url":"index.html"}]};</script>
+
+    <script src="/RCAT/assets/js/dist.js"></script>
+
+  </body>
+
+</html>
