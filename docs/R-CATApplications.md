@@ -2,11 +2,6 @@
 title: R-CAT Applications
 ---
 
-[![RCAT_Banner_Web](assets/images/RCAT_Banner_Web.png)]({{ site.url }})
-
-
-[R-CAT: Riparian Condition Assessment Tool]({{ site.url }})‎ >
-
 ### R-CAT Applications
 
 As we complete deliverable applications of R-CAT, we post them in the following sub-pages:

@@ -1,12 +1,6 @@
-### R-CAT: Riparian Condition Assessment Tool
-
-
-<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-
-![RCAT_Banner_Web](assets/images/RCAT_Banner_Web.png)
-
-
-
+---
+title: Home
+---
 
 Welcome to the R-CAT website. The Riparian Condition Assessment Tool ([R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/)) is a suite of stream network assessment tools. These tools are designed to delineate valley bottoms, assess riparian vegetation, evaluate floodplain condition and estimate recovery potential of riparian areas. The stream network models consist of the following: the Valley Bottom Extraction Tool ([V-BET]({{ site.baser.url }}/Documentation/VBET), Riparian Vegetation Departure ([RVD](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RVD)) tool, Riparian Condition Assessment ([RCA](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RCA)) tool and Riparian Recovery Potential (RRP) tool. These tools are intended to help researchers and managers assess riparian condition and recovery potential over large regions and watersheds.
 

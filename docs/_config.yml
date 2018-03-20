@@ -1,7 +1,7 @@
 # Site title will be used everywhere
 title: RCAT
 description: > # this means to ignore newlines until "baseurl:"
-  R-CAT: Riparian Condition Assessment Tool
+  R-CAT Riparian Condition Assessment Tool 
 
 # Final root url of the site. No ending slash. No subdirectory
 url: http://rcat.riverscapes.xyz/
@@ -15,7 +15,7 @@ markdown: kramdown
 # Syntax highlighter.
 highlighter: rouge
 
-# Choosing "default" layout means we don't need a "layout:default" in all our
+# Choosing "default" layout means we don't need a "layout:default" in all our 
 # front matter
 defaults:
   -
@@ -42,7 +42,7 @@ settings:
   autoPageContents:
     active: true
     onHome: true
-  # Options for the sidebar menu
+  # Options for the sidebar menu      
   sideMenu:
     homeItem: true
     startExpanded: false

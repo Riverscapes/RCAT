@@ -2,10 +2,6 @@
 title: Interpreting RCAT Outputs
 ---
 
-[![RCAT_Banner_Web](assets/images/RCAT_Banner_Web.png)]({{ site.url }})
-
-
-
 [R-CAT: Riparian Condition Assessment Tool](http://etal.joewheaton.org/rcat)‎ > ‎
 
 ### Interpreting RCAT Outputs

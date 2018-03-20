@@ -2,8 +2,6 @@
 title: Utah R-CAT Map Atlas
 ---
 
-[![RCAT_Banner_Web](assets/images/RCAT_Banner_Web.png)]({{ site.url }})
-
 ### Utah R-CAT Map Atlas
 
 This page contains static map images for all of the data products produced using R-CAT for the State of Utah. Click on individual maps to enlarge, or navigate to the bottom of the page to download full resolution map collections.
