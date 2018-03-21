@@ -12,8 +12,6 @@ title: Interpreting RCAT Outputs
 
 The V-BET output is simply an output polygon that represents the extent of the valley bottom for associated stream networks. 
 
-Test!
-
 ### Riparian Vegetation Departure (RVD)
 
 The Riparian Vegetation Departure from historic condition output is a line network, that is symbolized by default departure (in percent) of existing riparian vegetation cover from modeled historic riparian vegetation cover.
