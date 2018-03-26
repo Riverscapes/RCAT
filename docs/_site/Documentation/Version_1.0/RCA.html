@@ -7,27 +7,26 @@
       <title>RCAT</title>
 
       <meta name="viewport" content="width=device-width">
-      <link rel="stylesheet" href="/RCAT/assets/css/app.css">
-      <link rel="stylesheet" href="/RCAT/assets/css/custom.css">
+      <link rel="stylesheet" href="/assets/css/app.css">
+      <link rel="stylesheet" href="/assets/css/custom.css">
       <script src="https://use.fontawesome.com/586b1e1322.js"></script>
-      <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
 
-      <link rel="apple-touch-icon" sizes="57x57" href="/RCAT/assets/images/favicons/apple-icon-57x57.png">
-      <link rel="apple-touch-icon" sizes="60x60" href="/RCAT/assets/images/favicons/apple-icon-60x60.png">
-      <link rel="apple-touch-icon" sizes="72x72" href="/RCAT/assets/images/favicons/apple-icon-72x72.png">
-      <link rel="apple-touch-icon" sizes="76x76" href="/RCAT/assets/images/favicons/apple-icon-76x76.png">
-      <link rel="apple-touch-icon" sizes="114x114" href="/RCAT/assets/images/favicons/apple-icon-114x114.png">
-      <link rel="apple-touch-icon" sizes="120x120" href="/RCAT/assets/images/favicons/apple-icon-120x120.png">
-      <link rel="apple-touch-icon" sizes="144x144" href="/RCAT/assets/images/favicons/apple-icon-144x144.png">
-      <link rel="apple-touch-icon" sizes="152x152" href="/RCAT/assets/images/favicons/apple-icon-152x152.png">
-      <link rel="apple-touch-icon" sizes="180x180" href="/RCAT/assets/images/favicons/apple-icon-180x180.png">
-      <link rel="icon" type="image/png" sizes="192x192"  href="/RCAT/assets/images/favicons/android-icon-192x192.png">
-      <link rel="icon" type="image/png" sizes="32x32" href="/RCAT/assets/images/favicons/favicon-32x32.png">
-      <link rel="icon" type="image/png" sizes="96x96" href="/RCAT/assets/images/favicons/favicon-96x96.png">
-      <link rel="icon" type="image/png" sizes="16x16" href="/RCAT/assets/images/favicons/favicon-16x16.png">
-      <link rel="manifest" href="/RCAT/assets/images/favicons/manifest.json">
+      <link rel="apple-touch-icon" sizes="57x57" href="/assets/images/favicons/apple-icon-57x57.png">
+      <link rel="apple-touch-icon" sizes="60x60" href="/assets/images/favicons/apple-icon-60x60.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="/assets/images/favicons/apple-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="76x76" href="/assets/images/favicons/apple-icon-76x76.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="/assets/images/favicons/apple-icon-114x114.png">
+      <link rel="apple-touch-icon" sizes="120x120" href="/assets/images/favicons/apple-icon-120x120.png">
+      <link rel="apple-touch-icon" sizes="144x144" href="/assets/images/favicons/apple-icon-144x144.png">
+      <link rel="apple-touch-icon" sizes="152x152" href="/assets/images/favicons/apple-icon-152x152.png">
+      <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/favicons/apple-icon-180x180.png">
+      <link rel="icon" type="image/png" sizes="192x192"  href="/assets/images/favicons/android-icon-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicons/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicons/favicon-96x96.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicons/favicon-16x16.png">
+      <link rel="manifest" href="/assets/images/favicons/manifest.json">
       <meta name="msapplication-TileColor" content="#ffffff">
-      <meta name="msapplication-TileImage" content="/RCAT/assets/images/favicons/ms-icon-144x144.png">
+      <meta name="msapplication-TileImage" content="/assets/images/favicons/ms-icon-144x144.png">
       <meta name="theme-color" content="#ffffff">
 
       <!--[if lt IE 9]>
@@ -39,26 +38,28 @@
 
   <header>
     <div id="topbarnav"></div>
-    <div class="text-center callout large">
+    <div id="headcallout" class="text-center callout large">
       
 
-      <h4 class="subheader show-for-medium"><a href="/RCAT/">RCAT</a></h4>   
+      
+      <h4 class="subheader show-for-medium"><a href="/">RCAT</a></h4>   
       <h1>Riparian Condition Assessment (RCA)</h1>
             
       
     </div>
   </header>
 
-  <div id="inner" class="row">
-    <div id="main" class="large-8 columns large-push-4">
-      <section><p>The Riparian Condition Assessment (RCA) tool models the condition of riparian areas based on three inputs: riparian vegetation departure (as modeled using the <a href="https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/RVD">RVD</a> tool), land use intensity, and floodplain connectivity. Each segment of an input network is attributed with values on continuous scales for each of these three inputs. The output (condition) of each segment is then assessed using a fuzzy inference system. The tool produces an output polyline shapefile which includes the three model inputs as attributes, as well as an output table that contains the calculated condition for each segment which can be joined to the polyline using the “FID” field.</p>
+  <div id="inner-wrapper">
+    <div id="inner" class="row">
+      <div id="main" class="large-8 columns large-push-4">
+        <section><p>The Riparian Condition Assessment (RCA) tool models the condition of riparian areas based on three inputs: riparian vegetation departure (as modeled using the <a href="https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/RVD">RVD</a> tool), land use intensity, and floodplain connectivity. Each segment of an input network is attributed with values on continuous scales for each of these three inputs. The output (condition) of each segment is then assessed using a fuzzy inference system. The tool produces an output polyline shapefile which includes the three model inputs as attributes, as well as an output table that contains the calculated condition for each segment which can be joined to the polyline using the “FID” field.</p>
 
 <h2 id="pre-processing">Pre-Processing</h2>
 
 <ul>
-  <li>Prepare a stream network using the <a href="/RCAT/Documentation/Version_1.0/NHD">NHD Network Builder</a></li>
+  <li>Prepare a stream network using the <a href="/Documentation/Version_1.0/NHD">NHD Network Builder</a></li>
   <li>Dissolve and segment the network. (~500 meter segments work well.)</li>
-  <li>Produce a valley bottom using <a href="/RCAT/Documentation/Version_1.0/VBET">VBET</a>, and manually edit to desired accuracy.</li>
+  <li>Produce a valley bottom using <a href="/Documentation/Version_1.0/VBET">VBET</a>, and manually edit to desired accuracy.</li>
   <li>Download the LANDFIRE EVT and BpS layers from the LANDFIRE <a href="http://www.landfire.gov/">website</a> (for US Only; Equivalent vegetation layers may exist in other countries)</li>
 </ul>
 
@@ -74,7 +75,7 @@
   <li>Go through the split valley and manually fix polygons that need to be enclosed. (Areas where the stream does not intersect a polygon will be considered disconnected from the floodplain. See figure below.)</li>
 </ul>
 
-<p><img src="/RCAT/assets/images/fragvalley.png" alt="manual" /></p>
+<p><img src="/assets/images/fragvalley.png" alt="manual" /></p>
 
 <ul>
   <li>Add a field (type short int) to the split valley bottom feature and name it “Connected”.</li>
@@ -86,7 +87,7 @@
 
 <p>The figure below shows a final split valley bottom, ready for use in the tool.</p>
 
-<p><img src="/RCAT/assets/images/fp_connectivity.png" alt="fp_connectivity" /></p>
+<p><img src="/assets/images/fp_connectivity.png" alt="fp_connectivity" /></p>
 
 <h2 id="parameters">Parameters</h2>
 
@@ -112,7 +113,7 @@
   <li>The RCA output symbolized using the default symbology of the <code class="highlighter-rouge">CONDITION</code> field.</li>
 </ul>
 
-<p><img src="/RCAT/assets/images/RCAoutput.png" alt="RCAoutput" /></p>
+<p><img src="/assets/images/RCAoutput.png" alt="RCAoutput" /></p>
 
 <p>Additionally the <code class="highlighter-rouge">VEG</code> field may be of interest, and simply represents the proportion of historic vegetation cover (riparian and non-riparian) that exists on the landscape today.</p>
 
@@ -120,19 +121,19 @@
   <li>The RCA output symbolized using the <code class="highlighter-rouge">VEG</code> field to show the proportion of historic vegetation cover that exists now.</li>
 </ul>
 
-<p><img src="/RCAT/assets/images/RCA_veg.png" alt="RCAveg" /></p>
+<p><img src="/assets/images/RCA_veg.png" alt="RCAveg" /></p>
 
 <h3 id="additional-rca-output-fields">Additional RCA Output Fields</h3>
 
 <p><code class="highlighter-rouge">RVD</code>: The riparian vegetation departure score (proportion of historic riparian vegetation) for the given stream segment. <code class="highlighter-rouge">LUI</code>: The Land Use Intensity index, on a scale from 0 (high) to 3 (low). <code class="highlighter-rouge">CONNECT</code>: The proportion of the polygon (floodplain) associated with stream segment that is accessible to the stream. <code class="highlighter-rouge">COND_VAL</code>: A value on a continuous index from 0 to 1 that represents the condition of the riparian area for unconfined streams. (a value of 0 means that the stream is confined and the value is not relevant.)</p>
 
-<p><img src="/RCAT/assets/images/RCA_workflow.png" alt="rca_workflow" /></p>
+<p><img src="/assets/images/RCA_workflow.png" alt="rca_workflow" /></p>
 
 <p>Conceptual diagram showing how riparian condition assessment is calculated</p>
 </section>
-    </div>
-    <div id="sidebar" class="large-4 columns large-pull-8">
-        
+      </div>
+      <div id="sidebar" class="large-4 columns large-pull-8">
+          
 	
 	<div class="title-bar">
 		<div class="title-bar-title"><i class="fa fa-file-text"></i> Page Contents</div>		
@@ -150,21 +151,24 @@
 	</div>
 </div>
 <div id="sidenav">
-			<ul id='HTMLOnlyNav'>							<li><a href='/RCAT/CRBImplementation.html'>Columbia River Basin (CRB) Implementation</a></li>							<li><a href='/RCAT/CRBR-CATMapAtlas.html'>CRB R-CAT Map Atlas</a></li>							<li><a href='/RCAT/Documentation/RCAT.html'></a></li>							<li><a href='/RCAT/Documentation/Version_1.0/NHD.html'>NHD Network Builder Tool</a></li>							<li><a href='/RCAT/Documentation/Version_1.0/RCA.html'>Riparian Condition Assessment (RCA)</a></li>							<li><a href='/RCAT/Documentation/Version_1.0/RVD.html'>Riparian Vegetation Departure (RVD)</a></li>							<li><a href='/RCAT/Documentation/Version_1.0/VBET.html'>Valley Bottom Extraction Tool (VBET)</a></li>							<li><a href='/RCAT/InterpretingRCATOutputs.html'>Interpreting RCAT Outputs</a></li>							<li><a href='/RCAT/Landfire.html'>LANDFIRE Data Limitations</a></li>							<li><a href='/RCAT/R-CATApplications.html'>R-CAT Applications</a></li>							<li><a href='/RCAT/UtahImplementation.html'>Utah Implementation</a></li>							<li><a href='/RCAT/UtahR-CATMapAtlas.html'>Utah R-CAT Map Atlas</a></li>							<li><a href='/RCAT/WeberRiverStylesComparison.html'>Weber River Styles Comparison</a></li>							<li><a href='/RCAT/'>Home</a></li>		</ul>	
+			<ul id='HTMLOnlyNav'>							<li><a href='/CRBImplementation.html'>Columbia River Basin (CRB) Implementation</a></li>							<li><a href='/CRBR-CATMapAtlas.html'>CRB R-CAT Map Atlas</a></li>							<li><a href='/Documentation/RCAT.html'></a></li>							<li><a href='/Documentation/Version_1.0/NHD.html'>NHD Network Builder Tool</a></li>							<li><a href='/Documentation/Version_1.0/RCA.html'>Riparian Condition Assessment (RCA)</a></li>							<li><a href='/Documentation/Version_1.0/RVD.html'>Riparian Vegetation Departure (RVD)</a></li>							<li><a href='/Documentation/Version_1.0/VBET.html'>Valley Bottom Extraction Tool (VBET)</a></li>							<li><a href='/InterpretingRCATOutputs.html'>Interpreting RCAT Outputs</a></li>							<li><a href='/Landfire.html'>LANDFIRE Data Limitations</a></li>							<li><a href='/R-CATApplications.html'>R-CAT Applications</a></li>							<li><a href='/UtahImplementation.html'>Utah Implementation</a></li>							<li><a href='/UtahR-CATMapAtlas.html'>Utah R-CAT Map Atlas</a></li>							<li><a href='/WeberRiverStylesComparison.html'>Weber River Styles Comparison</a></li>							<li><a href='/'>Home</a></li>		</ul>	
 </div>
 
-      </div>
+        </div>
+    </div>
   </div>
 
-    <footer class="row">
-    <div class="large-12 columns">
-© Copyright <script>var year = new Date();document.write(year.getFullYear());</script>
-    <a href="http://www.northarrowresearch.com" target="_blank">North Arrow Research</a>
-    </div>
-</footer>
-    <script type="text/javascript">var NAVTitle = "RCAT";var NAVHome = "/RCAT";var NAVPages = [{url: "/CRBImplementation.html",absurl: "/RCAT/CRBImplementation.html",slug: "CRBImplementation.html",title: "Columbia River Basin (CRB) Implementation",weight: ""},{url: "/CRBR-CATMapAtlas.html",absurl: "/RCAT/CRBR-CATMapAtlas.html",slug: "CRBR-CATMapAtlas.html",title: "CRB R-CAT Map Atlas",weight: ""},{url: "/Documentation/RCAT.html",absurl: "/RCAT/Documentation/RCAT.html",slug: "RCAT.html",title: "",weight: ""},{url: "/Documentation/Version_1.0/NHD.html",absurl: "/RCAT/Documentation/Version_1.0/NHD.html",slug: "NHD.html",title: "NHD Network Builder Tool",weight: ""},{url: "/Documentation/Version_1.0/RCA.html",absurl: "/RCAT/Documentation/Version_1.0/RCA.html",slug: "RCA.html",title: "Riparian Condition Assessment (RCA)",weight: ""},{url: "/Documentation/Version_1.0/RVD.html",absurl: "/RCAT/Documentation/Version_1.0/RVD.html",slug: "RVD.html",title: "Riparian Vegetation Departure (RVD)",weight: ""},{url: "/Documentation/Version_1.0/VBET.html",absurl: "/RCAT/Documentation/Version_1.0/VBET.html",slug: "VBET.html",title: "Valley Bottom Extraction Tool (VBET)",weight: ""},{url: "/InterpretingRCATOutputs.html",absurl: "/RCAT/InterpretingRCATOutputs.html",slug: "InterpretingRCATOutputs.html",title: "Interpreting RCAT Outputs",weight: ""},{url: "/Landfire.html",absurl: "/RCAT/Landfire.html",slug: "Landfire.html",title: "LANDFIRE Data Limitations",weight: ""},{url: "/R-CATApplications.html",absurl: "/RCAT/R-CATApplications.html",slug: "R-CATApplications.html",title: "R-CAT Applications",weight: ""},{url: "/UtahImplementation.html",absurl: "/RCAT/UtahImplementation.html",slug: "UtahImplementation.html",title: "Utah Implementation",weight: ""},{url: "/UtahR-CATMapAtlas.html",absurl: "/RCAT/UtahR-CATMapAtlas.html",slug: "UtahR-CATMapAtlas.html",title: "Utah R-CAT Map Atlas",weight: ""},{url: "/WeberRiverStylesComparison.html",absurl: "/RCAT/WeberRiverStylesComparison.html",slug: "WeberRiverStylesComparison.html",title: "Weber River Styles Comparison",weight: ""},{url: "/",absurl: "/RCAT/",slug: "",title: "Home",weight: ""},];var SiteSettings = {"autoPageContents":{"active":true,"onHome":true},"sideMenu":{"homeItem":true,"startExpanded":false}};</script>
 
-    <script src="/RCAT/assets/js/dist.js"></script>
+    <footer id="footer" class="row">
+<div id="rightslogo">
+    <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank">
+        <img src="/assets/images/cc-watermarks-riverscapes_orig.png" alt="Picture">
+    </a>
+</div>
+</footer>
+    <script type="text/javascript">var NAVTitle = "RCAT";var NAVHome = "";var NAVPages = [{url: "/CRBImplementation.html",absurl: "/CRBImplementation.html",slug: "CRBImplementation.html",title: "Columbia River Basin (CRB) Implementation",weight: ""},{url: "/CRBR-CATMapAtlas.html",absurl: "/CRBR-CATMapAtlas.html",slug: "CRBR-CATMapAtlas.html",title: "CRB R-CAT Map Atlas",weight: ""},{url: "/Documentation/RCAT.html",absurl: "/Documentation/RCAT.html",slug: "RCAT.html",title: "",weight: ""},{url: "/Documentation/Version_1.0/NHD.html",absurl: "/Documentation/Version_1.0/NHD.html",slug: "NHD.html",title: "NHD Network Builder Tool",weight: ""},{url: "/Documentation/Version_1.0/RCA.html",absurl: "/Documentation/Version_1.0/RCA.html",slug: "RCA.html",title: "Riparian Condition Assessment (RCA)",weight: ""},{url: "/Documentation/Version_1.0/RVD.html",absurl: "/Documentation/Version_1.0/RVD.html",slug: "RVD.html",title: "Riparian Vegetation Departure (RVD)",weight: ""},{url: "/Documentation/Version_1.0/VBET.html",absurl: "/Documentation/Version_1.0/VBET.html",slug: "VBET.html",title: "Valley Bottom Extraction Tool (VBET)",weight: ""},{url: "/InterpretingRCATOutputs.html",absurl: "/InterpretingRCATOutputs.html",slug: "InterpretingRCATOutputs.html",title: "Interpreting RCAT Outputs",weight: ""},{url: "/Landfire.html",absurl: "/Landfire.html",slug: "Landfire.html",title: "LANDFIRE Data Limitations",weight: ""},{url: "/R-CATApplications.html",absurl: "/R-CATApplications.html",slug: "R-CATApplications.html",title: "R-CAT Applications",weight: ""},{url: "/UtahImplementation.html",absurl: "/UtahImplementation.html",slug: "UtahImplementation.html",title: "Utah Implementation",weight: ""},{url: "/UtahR-CATMapAtlas.html",absurl: "/UtahR-CATMapAtlas.html",slug: "UtahR-CATMapAtlas.html",title: "Utah R-CAT Map Atlas",weight: ""},{url: "/WeberRiverStylesComparison.html",absurl: "/WeberRiverStylesComparison.html",slug: "WeberRiverStylesComparison.html",title: "Weber River Styles Comparison",weight: ""},{url: "/",absurl: "/",slug: "",title: "Home",weight: ""},];var SiteSettings = {"autoPageContents":{"active":true,"onHome":true},"sideMenu":{"homeItem":true,"startExpanded":false},"topmenu":[{"title":"Riverscapes","childern":[{"title":"Model Home","url":"index"},{"title":"Riverscapes Home","url":"http://riverscapes.xyz"},{"title":"About Riverscapes","url":"http://riverscapes.xyz/about.html"},{"title":"Who We Are","url":"http://riverscapes.xyz/who-we-are.html"},{"title":"News","url":"http://riverscapes.xyz/news.html"}]},{"title":"RC Tools","url":"http://riverscapes.xyz/rc-tools.html"},{"title":"RC Science","url":"http://riverscapes.xyz/rc-science.html"},{"title":"RC Data","url":"http://riverscapes.xyz/rc-data.html"},{"title":"RC Help","url":"http://riverscapes.xyz/rc-help.html"}]};</script>
+
+    <script src="/assets/js/dist.js"></script>
 
   </body>
 
