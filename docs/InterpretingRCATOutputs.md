@@ -4,9 +4,7 @@ title: Interpreting RCAT Outputs
 
 [R-CAT: Riparian Condition Assessment Tool](http://etal.joewheaton.org/rcat)‎ > ‎
 
-### Interpreting RCAT Outputs
-
-[TOC]
+## Interpreting RCAT Outputs
 
 ### Valley Bottom Extraction Tool (V-BET)
 
