@@ -16,7 +16,7 @@ The V-BET output is simply an output polygon that represents the extent of the v
 
 The Riparian Vegetation Departure from historic condition output is a line network, that is symbolized by default departure (in percent) of existing riparian vegetation cover from modeled historic riparian vegetation cover.
 
-![Legend_BRAT_ConflictProb]({{ site.baseurl }}/assets/images/Legend_BRAT_ConflictProb.png)
+![rvd_legend]({{ site.baseurl }}/assets/images/rvd_legend.PNG)
 
  *Figure 1 - The default symbolization for the Riparian Vegetation Departure from historic condition output*
 
