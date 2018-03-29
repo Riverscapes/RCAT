@@ -2,7 +2,7 @@
 title: Interpreting RCAT Outputs
 ---
 
-[R-CAT: Riparian Condition Assessment Tool](http://etal.joewheaton.org/rcat)‎ > ‎
+[R-CAT: Riparian Condition Assessment Toolbox](http://etal.joewheaton.org/rcat)‎ > ‎
 
 ## Interpreting RCAT Outputs
 
