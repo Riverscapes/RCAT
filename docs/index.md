@@ -4,7 +4,7 @@ title: Home
 
 Welcome to the R-CAT website. The Riparian Condition Assessment Toolbox ([R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/)) is a suite of stream network assessment tools. These tools are designed to delineate valley bottoms, assess riparian vegetation, evaluate floodplain condition and estimate recovery potential of riparian areas. The stream network models consist of the following: the Valley Bottom Extraction Tool ([V-BET]({{ site.baser.url }}/Documentation/VBET), Riparian Vegetation Departure ([RVD](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RVD)) tool, Riparian Condition Assessment ([RCA](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RCA)) tool and Riparian Recovery Potential (RRP) tool. These tools are intended to help researchers and managers assess riparian condition and recovery potential over large regions and watersheds.
 
-These network models were first developed and implemented across the Colorado Plateau Ecoregion and the state of Utah (see [Utah Implementation](http://etal.joewheaton.org/rcat/r-cat-applications/utah) page). The models are now being run for the Interior Columbia River Basin (see [Columbia River Basin Implementation](http://etal.joewheaton.org/rcat/r-cat-applications/columbia-river-basin-implementation) page) .
+These network models were first developed and implemented across the Colorado Plateau Ecoregion and the state of Utah (see [Utah Implementation]({{ site.baseurl }}/UtahImplementation) page). The models are now being run for the Interior Columbia River Basin (see [Columbia River Basin Implementation]({{ site.baseurl }}/CRBImplementation) page) .
 
 The [R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/) models can be run with nationally available existing GIS datasets or high resolution landcover and DEM datasets.  
 
@@ -12,7 +12,7 @@ The [R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/
 
 ### Development Team
 
-The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton.org/people/researchers-technicians/Wally), [Jordan Gilbert](http://etal.joewheaton.org/people/researchers-technicians/jordan-gilbert), [Joe Wheaton](http://etal.joewheaton.org/people/dr-joe-wheaton), [Josh Gilbert](http://etal.joewheaton.org/people/researchers-technicians/joshua_gilbert), [Chalese Hafen](http://etal.joewheaton.org/people/researchers-technicians/chalese-hafen), [Martha Jensen](http://etal.joewheaton.org/people/students/martha-jensen), [Elijah Portugal](http://etal.joewheaton.org/system/errors/NodeNotFound?suri=wuid:gx:63ea5df2319bfdec), and [Peter McHugh](http://etal.joewheaton.org/people/researchers-technicians/pete-mchugh).
+The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton.org/wally-macfarlane.html), [Jordan Gilbert](http://etal.joewheaton.org/jordan-gilbert), [Joe Wheaton](http://etal.joewheaton.org/joe-wheaton), [Josh Gilbert](http://etal.joewheaton.org/joshua_gilbert), [Chalese Hafen](http://etal.joewheaton.org/chalese-hafen), [Martha Jensen](http://etal.joewheaton.org/martha-jensen), [Elijah Portugal](http://etal.joewheaton.org/elijah-portugal.html), and [Peter McHugh](http://etal.joewheaton.org/pete-mchugh).
 
 ### Publications
 
@@ -29,7 +29,7 @@ The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton
 
 ### Interested In Helping?
 
- If you are interested in helping us improve R-CAT please contact us. We view these [R-CAT products ](http://etal.joewheaton.org/rcat/r-cat-applications/utah)as a first iteration and as better input data is available the output products will improve proportionally.
+ If you are interested in helping us improve R-CAT please contact us. We view these [R-CAT products ]({{ site.baseurl }}/UtahR-CATMapAtlas)as a first iteration and as better input data is available the output products will improve proportionally.
 
 ### R-CAT products Financial Support
 
