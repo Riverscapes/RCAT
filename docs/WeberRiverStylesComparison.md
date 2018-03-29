@@ -145,7 +145,7 @@ We performed the comparison by analyzing the output distributions of the RS and 
 
 Figure 13 - Comparison of River Styles geomorphic condition outputs to the Riparian Condition Assessment (RCA) tool outputs.
 
-Table 12 - Results of of Person’s Chi-Square statistical tests comparing the outputs from the Riparian Condition Assessment Tool.
+Table 12 - Results of of Person’s Chi-Square statistical tests comparing the outputs from the Riparian Condition Assessment Toolbox.
 
 | **Comparison**          | **RCA VS River Styles Condition** | **RRP VS River Styles Recovery Potential** |
 | ----------------------- | --------------------------------- | ---------------------------------------- |
@@ -223,7 +223,7 @@ We performed the same comparison described above in the condition section and th
 
 Figure 15 - Comparison of River Styles recovery potential outputs to the Riparian Recovery Potential (RRP) tool outputs.
 
-Table 13 - Results of Person’s Chi-Square statistical tests comparing the outputs from the Riparian Condition Assessment Tool.
+Table 13 - Results of Person’s Chi-Square statistical tests comparing the outputs from the Riparian Condition Assessment Toolbox.
 
 | **Comparison**          | **RCA VS River Style Condition** | **RRP VS River Style Recovery Potential** |
 | ----------------------- | -------------------------------- | ---------------------------------------- |

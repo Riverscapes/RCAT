@@ -1,9 +1,9 @@
 ---
-tittle: Riparian Condition Assessment Tools (RCAT)
+title: Riparian Condition Assessment Toolbox (RCAT)
 ---
 ## Introduction
 
-The Riparian Condition Assessment Tools is an ArcGIS python toolbox created to remotely assess the condition of riparian and floodplain areas over fairly large spatial scales (e.g. HUC8 watersheds) using relatively coarse, nationally avialable datasets as inputs.
+The Riparian Condition Assessment Toolbox is an ArcGIS python toolbox created to remotely assess the condition of riparian and floodplain areas over fairly large spatial scales (e.g. HUC8 watersheds) using relatively coarse, nationally avialable datasets as inputs.
 
 ## Dependencies
 

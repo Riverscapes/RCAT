@@ -2,9 +2,9 @@
 title: Home
 ---
 
-Welcome to the R-CAT website. The Riparian Condition Assessment Tool ([R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/)) is a suite of stream network assessment tools. These tools are designed to delineate valley bottoms, assess riparian vegetation, evaluate floodplain condition and estimate recovery potential of riparian areas. The stream network models consist of the following: the Valley Bottom Extraction Tool ([V-BET]({{ site.baser.url }}/Documentation/VBET), Riparian Vegetation Departure ([RVD](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RVD)) tool, Riparian Condition Assessment ([RCA](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RCA)) tool and Riparian Recovery Potential (RRP) tool. These tools are intended to help researchers and managers assess riparian condition and recovery potential over large regions and watersheds.
+Welcome to the R-CAT website. The Riparian Condition Assessment Toolbox ([R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/)) is a suite of stream network assessment tools. These tools are designed to delineate valley bottoms, assess riparian vegetation, evaluate floodplain condition and estimate recovery potential of riparian areas. The stream network models consist of the following: the Valley Bottom Extraction Tool ([V-BET]({{ site.baser.url }}/Documentation/VBET), Riparian Vegetation Departure ([RVD](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RVD)) tool, Riparian Condition Assessment ([RCA](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/Version_1.0/RCA)) tool and Riparian Recovery Potential (RRP) tool. These tools are intended to help researchers and managers assess riparian condition and recovery potential over large regions and watersheds.
 
-These network models were first developed and implemented across the Colorado Plateau Ecoregion and the state of Utah (see [Utah Implementation](http://etal.joewheaton.org/rcat/r-cat-applications/utah) page). The models are now being run for the Interior Columbia River Basin (see [Columbia River Basin Implementation](http://etal.joewheaton.org/rcat/r-cat-applications/columbia-river-basin-implementation) page) . 
+These network models were first developed and implemented across the Colorado Plateau Ecoregion and the state of Utah (see [Utah Implementation](http://etal.joewheaton.org/rcat/r-cat-applications/utah) page). The models are now being run for the Interior Columbia River Basin (see [Columbia River Basin Implementation](http://etal.joewheaton.org/rcat/r-cat-applications/columbia-river-basin-implementation) page) .
 
 The [R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/) models can be run with nationally available existing GIS datasets or high resolution landcover and DEM datasets.  
 
@@ -18,7 +18,7 @@ The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton
 
 - Gilbert, J.T, W.W Macfarlane, M.L. and J.M. Wheaton 2016.  V-BET: A GIS tool for delineating valley bottoms across entire drainage networks. Computers and Geosciences 97:1-14.  [http://www.sciencedirect.com/science/article/pii/S0098300416301935](http://www.sciencedirect.com/science/article/pii/S0098300416301935)
 - Macfarlane, W.W., J.T. Gilbert, M.L. Jensen, J. D. Gilbert, N. Hough-Snee, P.A. McHugh, J.M. Wheaton, and S.N. Bennett 2016. Riparian vegetation as an indicator of riparian condition: detecting departures from historic condition across the North American West. Journal of Environmental Management. [http://www.sciencedirect.com/science/article/pii/S0301479716308489](http://www.sciencedirect.com/science/article/pii/S0301479716308489)
-- In prep. Macfarlane, W.W., J.T. Gilbert, M.L., N. Hough-Snee, C. Saunders , C.W. Hafen, and J.M. Wheaton. What is the condition of floodplain riparian areas of the western U.S.? Identifying impaired floodplain ecosystems using the Riparian Condition Assessment tool (RCA). For submission to Environmental Management. 
+- In prep. Macfarlane, W.W., J.T. Gilbert, M.L., N. Hough-Snee, C. Saunders , C.W. Hafen, and J.M. Wheaton. What is the condition of floodplain riparian areas of the western U.S.? Identifying impaired floodplain ecosystems using the Riparian Condition Assessment toolbox (RCA). For submission to Environmental Management. 
 
 ### Limitations of Outputs Driven with Nationally Available Data
 
@@ -35,7 +35,7 @@ The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton
 
 The development of R-CAT was primarily initially funded by:
 
-1.  The [Bureau of Land Management](http://blm.gov/) (BLM), 
+1.  The [Bureau of Land Management](http://blm.gov/) (BLM),
 2.  The [Utah Department of Natural Resources](http://naturalresources.utah.gov/), through the Utah Endangered Species Mitigation Fund (ESMF), and
 3.  The [Utah Division of Wildlife Resources](http://wildlife.utah.gov/) (UDWR) through Pittman-Robertson Wildlife Restoration Act (PR) funds.
 
