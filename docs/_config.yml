@@ -1,5 +1,5 @@
 # Site title will be used everywhere
-title: ![RCAT_Logo-wGrayTxt]({{site.baseurl }}/assets/images/RCAT_Logo-wGrayTxt.png)
+title: RCAT
 description: > # this means to ignore newlines until "baseurl:"
   R-CAT Riparian Condition Assessment Tool 
 
