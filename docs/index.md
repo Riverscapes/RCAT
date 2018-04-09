@@ -12,7 +12,7 @@ The [R-CAT](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/
 
 ### Development Team
 
-The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton.org/wally-macfarlane.html), [Jordan Gilbert](http://etal.joewheaton.org/jordan-gilbert), [Joe Wheaton](http://etal.joewheaton.org/joe-wheaton), [Josh Gilbert](http://etal.joewheaton.org/joshua_gilbert), [Chalese Hafen](http://etal.joewheaton.org/chalese-hafen), [Martha Jensen](http://etal.joewheaton.org/martha-jensen), [Elijah Portugal](http://etal.joewheaton.org/elijah-portugal.html), and [Peter McHugh](http://etal.joewheaton.org/pete-mchugh).
+The ETAL development team consisted of [Wally Macfarlane](http://etal.joewheaton.org/wally-macfarlane.html), [Jordan Gilbert](http://etal.joewheaton.org/jordan-gilbert), [Joe Wheaton](http://etal.joewheaton.org/joe-wheaton), [Josh Gilbert](http://etal.joewheaton.org/joshua-gilbert), [Chalese Hafen](http://etal.joewheaton.org/chalese-hafen), [Martha Jensen](http://etal.joewheaton.org/martha-jensen), [Elijah Portugal](http://etal.joewheaton.org/elijah-portugal.html), and [Peter McHugh](http://etal.joewheaton.org/pete-mchugh).
 
 ### Publications
 
