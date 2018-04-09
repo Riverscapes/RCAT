@@ -8,7 +8,7 @@ The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to d
 
 - Prepare a network using the [NHD Network Builder]({{ site.baseurl }}/Documentation/Version_1.0/NHD)
 - Dissolve and segment the network. (~500 meter segments work well.)
-- Produce a valley bottom using [VBET]({{ site.baseurl }}/Documentation/Version_0.1/VBET), and manually edit to desired accuracy.
+- Produce a valley bottom using [VBET]({{ site.baseurl }}/Documentation/Version_1.0/VBET), and manually edit to desired accuracy.
 - Download the LANDFIRE EVT and BpS layers from the LANDFIRE [website](http://www.landfire.gov/) (for US Only; Equivalent vegetation layers may exist in other countries)
 
 ## Parameters
