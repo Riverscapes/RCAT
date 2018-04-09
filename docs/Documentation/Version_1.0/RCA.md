@@ -2,7 +2,7 @@
 title: Riparian Condition Assessment (RCA)
 ---
 
-The Riparian Condition Assessment (RCA) tool models the condition of riparian areas based on three inputs: riparian vegetation departure (as modeled using the [RVD](https://bitbucket.org/jtgilbert/riparian-condition-assessment-tools/wiki/Tool_Documentation/RVD) tool), land use intensity, and floodplain connectivity. Each segment of an input network is attributed with values on continuous scales for each of these three inputs. The output (condition) of each segment is then assessed using a fuzzy inference system. The tool produces an output polyline shapefile which includes the three model inputs as attributes, as well as an output table that contains the calculated condition for each segment which can be joined to the polyline using the "FID" field.
+The Riparian Condition Assessment (RCA) tool models the condition of riparian areas based on three inputs: riparian vegetation departure (as modeled using the [RVD](http://rcat.riverscapes.xyz/Documentation/Version_1.0/RVD) tool), land use intensity, and floodplain connectivity. Each segment of an input network is attributed with values on continuous scales for each of these three inputs. The output (condition) of each segment is then assessed using a fuzzy inference system. The tool produces an output polyline shapefile which includes the three model inputs as attributes, as well as an output table that contains the calculated condition for each segment which can be joined to the polyline using the "FID" field.
 
 ## Pre-Processing
 
