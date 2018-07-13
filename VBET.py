@@ -124,8 +124,8 @@ def main(
             cursor.updateRow(row)
     arcpy.DeleteField_management(fcNetwork, "MAX")
 
-    if check_drain_area:
-        arcpy.AddMessage("Fixing Drainage Area...")
+    fc_fields = [field.name for field in arcpy.ListFields(fcNetwork)]
+    if check_drain_area and "ReachDist" in fc_fields:
         DA_Check.main(fcNetwork)
 
     # create buffers around the different network segments

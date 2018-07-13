@@ -19,6 +19,7 @@ def main(stream_network):
     :param stream_network: The stream network that we want to fix up
     :return:
     """
+    arcpy.AddMessage("Fixing Drainage Area...")
     stream_heaps = find_streams(stream_network)
     #check_heap(stream_network, stream_heaps)
 
