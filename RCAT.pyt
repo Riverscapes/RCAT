@@ -257,8 +257,15 @@ class VBETtool(object):
             direction="Input")
         param20.value = 50000
 
+        param21 = arcpy.Parameter(
+            displayName="Validate Drainage Area Using ReachDist",
+            name="check_drain_area",
+            datatype="GPBoolean",
+            parameterType="Optional",
+            direction="Input")
+
         return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11,
-                param12, param13, param14, param15, param16, param17, param18, param19, param20]
+                param12, param13, param14, param15, param16, param17, param18, param19, param20, param21]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -298,7 +305,8 @@ class VBETtool(object):
                   p[17].valueAsText,
                   p[18].valueAsText,
                   p[19].valueAsText,
-                  p[20].valueAsText)
+                  p[20].valueAsText,
+                  p[21].valueAsText)
         return
 
 

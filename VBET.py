@@ -19,6 +19,7 @@ from arcpy.sa import *
 import datetime
 import uuid
 import projectxml
+import RCAT_Drainage_Area_Check as DA_Check
 
 
 def main(
@@ -42,7 +43,9 @@ def main(
     scratch,
     ag_distance,
     min_area,
-    min_hole):
+    min_hole,
+    check_drain_area):
+    check_drain_area = parseInputBool(check_drain_area)
 
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
@@ -110,20 +113,20 @@ def main(
     lf = arcpy.ListFields(fcNetwork, "DA_sqkm")
     if len(lf) is 1:
         arcpy.DeleteField_management(fcNetwork, "DA_sqkm")
-    else:
-        pass
 
     arcpy.AddField_management(fcNetwork, "DA_sqkm", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcNetwork, ["MAX", "DA_sqkm"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-        if row[1] < 0.1:
-            row[1] = 0.1
-        cursor.updateRow(row)
-    del row
-    del cursor
+    with arcpy.da.UpdateCursor(fcNetwork, ["MAX", "DA_sqkm"]) as cursor:
+        for row in cursor:
+            row[1] = row[0]
+            cursor.updateRow(row)
+            if row[1] < 0.1:
+                row[1] = 0.1
+            cursor.updateRow(row)
     arcpy.DeleteField_management(fcNetwork, "MAX")
+
+    if check_drain_area:
+        arcpy.AddMessage("Fixing Drainage Area...")
+        DA_Check.main(fcNetwork)
 
     # create buffers around the different network segments
     arcpy.AddMessage("Creating buffers")
@@ -390,6 +393,13 @@ def main(
         exxml.write()
 
     arcpy.CheckInExtension("spatial")
+
+
+def parseInputBool(given_input):
+    if given_input == 'false' or given_input is None:
+        return False
+    else:
+        return True
 
 
 def calc_drain_area(DEM):
