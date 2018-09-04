@@ -51,9 +51,10 @@ settings:
   # ----------------------------------
   topmenu:
     - title: "Riverscapes"
+      url: http://riverscapes.xyz
       childern:
         - title: "Model Home"
-          url: index
+          url: http://rcat.riverscapes.xyz
         - title: "Riverscapes Home"
           url: http://riverscapes.xyz
         - title: "About Riverscapes"
