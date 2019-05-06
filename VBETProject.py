@@ -13,8 +13,10 @@
 
 # import modules
 import os
-import arcpy
 import sys
+import arcpy
+from arcpy.sa import *
+arcpy.CheckOutExtension('Spatial')
 
 
 def main(projPath, dem, network, drar):
@@ -32,34 +34,39 @@ def main(projPath, dem, network, drar):
 
     # add the dem inputs to project
     indem = dem.split(";")
-    os.chdir("01_Inputs/01_Topo/")
     i = 1
     for x in range(len(indem)):
-        if not os.path.exists("DEM_" + str(i)):
-            os.mkdir("DEM_" + str(i))
-        arcpy.CopyRaster_management(indem[x], "DEM_" + str(i) + "/" + os.path.basename(indem[x]))
+        demDir = os.path.join(projPath, '01_Inputs', '01_Topo', 'DEM_' + str(i))
+        if not os.path.exists(os.path.join(demDir)):
+            os.mkdir(os.path.join(demDir))
+        outdem = os.path.join(demDir, os.path.basename(indem[x]))
+        arcpy.CopyRaster_management(indem[x], outdem)
         i += 1
 
     # add the network inputs to project
     innetwork = network.split(";")
-    os.chdir(projPath + "/01_Inputs/02_Network/")
     i = 1
     for x in range(len(innetwork)):
-        if not os.path.exists("Network_" + str(i)):
-            os.mkdir("Network_" + str(i))
-        arcpy.Copy_management(innetwork[x], "Network_" + str(i) + "/" + os.path.basename(innetwork[x]))
+        networkDir = os.path.join(projPath, '01_Inputs', '02_Network', 'Network_' + str(i))
+        if not os.path.exists(networkDir):
+            os.mkdir(networkDir)
+        outnetwork = os.path.join(networkDir, os.path.basename(innetwork[x]))
+        arcpy.Copy_management(innetwork[x], outnetwork)
         i += 1
 
     # add the drainage area raster input if it exists
     if drar is not None:
         indrar = drar.split(";")
         i = 1
-        os.chdir(projPath + "/01_Inputs/01_Topo/DEM_" + str(i))
+        demDir = os.path.join(projPath, '01_Inputs', '01_Topo', 'DEM_' + str(i))
         for x in range(len(indrar)):
-            if not os.path.exists("Flow"):
-                os.mkdir("Flow")
-            arcpy.CopyRaster_management(indrar[x], "Flow/" + os.path.basename(indrar[x]))
+            flowDir = os.path.join(demDir, 'Flow')
+            if not os.path.exists(flowDir):
+                os.mkdir(flowDir)
+            outdrar = os.path.join(flowDir, os.path.basename(indrar[x]))
+            arcpy.CopyRaster_management(indrar[x], outdrar)
             i += 1
+
 
 def set_structure(projPath):
     """Sets up the folder structure for an VBET project"""
