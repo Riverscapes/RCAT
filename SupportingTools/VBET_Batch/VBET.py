@@ -345,11 +345,11 @@ def main(
     sm_buf_slope = ExtractByMask(inSlope, sm_buffer)
 
     # reclassify slope rasters for each of the buffers
-    lg_valley_raster = Con(lg_buf_slope <= lg_slope_thresh, 1)
+    lg_valley_raster = Con(lg_buf_slope <= float(lg_slope_thresh), 1)
     lg_valley_raster.save(os.path.join(tempDir, "lg_valley_raster.tif"))
-    med_valley_raster = Con(med_buf_slope <= med_slope_thresh, 1)
+    med_valley_raster = Con(med_buf_slope <= float(med_slope_thresh), 1)
     med_valley_raster.save(os.path.join(tempDir, "med_valley_raster.tif"))
-    sm_valley_raster = Con(sm_buf_slope <= sm_slope_thresh, 1)
+    sm_valley_raster = Con(sm_buf_slope <= float(sm_slope_thresh), 1)
     sm_valley_raster.save(os.path.join(tempDir, "sm_valley_raster.tif"))
 
     # convert into polygons
