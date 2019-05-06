@@ -1,4 +1,5 @@
-import xml, os
+import xml
+import os
 import uuid
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
