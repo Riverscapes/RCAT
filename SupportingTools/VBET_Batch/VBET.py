@@ -120,7 +120,6 @@ def zonalStatsWithinBuffer(buffer, ras, statType, statField, outFC, outFCField, 
                 pass
     statDict.clear()
     # delete temp fcs, tbls, etc.
-    #items = [statTbl, haveStatList, haveStatList2, needStatList, stat, tmp_buff_lyr, needStat]
     items = [statTbl, stat, tmp_buff_lyr]
     for item in items:
         if item is not None:
@@ -161,7 +160,11 @@ def main(
 
     # define workspace environment settings
     arcpy.env.workspace = tempDir
+    arcpy.env.scratchWorkspace = tempDir
     arcpy.env.overwriteOutput = True
+
+    # set DEM path to variable for xml
+    dem_path = DEM
 
     # read in DEM as raster object
     DEM = arcpy.sa.Raster(DEM)
@@ -208,6 +211,7 @@ def main(
     neighborhood = NbrRectangle(3, 3, "CELL")
     smDEM_raw = FocalStatistics(DEM, neighborhood, 'MEAN')
     smDEM = ExtractByMask(smDEM_raw, DEM)
+    arcpy.Delete_management(smDEM_raw)
 
     # --calculate drainage area values for each network segment--
 
@@ -240,7 +244,7 @@ def main(
     else:
         raise Exception("Low drainage area threshold is less than the lowest network drainage area value")
 
-    print "Calculting stream network drainage area values..."
+    print "Calculating stream network drainage area values..."
 
     # create network segment midpoints
     network_midpoints = os.path.join(tempDir, "network_midpoints.shp")
@@ -248,6 +252,7 @@ def main(
 
     # create midpoint 100 m buffer
     midpoint_buffer = arcpy.Buffer_analysis(network_midpoints, os.path.join(tempDir, "midpoint_buffer.shp"), "100 Meters")
+    arcpy.Delete_management(network_midpoints)
 
     # check 'DA_sqkm' field exists in flowline network attribute table
     # if it does delete it
@@ -260,6 +265,7 @@ def main(
     arcpy.AddField_management(fcNetwork, "DA_sqkm", "DOUBLE")
     # get max drainage area within 100 m midpoint buffer
     zonalStatsWithinBuffer(midpoint_buffer, inFlow, "MAXIMUM", 'MAX', fcNetwork, "DA_sqkm", tempDir)
+    arcpy.Delete_management(midpoint_buffer)
 
     # replace '0' drainage area values with tiny value
     with arcpy.da.UpdateCursor(fcNetwork, ["DA_sqkm"]) as cursor:
@@ -269,7 +275,7 @@ def main(
             cursor.updateRow(row)
 
     # --code to update da value for major rivers crossing huc8 boundary--
-    # create feautre layer from network shp for selection(s)
+    # create feature layer from network shp for selection(s)
     arcpy.MakeFeatureLayer_management(fcNetwork, "network_lyr")
 
     if sub_daDict is not None:
@@ -330,16 +336,21 @@ def main(
     arcpy.CopyRaster_management(slope_raster, os.path.join(slopeDir, 'slope.tif'))
     # save slope path as separate object for xml purposes
     inSlope = os.path.join(slopeDir, 'slope.tif')
+    arcpy.Delete_management(slope_raster)
+    arcpy.Delete_management(smDEM)
 
     # clip slope raster to each of the small, large, medium network segment buffers
-    lg_buf_slope = ExtractByMask(slope_raster, lg_buffer)
-    med_buf_slope = ExtractByMask(slope_raster, med_buffer)
-    sm_buf_slope = ExtractByMask(slope_raster, sm_buffer)
+    lg_buf_slope = ExtractByMask(inSlope, lg_buffer)
+    med_buf_slope = ExtractByMask(inSlope, med_buffer)
+    sm_buf_slope = ExtractByMask(inSlope, sm_buffer)
 
     # reclassify slope rasters for each of the buffers
     lg_valley_raster = Con(lg_buf_slope <= lg_slope_thresh, 1)
+    lg_valley_raster.save(os.path.join(tempDir, "lg_valley_raster.tif"))
     med_valley_raster = Con(med_buf_slope <= med_slope_thresh, 1)
+    med_valley_raster.save(os.path.join(tempDir, "med_valley_raster.tif"))
     sm_valley_raster = Con(sm_buf_slope <= sm_slope_thresh, 1)
+    sm_valley_raster.save(os.path.join(tempDir, "sm_valley_raster.tif"))
 
     # convert into polygons
     lg_polygon = os.path.join(tempDir, "lg_polygon.shp")
@@ -349,10 +360,13 @@ def main(
     arcpy.RasterToPolygon_conversion(med_valley_raster, med_polygon, "SIMPLIFY")
     arcpy.RasterToPolygon_conversion(sm_valley_raster, sm_polygon, "SIMPLIFY")
 
-    # # delete rasters that are no longer needed
-    # rasList = [smDEM, slope_raster, lg_valley_raster, med_valley_raster, sm_valley_raster]
-    # for ras in rasList:
-    #     arcpy.Delete_management(ras)
+    # delete rasters that are no longer needed
+    items = [lg_buf_slope, med_buf_slope, sm_buf_slope, lg_valley_raster, med_valley_raster, sm_valley_raster]
+    for item in items:
+        try:
+            arcpy.Delete_management(item)
+        except Exception as e:
+            print e.args[0]
 
     # select polygons that intersect the input network
     arcpy.MakeFeatureLayer_management(fcNetwork, "fcNetwork_lyr")
@@ -364,8 +378,9 @@ def main(
     arcpy.SelectLayerByLocation_management("lg_polygon_lyr", "INTERSECT", 'fcNetwork_lyr')
     arcpy.CopyFeatures_management("lg_polygon_lyr", lg_valley_polygon)
     lg_valley_elim = os.path.join(tempDir, "lg_valley_elim.shp")
-    #arcpy.EliminatePolygonPart_management(lg_valley_polygon, lg_valley_elim, 'PERCENT', '', 99.0)
     arcpy.EliminatePolygonPart_management(lg_valley_polygon, lg_valley_elim, 'AREA', min_hole)
+    arcpy.SelectLayerByAttribute_management("lg_polygon_lyr", 'CLEAR_SELECTION')
+    arcpy.Delete_management("lg_polygon_lyr")
 
     med_valley_polygon = os.path.join(tempDir, "med_valley_polygon.shp")
     arcpy.MakeFeatureLayer_management(med_polygon, "med_polygon_lyr")
@@ -375,6 +390,7 @@ def main(
     arcpy.CopyFeatures_management("med_polygon_lyr", med_valley_polygon)
     med_valley_elim = os.path.join(tempDir, "med_valley_elim.shp")
     arcpy.EliminatePolygonPart_management(med_valley_polygon, med_valley_elim, 'AREA', min_hole)
+    arcpy.Delete_management("med_polygon_lyr")
 
     sm_valley_polygon = os.path.join(tempDir, "sm_valley_polygon.shp")
     arcpy.MakeFeatureLayer_management(sm_polygon, "sm_polygon_lyr")
@@ -382,6 +398,7 @@ def main(
     arcpy.SelectLayerByAttribute_management('fcNetwork_lyr', 'NEW_SELECTION', quer)
     arcpy.SelectLayerByLocation_management("sm_polygon_lyr", "INTERSECT", 'fcNetwork_lyr')
     arcpy.CopyFeatures_management("sm_polygon_lyr", sm_valley_polygon)
+    arcpy.Delete_management("sm_polygon_lyr")
 
     # merge and clean valley bottom polygons
     print "Merging outputs for final valley bottom..."
@@ -393,8 +410,9 @@ def main(
     arcpy.Dissolve_management(merged_polygon, dissolved_valley, '', '', 'SINGLE_PART')
 
     elim_valley = os.path.join(tempDir, "elim_valley.shp")
-    #arcpy.EliminatePolygonPart_management(dissolved_valley, elim_valley, 'PERCENT', '', 99.0)
     arcpy.EliminatePolygonPart_management(dissolved_valley, elim_valley, 'AREA', min_hole)
+
+    # commented out this block as it was throwing errors in newer versions of ArcMap
     # try:
     #     aggregated_valley = os.path.join(projPath, "aggregated_valley.shp")  # ToDo: change to tempDir and/or delete after testing
     #     arcpy.AggregatePolygons_cartography(dissolved_valley, aggregated_valley, ag_distance, min_area, min_hole)
@@ -416,22 +434,25 @@ def main(
 
     arcpy.SmoothPolygon_cartography(elim_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
 
+    arcpy.AddMessage("Successfully saved valley bottom output shapefile...")
 
     # temporary code to copy fcs with issues to output folder
     # arcpy.CopyFeatures_management(merged_polygon, os.path.join(outDir, "merged_polygon.shp"))
     # arcpy.CopyFeatures_management(dissolved_valley, os.path.join(outDir, "dissolved_valley.shp"))
 
-    try:
-        arcpy.Delete_management(os.path.join(tempDir), "info")
-        temp_files = glob.glob(os.path.join(tempDir, '*'))
-        for temp_file in temp_files:
-            os.remove(temp_file)
-        rmtree(tempDir)
-    except OSError as e:
-        print ("Error: %s - %s." % (e.filename, e.strerror))
-        pass
+    # delete temporary files and workspace...
+    arcpy.AddMessage("Removing scratch files...")
 
-    # # # Write xml file # # #
+    temp_files = glob.glob(os.path.join(tempDir, '*'))
+    for temp_file in temp_files:
+        try:
+            arcpy.Delete_management(temp_file)
+        except:
+            pass
+    rmtree(tempDir)
+
+
+    # --write xml--
     arcpy.AddMessage("Writing xml...")
     if not os.path.exists(projPath + "/project.rs.xml"):
 
@@ -467,7 +488,7 @@ def main(
         newxml.addParameter("min_hole", min_hole, newxml.VBETrealizations[0])
 
         # add inputs and outputs to xml file
-        newxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM1", guid=getUUID())
+        newxml.addProjectInput("DEM", "DEM", dem_path[dem_path.find("01_Inputs"):], iid="DEM1", guid=getUUID())
         newxml.addVBETInput(newxml.VBETrealizations[0], "DEM", ref="DEM1")
 
         newxml.addProjectInput("Vector", "Drainage Network", fcNetwork[fcNetwork.find("01_Inputs"):], iid="DN1", guid=getUUID())
@@ -537,18 +558,18 @@ def main(
             dempath[i] = dem[i].find("Path").text
 
         for i in range(len(dempath)):
-            if os.path.abspath(dempath[i]) == os.path.abspath(DEM[DEM.find("01_Inputs"):]):
+            if os.path.abspath(dempath[i]) == os.path.abspath(dem_path[dem_path.find("01_Inputs"):]):
                 exxml.addVBETInput(exxml.VBETrealizations[0], "DEM", ref=str(demid[i]))
         nlist = []
         for j in dempath:
-            if os.path.abspath(DEM[DEM.find("01_Inputs"):]) == os.path.abspath(j):
+            if os.path.abspath(dem_path[dem_path.find("01_Inputs"):]) == os.path.abspath(j):
                 nlist.append("yes")
             else:
                 nlist.append("no")
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("DEM", "DEM", DEM[DEM.find("01_Inputs"):], iid="DEM" + str(k), guid=getUUID())
+            exxml.addProjectInput("DEM", "DEM", dem_path[dem_path.find("01_Inputs"):], iid="DEM" + str(k), guid=getUUID())
             exxml.addVBETInput(exxml.VBETrealizations[0], "DEM", ref="DEM" + str(k))
 
         vector = inputs.findall("Vector")
