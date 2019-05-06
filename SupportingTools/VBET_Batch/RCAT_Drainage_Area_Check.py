@@ -19,7 +19,7 @@ def main(stream_network):
     :param stream_network: The stream network that we want to fix up
     :return:
     """
-    arcpy.AddMessage("Fixing Drainage Area...")
+    arcpy.AddMessage("Fixing drainage area...")
     stream_heaps = find_streams(stream_network)
     #check_heap(stream_network, stream_heaps)
 
@@ -35,7 +35,7 @@ def find_streams(stream_network):
     :param stream_network: The stream network to be used
     :return:
     """
-    arcpy.AddMessage("Finding Streams...")
+    arcpy.AddMessage("Finding streams...")
     stream_heaps = []
     req_fields = ["ReachID", "StreamID", "ReachDist", "DA_sqkm"]
     with arcpy.da.SearchCursor(stream_network, req_fields) as cursor:
@@ -66,7 +66,7 @@ def check_heap(stream_network, stream_heaps):
                     raise Exception("Error in stream id: " + str(streams[k].stream_id))
             except IndexError:
                 pass
-    arcpy.AddMessage("Stream Heaps passed check")
+    arcpy.AddMessage("Stream heaps passed check")
 
 
 
@@ -90,7 +90,7 @@ def find_problem_streams(stream_heaps):
     :param stream_heaps: A list of stream heaps
     :return:
     """
-    arcpy.AddMessage("Identifying problem streams...")
+    arcpy.AddMessage("Identifying streams that need drainage area updated...")
     problem_streams = []
     for stream_heap in stream_heaps:
         while len(stream_heap.streams) > 0:
@@ -135,7 +135,7 @@ def fix_problem_streams(stream_network, problem_streams):
     :param problem_streams: A list of problem streams
     :return:
     """
-    arcpy.AddMessage("Fixing Streams...")
+    arcpy.AddMessage("Updating drainage area values...")
     arcpy.AddField_management(stream_network, "Orig_DA", "DOUBLE")
     req_fields = ["ReachID", "DA_sqkm", "Orig_DA"]
     with arcpy.da.UpdateCursor(stream_network, req_fields) as cursor:
