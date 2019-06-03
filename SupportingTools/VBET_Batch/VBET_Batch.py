@@ -90,10 +90,10 @@ def main():
                     sm_buf_size = widthDict[dir]['SmallBuffer']
                     min_buf_size = widthDict[dir]['MinBuffer']
                 else:
-                    lg_buf_size = 200
-                    med_buf_size = 100
-                    sm_buf_size = 25
-                    min_buf_size = 8
+                    lg_buf_size = 2000
+                    med_buf_size = 350
+                    sm_buf_size = 20
+                    min_buf_size = 10
                 lg_slope_thresh = 5 # Default: 5
                 med_slope_thresh = 7 # Default: 7
                 sm_slope_thresh = 12 # Default: 12
