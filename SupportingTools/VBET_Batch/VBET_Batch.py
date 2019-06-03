@@ -33,20 +33,20 @@ def main():
 
     # read in csv of width parameters and convert to python dictionary
     widthDict = defaultdict(dict)
-    with open(width_csv_path, "rb") as infile:
-        reader = csv.reader(infile)
-        headers = next(reader)[1:]
-        for row in reader:
-            widthDict[row[0]] = {key: int(value) for key, value in zip(headers, row[1:])}
+    if width_csv_path is not None:
+        with open(width_csv_path, "rb") as infile:
+            reader = csv.reader(infile)
+            headers = next(reader)[1:]
+            for row in reader:
+                widthDict[row[0]] = {key: int(value) for key, value in zip(headers, row[1:])}
 
     # read in csv of width parameters and convert to python dictionary
     daDict = defaultdict(dict)
-
-    with open(da_csv_path, "r") as infile:
-        reader = csv.DictReader(infile)
-        for row in reader:
-            daDict[row['HUC8Dir']][row['StreamName']] = float(row['US_DA_sqkm'])
-
+    if da_csv_path is not None:
+        with open(da_csv_path, "r") as infile:
+            reader = csv.DictReader(infile)
+            for row in reader:
+                daDict[row['HUC8Dir']][row['StreamName']] = float(row['US_DA_sqkm'])
 
     # change directory to the parent folder path
     os.chdir(pf_path)
@@ -65,7 +65,7 @@ def main():
             projPath = os.path.join(pf_path, dir, 'VBET', run_folder)
             vbPath = os.path.join(projPath, "02_Analyses/Output_1", out_name)
 
-            if not os.path.exists(vbPath):
+            if not os.path.exists(vbPath) or overwrite_run is True:
                 print "Running VBET for " + dir
                 if dir in daDict:
                     sub_daDict = {k: v for k, v in daDict.iteritems() if dir in k}
@@ -84,10 +84,16 @@ def main():
                 outName = out_name
                 high_da_thresh = 250 # Default: 250
                 low_da_thresh = 25 # Default: 25
-                lg_buf_size = widthDict[dir]['LargeBuffer']
-                med_buf_size = widthDict[dir]['MedBuffer']
-                sm_buf_size = widthDict[dir]['SmallBuffer']
-                min_buf_size = widthDict[dir]['MinBuffer']
+                if dir in widthDict:
+                    lg_buf_size = widthDict[dir]['LargeBuffer']
+                    med_buf_size = widthDict[dir]['MedBuffer']
+                    sm_buf_size = widthDict[dir]['SmallBuffer']
+                    min_buf_size = widthDict[dir]['MinBuffer']
+                else:
+                    lg_buf_size = 200
+                    med_buf_size = 100
+                    sm_buf_size = 25
+                    min_buf_size = 8
                 lg_slope_thresh = 5 # Default: 5
                 med_slope_thresh = 7 # Default: 7
                 sm_slope_thresh = 12 # Default: 12
