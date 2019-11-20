@@ -224,40 +224,41 @@ class VBETtool(object):
             direction="Input")
         param16.value = 12
 
-        param17 = arcpy.Parameter(
-            displayName="Scratch Workspace",
-            name="scratchWS",
-            datatype="DEWorkspace",
-            parameterType="Required",
-            direction="Input")
-        param17.filter.list = ["Local Database"]
-        param17.value = arcpy.env.scratchWorkspace
+# added in temp directory to VBET folder to avoid defining workspace
+#        param17 = arcpy.Parameter(
+#            displayName="Scratch Workspace",
+#            name="scratchWS",
+#            datatype="DEWorkspace",
+#            parameterType="Required",
+#            direction="Input")
+#        param17.filter.list = ["Local Database"]
+#        param17.value = arcpy.env.scratchWorkspace
 
-        param18 = arcpy.Parameter(
+        param17 = arcpy.Parameter(
             displayName="Aggregation Distance",
             name="ag_distance",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param18.value = 100
+        param17.value = 100
 
-        param19 = arcpy.Parameter(
+        param18 = arcpy.Parameter(
             displayName="Minimum Polygon Area to Keep in Output",
             name="min_area",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param19.value = 30000
+        param18.value = 30000
 
-        param20 = arcpy.Parameter(
+        param19 = arcpy.Parameter(
             displayName="Minimum Hole Area to Keep in Output",
             name="min_hole",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param20.value = 50000
+        param19.value = 50000
 
-        param21 = arcpy.Parameter(
+        param20 = arcpy.Parameter(
             displayName="Validate Drainage Area Using ReachDist",
             name="check_drain_area",
             datatype="GPBoolean",
@@ -265,7 +266,7 @@ class VBETtool(object):
             direction="Input")
 
         return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11,
-                param12, param13, param14, param15, param16, param17, param18, param19, param20, param21]
+                param12, param13, param14, param15, param16, param17, param18, param19, param20]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -305,8 +306,7 @@ class VBETtool(object):
                   p[17].valueAsText,
                   p[18].valueAsText,
                   p[19].valueAsText,
-                  p[20].valueAsText,
-                  p[21].valueAsText)
+                  p[20].valueAsText)
         return
 
 

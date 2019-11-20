@@ -38,6 +38,7 @@ def main(
     outName,
     scratch):
 
+    arcpy.env.workspace = scratch
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
 
@@ -49,6 +50,8 @@ def main(
         raise Exception("Valley input has no field 'Connected'")
 
     # create thiessen polygons clipped to the extent of a buffered valley bottom
+    seg_network_lyr = scratch + "/seg_network"
+    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
     midpoints = scratch + "/midpoints"
     arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
     thiessen = scratch + "/thiessen"
