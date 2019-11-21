@@ -12,6 +12,7 @@
 #import modules
 import arcpy
 import sys
+import shutil
 
 
 def main(
@@ -31,10 +32,9 @@ def main(
     boolEphemeral,
     outFC,
     projection,
-    scratch = arcpy.env.scratchWorkspace):
+    scratch):
 
     arcpy.env.overwriteOutput = True
-
     pFlowline = scratch + "/pFlowline.shp"
     pWaterbody = scratch + "/pWaterbody.shp"
     pArea = scratch + "/pArea.shp"

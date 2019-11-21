@@ -35,19 +35,21 @@ def main(
     seg_network,
     valley,
     lg_river,
-    outName,
-    scratch):
+    outName):
 
     arcpy.env.overwriteOutput = True
+    scratch = os.path.join(projPath, 'Temp')
+    if not os.path.exists(scratch):
+        os.mkdir(scratch)
     arcpy.env.workspace = scratch
     arcpy.CheckOutExtension("spatial")
 
     # create thiessen polygons from segmented network input
     arcpy.AddMessage("Creating thiessen polygons")
-    seg_network_lyr = os.path.join(scratch, "seg_network")
-    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
-    midpoints = scratch + "/midpoints"
-    arcpy.FeatureVerticesToPoints_management(seg_network_lyr, midpoints, "MID")
+    #seg_network_lyr = os.path.join(scratch, "seg_network")
+    #arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
+    midpoints = scratch + "/midpoints.shp"
+    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
     midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
     midpoint_fields.remove("OBJECTID")
     midpoint_fields.remove("Shape")
@@ -60,9 +62,9 @@ def main(
             print "Could not delete all misc. field in midpoints temp file. Error thrown was:"
             print err
 
-    thiessen = scratch + "/thiessen"
+    thiessen = scratch + "/thiessen.shp"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
-    valley_buf = scratch + "/valley_buf"
+    valley_buf = scratch + "/valley_buf.shp"
     arcpy.Buffer_analysis(valley, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
     if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
         os.mkdir(os.path.dirname(seg_network) + "/Thiessen")
@@ -850,16 +852,16 @@ def main(
 
     arcpy.CheckInExtension("spatial")
 
-    arcpy.AddMessage("Deleting temporary files....")
-    temp_files = [seg_network_lyr, midpoints, thiessen, bps_zs, evt_zs, count_table, valley_buf, conv_code_table, scratch + "/Reclass_afr1",
-                  scratch + "Reclass_rcl1", scratch + "Reclass_rcl2", scratch + "Reclass_rcl3", scratch + "Reclass_rcl4",
-                  scratch + "Reclass_rcl5", scratch + "Reclass_rcl6", scratch + "Reclass_rcl7", scratch + "table_0", scratch + "table_50",
-                  scratch + "table_60", scratch + "table_80", scratch + "table_97", scratch + "table_98", scratch + "table_99"]
-    for tf in temp_files:
-        try:
-            arcpy.Delete_management(tf)
-        except Exception as err:
-            print "Delete failed for " + tf + ": try manually deleting" 
+#    arcpy.AddMessage("Deleting temporary files....")
+#    temp_files = [midpoints, thiessen, bps_zs, evt_zs, count_table, valley_buf, conv_code_table, scratch + "/Reclass_afr1",
+#                  scratch + "Reclass_rcl1", scratch + "Reclass_rcl2", scratch + "Reclass_rcl3", scratch + "Reclass_rcl4",
+#                  scratch + "Reclass_rcl5", scratch + "Reclass_rcl6", scratch + "Reclass_rcl7", scratch + "table_0", scratch + "table_50",
+#                  scratch + "table_60", scratch + "table_80", scratch + "table_97", scratch + "table_98", scratch + "table_99"]
+#    for tf in temp_files:
+#        try:
+#            arcpy.Delete_management(tf)
+#        except Exception as err:
+#            print "Delete failed for " + tf + ": try manually deleting" 
     
     return
 
@@ -1029,5 +1031,4 @@ if __name__ == '__main__':
         sys.argv[7],
         sys.argv[8],
         sys.argv[9],
-        sys.argv[10],
-        sys.argv[11])
+        sys.argv[10])

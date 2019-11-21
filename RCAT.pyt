@@ -499,7 +499,7 @@ class RVDBuilder(object):
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Select existing vegetation datasets",
+            displayName="Select existing vegetation folder",
             name="ex_veg",
             datatype="DEFolder",
             parameterType="Required",
@@ -507,7 +507,7 @@ class RVDBuilder(object):
             multiValue=True)
 
         param2 = arcpy.Parameter(
-            displayName="Select historic vegetation datasets",
+            displayName="Select historic vegetation folder",
             name="hist_veg",
             datatype="DEFolder",
             parameterType="Required",
@@ -605,14 +605,14 @@ class RVDtool(object):
             direction="Input")
 
         param4 = arcpy.Parameter(
-            displayName="Existing Vegetation Layer",
+            displayName="Existing Vegetation Raster",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param5 = arcpy.Parameter(
-            displayName="Historic Vegetation Layer",
+            displayName="Historic Vegetation Raster",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
@@ -650,16 +650,16 @@ class RVDtool(object):
             direction="Input")
         # param9.symbology = os.path.join(os.path.dirname(__file__), "RVD_ratio.lyr")
 
-        param10 = arcpy.Parameter(
-            displayName="Scratch Workspace",
-            name="scratch",
-            datatype="DEWorkspace",
-            parameterType="Required",
-            direction = "Input")
-        param10.filter.list = ["Local Database"]
-        param10.value = arcpy.env.scratchWorkspace
+#        param10 = arcpy.Parameter(
+#            displayName="Scratch Workspace",
+#            name="scratch",
+#            datatype="DEWorkspace",
+#            parameterType="Required",
+#            direction = "Input")
+#        param10.filter.list = ["Local Database"]
+#        param10.value = arcpy.env.scratchWorkspace
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -688,8 +688,7 @@ class RVDtool(object):
                   p[6].valueAsText,
                   p[7].valueAsText,
                   p[8].valueAsText,
-                  p[9].valueAsText,
-                  p[10].valueAsText)
+                  p[9].valueAsText)
         return
 
 
@@ -710,7 +709,7 @@ class RCABuilder(object):
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Select existing cover datasets",
+            displayName="Select existing cover folder",
             name="ex_cov",
             datatype="DEFolder",
             parameterType="Required",
@@ -718,7 +717,7 @@ class RCABuilder(object):
             multiValue=True)
 
         param2 = arcpy.Parameter(
-            displayName="Select historic cover datasets",
+            displayName="Select historic cover folder",
             name="hist_cov",
             datatype="DEFolder",
             parameterType="Required",
@@ -816,14 +815,14 @@ class RCAtool(object):
             direction="Input")
 
         param4 = arcpy.Parameter(
-            displayName="Existing Cover Layer",
+            displayName="Existing Cover Raster",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param5 = arcpy.Parameter(
-            displayName="Historic Cover Layer",
+            displayName="Historic Cover Raster",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
@@ -868,16 +867,16 @@ class RCAtool(object):
             parameterType="Required",
             direction="Input")
 
-        param11 = arcpy.Parameter(
-            displayName="Scratch Workspace",
-            name="scratch",
-            datatype="DEWorkspace",
-            parameterType="Required",
-            direction = "Input")
-        param11.filter.list = ["Local Database"]
-        param11.value = arcpy.env.scratchWorkspace
+#        param11 = arcpy.Parameter(
+#            displayName="Scratch Workspace",
+#            name="scratch",
+#            datatype="DEWorkspace",
+#            parameterType="Required",
+#            direction = "Input")
+#        param11.filter.list = ["Local Database"]
+#        param11.value = arcpy.env.scratchWorkspace
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -907,8 +906,7 @@ class RCAtool(object):
                   p[7].valueAsText,
                   p[8].valueAsText,
                   p[9].valueAsText,
-                  p[10].valueAsText,
-                  p[11].valueAsText)
+                  p[10].valueAsText)
         return
 
 

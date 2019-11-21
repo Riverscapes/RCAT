@@ -35,10 +35,13 @@ def main(
     frag_valley,
     lg_river,
     width_thresh,
-    outName,
-    scratch):
+    outName):
 
+    scratch = os.path.join(projPath, 'Temp')
+    if not os.path.exists(scratch):
+        os.mkdir(scratch)
     arcpy.env.workspace = scratch
+    
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
 
@@ -48,13 +51,13 @@ def main(
         raise Exception("Valley input has no field 'Connected'")
 
     # create thiessen polygons clipped to the extent of a buffered valley bottom
-    seg_network_lyr = scratch + "/seg_network"
+    seg_network_lyr = scratch + "/seg_network.lyr"
     arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
-    midpoints = scratch + "/midpoints"
+    midpoints = scratch + "/midpoints.shp"
     arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
-    thiessen = scratch + "/thiessen"
+    thiessen = scratch + "/thiessen.shp"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
-    buf_valley = scratch + "/buf_valley"
+    buf_valley = scratch + "/buf_valley.shp"
     arcpy.Buffer_analysis(frag_valley, buf_valley, "10 Meters", "FULL", "ROUND", "ALL")
     if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
         os.mkdir(os.path.dirname(seg_network) + "/Thiessen")
@@ -110,7 +113,7 @@ def main(
     arcpy.MakeFeatureLayer_management(fcOut, "rca_in_lyr")
     arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" >= {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_u")
-    rca_u = scratch + "/rca_u"
+    rca_u = scratch + "/rca_u.shp"
 
     ct = arcpy.GetCount_management(rca_u)
     count = int(ct.getOutput(0))
@@ -217,9 +220,9 @@ def main(
         np.savetxt(out_table, columns, delimiter=",", header="ID, COND_VAL", comments="")
         arcpy.CopyRows_management(out_table, "final_table")
 
-        final_table = scratch + "/final_table"
+        final_table = scratch + "/final_table.shp"
         arcpy.JoinField_management(rca_u, "OBJECTID", final_table, "OBJECTID", "COND_VAL")
-        rca_u_final = scratch + "/rca_u_final"
+        rca_u_final = scratch + "/rca_u_final.shp"
         arcpy.CopyFeatures_management(rca_u, rca_u_final)
 
     else:
@@ -229,7 +232,7 @@ def main(
 
     arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" < {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c")
-    rca_c = scratch + "/rca_c"
+    rca_c = scratch + "/rca_c.shp"
 
     arcpy.AddField_management(rca_c, "CONDITION", "TEXT")
     cursor = arcpy.da.UpdateCursor(rca_c, ["LUI", "CONNECT", "VEG", "CONDITION"])
@@ -567,14 +570,14 @@ def main(
 
     arcpy.CheckInExtension('spatial')
 
-    arcpy.AddMessage("Deleting temporary files.....")
-    temp_files = [seg_network_lyr, midpoints, thiessen, buf_valley, bps_zs, evt_zs, exveg_zs, histveg_zs,
-                  fp_conn, lui_zs, final_table, rca_u_final, rca_u, rca_c]
-    for tf in temp_files:
-        try:
-            arcpy.Delete_management(tf)
-        except Exception as err:
-            print "Delete failed for " + tf + ": try manually deleting"
+    #arcpy.AddMessage("Deleting temporary files.....")
+    #temp_files = [seg_network_lyr, midpoints, thiessen, buf_valley, bps_zs, evt_zs, exveg_zs, histveg_zs,
+    #              fp_conn, lui_zs, final_table, rca_u_final, rca_u, rca_c]
+    #for tf in temp_files:
+    #   try:
+    #        arcpy.Delete_management(tf)
+    #    except Exception as err:
+    #        print "Delete failed for " + tf + ": try manually deleting"
     return
 
 
@@ -976,5 +979,4 @@ if __name__ == '__main__':
         sys.argv[8],
         sys.argv[9],
         sys.argv[10],
-        sys.argv[11],
-        sys.argv[12])
+        sys.argv[11])
