@@ -43,10 +43,8 @@ def main(
     arcpy.CheckOutExtension("spatial")
 
     # make sure that the fragmented valley input has a field called "connected"
-    valley_fields = arcpy.ListFields(frag_valley, "Connected")
-    if len(valley_fields) == 1:
-        pass
-    else:
+    valley_fields = [f.name for f in arcpy.ListFields(frag_valley)]
+    if "Connected" not in valley_fields:
         raise Exception("Valley input has no field 'Connected'")
 
     # create thiessen polygons clipped to the extent of a buffered valley bottom
@@ -569,6 +567,14 @@ def main(
 
     arcpy.CheckInExtension('spatial')
 
+    arcpy.AddMessage("Deleting temporary files.....")
+    temp_files = [seg_network_lyr, midpoints, thiessen, buf_valley, bps_zs, evt_zs, exveg_zs, histveg_zs,
+                  fp_conn, lui_zs, final_table, rca_u_final, rca_u, rca_c]
+    for tf in temp_files:
+        try:
+            arcpy.Delete_management(tf)
+        except Exception as err:
+            print "Delete failed for " + tf + ": try manually deleting"
     return
 
 

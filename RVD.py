@@ -39,17 +39,26 @@ def main(
     scratch):
 
     arcpy.env.overwriteOutput = True
+    arcpy.env.workspace = scratch
     arcpy.CheckOutExtension("spatial")
 
     # create thiessen polygons from segmented network input
     arcpy.AddMessage("Creating thiessen polygons")
+    seg_network_lyr = os.path.join(scratch, "seg_network")
+    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
     midpoints = scratch + "/midpoints"
-    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
+    arcpy.FeatureVerticesToPoints_management(seg_network_lyr, midpoints, "MID")
     midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
     midpoint_fields.remove("OBJECTID")
     midpoint_fields.remove("Shape")
     midpoint_fields.remove("ORIG_FID")
-    arcpy.DeleteField_management(midpoints, midpoint_fields)
+    # Error handling if permanent field can't be deleted
+    for f in midpoint_fields:
+        try:
+            arcpy.DeleteField_management(midpoints, f)
+        except Exception as err:
+            print "Could not delete all misc. field in midpoints temp file. Error thrown was:"
+            print err
 
     thiessen = scratch + "/thiessen"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
@@ -841,6 +850,17 @@ def main(
 
     arcpy.CheckInExtension("spatial")
 
+    arcpy.AddMessage("Deleting temporary files....")
+    temp_files = [seg_network_lyr, midpoints, thiessen, bps_zs, evt_zs, count_table, valley_buf, conv_code_table, scratch + "/Reclass_afr1",
+                  scratch + "Reclass_rcl1", scratch + "Reclass_rcl2", scratch + "Reclass_rcl3", scratch + "Reclass_rcl4",
+                  scratch + "Reclass_rcl5", scratch + "Reclass_rcl6", scratch + "Reclass_rcl7", scratch + "table_0", scratch + "table_50",
+                  scratch + "table_60", scratch + "table_80", scratch + "table_97", scratch + "table_98", scratch + "table_99"]
+    for tf in temp_files:
+        try:
+            arcpy.Delete_management(tf)
+        except Exception as err:
+            print "Delete failed for " + tf + ": try manually deleting" 
+    
     return
 
 
