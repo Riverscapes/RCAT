@@ -23,30 +23,19 @@ import projectxml
 import uuid
 import datetime
 
-projName = 'Otter Creek'
-hucID = None
-hucName = None
-projPath = 'C:/Users/a02046349/Desktop/OtterCreek/wrk_Data/RCA2019'
-evt = 'C:/Users/a02046349/Desktop/OtterCreek/wrk_Data/RCA2019/01_Inputs/01_Ex_Cov/Ex_Cov_1/Existing/LANDFIRE_200EVT.tif'
-bps = 'C:/Users/a02046349/Desktop/OtterCreek/wrk_Data/RCA2019/01_Inputs/02_Hist_Cov/Hist_Cov_1/Historic/LANDFIRE_200BPS.tif'
-seg_network = 'C:/Users/a02046349/Desktop/OtterCreek/wrk_Data/RCA2019/01_Inputs/03_Network/Network_1/NHD_edited_120mReaches.shp'
-frag_valley = 'C:/Users/a02046349/Desktop/OtterCreek/wrk_Data/RCA2019/01_Inputs/04_Frag_Valley/Frag_Valley_1/ValleyBottom_Edited_Digitized.shp'
-lg_river = None
-width_thresh = 120
-outName = 'OtterCreek_RCA2019'
 
-def main():
-#    projName,
-#    hucID,
-#    hucName,
-#    projPath,
-#    evt,
-#    bps,
-#    seg_network,
-#    frag_valley,
-#    lg_river,
-#    width_thresh,
-#    outName):
+def main(
+    projName,
+    hucID,
+    hucName,
+    projPath,
+    evt,
+    bps,
+    seg_network,
+    frag_valley,
+    lg_river,
+    width_thresh,
+    outName):
 
     scratch = os.path.join(projPath, 'Temp')
     if not os.path.exists(scratch):
@@ -979,8 +968,7 @@ def getUUID():
 
 
 if __name__ == '__main__':
-    main()
-"""        sys.argv[1],
+    main(sys.argv[1],
         sys.argv[2],
         sys.argv[3],
         sys.argv[4],
@@ -990,4 +978,4 @@ if __name__ == '__main__':
         sys.argv[8],
         sys.argv[9],
         sys.argv[10],
-        sys.argv[11])"""
+        sys.argv[11])
