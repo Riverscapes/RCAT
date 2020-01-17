@@ -34,13 +34,14 @@ def main(
     seg_network,
     frag_valley,
     lg_river,
+    mines,
     width_thresh,
     outName):
 
     scratch = os.path.join(projPath, 'Temp')
     if not os.path.exists(scratch):
         os.mkdir(scratch)
-    arcpy.env.workspace = scratch
+    arcpy.env.workspace = 'in_memory'
     
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
@@ -51,7 +52,8 @@ def main(
         raise Exception("Valley input has no field 'Connected'")
 
     # create thiessen polygons clipped to the extent of a buffered valley bottom
-    seg_network_lyr = scratch + "/seg_network.lyr"
+    arcpy.AddMessage("Creating thiessen polygons")
+    seg_network_lyr = "seg_network_lyr"
     arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
     midpoints = scratch + "/midpoints.shp"
     arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
@@ -95,13 +97,13 @@ def main(
     score_landfire(evt, bps)
 
     arcpy.AddMessage("Calculating riparian departure")
-    calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, scratch)
+    calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, mines, scratch)
 
     arcpy.AddMessage("Assessing land use intensity")
     calc_lui(evt, thiessen_valley, fcOut)
 
     arcpy.AddMessage("Assessing floodplain connectivity")
-    calc_connectivity(frag_valley, thiessen_valley, fcOut, scratch)
+    calc_connectivity(frag_valley, thiessen_valley, fcOut, mines, scratch)
 
     arcpy.AddMessage("Calculating overall vegetation departure")
     calc_veg(evt, bps, thiessen_valley, fcOut)
@@ -218,9 +220,10 @@ def main(
         columns = np.column_stack((fid, out))
         out_table = os.path.dirname(fcOut) + "/RCA_Table.txt"
         np.savetxt(out_table, columns, delimiter=",", header="ID, COND_VAL", comments="")
-        arcpy.CopyRows_management(out_table, "final_table")
 
-        final_table = scratch + "/final_table"
+        final_table = scratch + "/final_table.dbf"
+        arcpy.CopyRows_management(out_table, final_table)
+
         arcpy.JoinField_management(rca_u, "FID", final_table, "ID", "COND_VAL")
         rca_u_final = scratch + "/rca_u_final.shp"
         arcpy.CopyFeatures_management(rca_u, rca_u_final)
@@ -300,8 +303,24 @@ def main(
     arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
 
-    # # # Write xml file # # #
+    write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_valley, lg_river, mines, width_thresh, output)
 
+    
+    arcpy.CheckInExtension('spatial')
+
+    #arcpy.AddMessage("Deleting temporary files.....")
+    #temp_files = [seg_network_lyr, midpoints, thiessen, buf_valley, bps_zs, evt_zs, exveg_zs, histveg_zs,
+    #              fp_conn, lui_zs, final_table, rca_u_final, rca_u, rca_c]
+    #for tf in temp_files:
+    #   try:
+    #        arcpy.Delete_management(tf)
+    #    except Exception as err:
+    #        print "Delete failed for " + tf + ": try manually deleting"
+    return
+
+    # # # Write xml file # # #
+def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_valley, lg_river, mines, width_thresh, output):
+    """ Writes project XML file to document all input paths and other metadata """
     if not os.path.exists(projPath + "/project.rs.xml"):
         # xml file
         xmlfile = projPath + "/project.rs.xml"
@@ -343,6 +362,10 @@ def main(
         if lg_river is not None:
             newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=getUUID())
             newxml.addRCAInput(newxml.RCArealizations[0], "LRP", ref="LRP1")
+
+        if mines is not None:
+            newxml.addProjectInput("Vector", "Mining Polygon", mines[mines.find("01_Inputs"):], iid="MINES1", guid=getUUID())
+            newxml.addRCAInput(newxml.RCArealizations[0], "Mines", ref="MINES1")
 
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
                            path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=getUUID())
@@ -518,7 +541,9 @@ def main(
             if lg_river is not None:
                 if os.path.abspath(vectorpath[i]) == os.path.abspath(lg_river[lg_river.find("01_Inputs"):]):
                     exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref=str(vectorid[i]))
-
+            if mines is not None:
+                if os.path.abspath(vectorpath[i]) == os.path.abspath(mines[mines.find("01_Inputs"):]):
+                    exxml.addRVDInput(exxml.RCArealizations[0], "Mines", ref=str(vectorid[i]))
         nlist = []
         for j in vectorpath:
             if os.path.abspath(seg_network[seg_network.find("01_Inputs"):]) == os.path.abspath(j):
@@ -561,24 +586,25 @@ def main(
                                       iid="LRP" + str(k), guid=getUUID())
                 exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref="LRP" + str(k))
 
+        if mines is not None:
+            nlist = []
+            for j in vectorpath:
+                if os.path.abspath(mines[mines.find("01_Inputs"):]) == os.path.abspath(j):
+                    nlist.append("yes")
+                else:
+                    nlist.append("no")
+            if "yes" in nlist:
+                pass
+            else:
+                exxml.addProjectInput("Vector", "Mining Polygon", mines[mines.find("01_Inputs"):], iid="MINES" + str(k), guid=getUUID())
+                exxml.addRVDInput(exxml.RVDrealizations[0], "Mines", ref="MINES" + str(k))
+
         del nlist
 
         exxml.addOutput("RCA Analysis " + str(k), "Vector", "RCA Output", output[output.find("02_Analyses"):],
                         exxml.RCArealizations[0], guid=getUUID())
 
         exxml.write()
-
-    arcpy.CheckInExtension('spatial')
-
-    #arcpy.AddMessage("Deleting temporary files.....")
-    #temp_files = [seg_network_lyr, midpoints, thiessen, buf_valley, bps_zs, evt_zs, exveg_zs, histveg_zs,
-    #              fp_conn, lui_zs, final_table, rca_u_final, rca_u, rca_c]
-    #for tf in temp_files:
-    #   try:
-    #        arcpy.Delete_management(tf)
-    #    except Exception as err:
-    #        print "Delete failed for " + tf + ": try manually deleting"
-    return
 
 
 def score_landfire(evt, bps):
@@ -759,7 +785,7 @@ def score_landfire(evt, bps):
     del cursor5
 
 
-def calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, scratch):
+def calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, mines, scratch):
     evt_lookup = Lookup(evt, "VEG_SCORE")
     if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
         os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
@@ -769,9 +795,30 @@ def calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, scratch):
         os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
     bps_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Riparian.tif")
 
+    if mines is not None:
+        mines_dissolved = arcpy.Dissolve_management(mines)
+        arcpy.env.extent = thiessen_valley
+        mines_raster = ExtractByMask(evt, mines_dissolved)
+        cursor = arcpy.UpdateCursor(mines_raster)
+        for row in cursor:
+            row.setValue("VEG_SCORE", 0)
+            cursor.updateRow(row)
+        del row
+        del cursor
+
+        mines_lookup = Lookup(mines_raster, "VEG_SCORE")
+        mines_reclass = Reclassify(mines_lookup, "VALUE", "0 8; NODATA 0")
+        evt_mine_calc = mines_reclass + evt_lookup
+        evt_mines = Reclassify(evt_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
+        evt_mines.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_riparian_mines.tif")
+
+    else:
+        evt_mines = evt_lookup
+        evt_mines.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_riparian_mines.tif")
+
     if lg_river == None:
         # create raster output of riparian vegetation departure for areas without large rivers
-        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_lookup, "evt_zs", statistics_type="MEAN")
+        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_mines, "evt_zs", statistics_type="MEAN")
         bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_lookup, "bps_zs", statistics_type="MEAN")
 
         arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
@@ -825,7 +872,7 @@ def calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, scratch):
 
         river_lookup = Lookup(lg_river_raster, "VEG_SCORE")
         river_reclass = Reclassify(river_lookup, "VALUE", "8 8; NODATA 0")
-        evt_calc = river_reclass + evt_lookup
+        evt_calc = river_reclass + evt_mines
         bps_calc = river_reclass + bps_lookup
         evt_wo_rivers = Reclassify(evt_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
         bps_wo_rivers = Reclassify(bps_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
@@ -894,10 +941,35 @@ def calc_lui(evt, thiessen_valley, fcOut):
     return
 
 
-def calc_connectivity(frag_valley, thiessen_valley, fcOut, scratch):
+def calc_connectivity(frag_valley, thiessen_valley, fcOut, mines, scratch):
     fp_conn = scratch + '/fp_conn'
     arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
-    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", fp_conn, "fp_conn_zs", statistics_type="MEAN")
+    #connect_lookup = Lookup(fp_conn, "VALUE")
+
+    if mines is not None:
+        mines_dissolved = arcpy.Dissolve_management(mines)
+        arcpy.env.extent = thiessen_valley
+        mines_raster = ExtractByMask(fp_conn, mines_dissolved)
+
+#        cursor = arcpy.UpdateCursor(mines_raster)
+#        for row in cursor:
+#            row.setValue("VALUE", 8)
+#            cursor.updateRow(row)
+#        del row
+#        del cursor
+#row.setValue() (above) gives error that field not editable
+
+        #mines_lookup = Lookup(mines_raster, "VALUE")
+        mines_reclass = Reclassify(mines_raster, "VALUE", "0 8; 1 8; NODATA 0")
+        connect_mine_calc = mines_reclass + fp_conn
+        fp_conn_out = Reclassify(connect_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
+        fp_conn_out.save(scratch + "/fp_conn_out.tif")
+    else:
+        fp_conn_out = fp_conn
+        #fp_conn_out.save(os.path.dirname(os.path.dirname(scratch)) + "/fp_conn_out.tif")
+        #fp_conn_out.save throws error?
+
+    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", fp_conn_out, "fp_conn_zs", statistics_type="MEAN")
     #fp_conn.save(scratch + '/Floodplain_Connectivity')
 
     arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "ORIG_FID", "MEAN")
@@ -978,4 +1050,5 @@ if __name__ == '__main__':
         sys.argv[8],
         sys.argv[9],
         sys.argv[10],
-        sys.argv[11])
+        sys.argv[11],
+        sys.argv[12])

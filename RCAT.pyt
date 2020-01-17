@@ -538,7 +538,15 @@ class RVDBuilder(object):
             direction="Input",
             multiValue=True)
 
-        return [param0, param1, param2, param3, param4, param5]
+        param6 = arcpy.Parameter(
+            displayName="Select mining polygons",
+            name="mines",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        return [param0, param1, param2, param3, param4, param5, param6]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -563,7 +571,8 @@ class RVDBuilder(object):
                         p[2].valueAsText,
                         p[3].valueAsText,
                         p[4].valueAsText,
-                        p[5].valueAsText)
+                        p[5].valueAsText,
+                        p[6].valueAsText)
         return
 
 
@@ -643,23 +652,31 @@ class RVDtool(object):
         param8.filter.list = ["Polygon"]
 
         param9 = arcpy.Parameter(
+            displayName="Mining polygon",
+            name="mines",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input")
+        param9.filter.list = ["Polygon"]
+
+        param10 = arcpy.Parameter(
             displayName="Name RVD Output",
             name="outName",
             datatype="GPString",
             parameterType="Required",
             direction="Input")
-        # param9.symbology = os.path.join(os.path.dirname(__file__), "RVD_ratio.lyr")
+        # param10.symbology = os.path.join(os.path.dirname(__file__), "RVD_ratio.lyr")
 
-#        param10 = arcpy.Parameter(
+#        param11 = arcpy.Parameter(
 #            displayName="Scratch Workspace",
 #            name="scratch",
 #            datatype="DEWorkspace",
 #            parameterType="Required",
 #            direction = "Input")
-#        param10.filter.list = ["Local Database"]
-#        param10.value = arcpy.env.scratchWorkspace
+#        param11.filter.list = ["Local Database"]
+#        param11.value = arcpy.env.scratchWorkspace
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -688,7 +705,8 @@ class RVDtool(object):
                   p[6].valueAsText,
                   p[7].valueAsText,
                   p[8].valueAsText,
-                  p[9].valueAsText)
+                  p[9].valueAsText,
+                  p[10].valueAsText)
         return
 
 
@@ -748,7 +766,15 @@ class RCABuilder(object):
             direction="Input",
             multiValue=True)
 
-        return [param0, param1, param2, param3, param4, param5]
+        param6 = arcpy.Parameter(
+            displayName="Select mining polygons",
+            name="mining",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        return [param0, param1, param2, param3, param4, param5, param6]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -773,7 +799,8 @@ class RCABuilder(object):
                         p[2].valueAsText,
                         p[3].valueAsText,
                         p[4].valueAsText,
-                        p[5].valueAsText)
+                        p[5].valueAsText,
+                        p[6].valueAsText)
         return
 
 
@@ -853,14 +880,22 @@ class RCAtool(object):
         param8.filter.list = ["Polygon"]
 
         param9 = arcpy.Parameter(
+            displayName="Mining Polygon",
+            name="mines",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input")
+        param9.filter.list = ["Polygon"]
+
+        param10 = arcpy.Parameter(
             displayName="Valley Bottom Width Threshold",
             name="width_thresh",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param9.value = 120
+        param10.value = 120
 
-        param10 = arcpy.Parameter(
+        param11 = arcpy.Parameter(
             displayName="Name RCA Output",
             name="output",
             datatype="GPString",
@@ -876,7 +911,7 @@ class RCAtool(object):
 #        param11.filter.list = ["Local Database"]
 #        param11.value = arcpy.env.scratchWorkspace
 
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -906,7 +941,8 @@ class RCAtool(object):
                   p[7].valueAsText,
                   p[8].valueAsText,
                   p[9].valueAsText,
-                  p[10].valueAsText)
+                  p[10].valueAsText,
+                  p[11].valueAsText)
         return
 
 

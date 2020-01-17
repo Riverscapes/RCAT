@@ -23,6 +23,7 @@ import numpy as np
 import projectxml
 import uuid
 import datetime
+import shutil
 
 
 def main(
@@ -35,37 +36,51 @@ def main(
     seg_network,
     valley,
     lg_river,
+    mines,
     outName):
 
+    # make clean temporary directory
+    scratch = projPath + '/Temp'
+    if os.path.exists(scratch):
+        shutil.rmtree(scratch)
+    os.mkdir(scratch)
+
+    # set up arcpy environment
     arcpy.env.overwriteOutput = True
-    scratch = os.path.join(projPath, 'Temp')
-    if not os.path.exists(scratch):
-        os.mkdir(scratch)
-    arcpy.env.workspace = scratch
+    arcpy.env.workspace = 'in_memory'
     arcpy.CheckOutExtension("spatial")
 
     # create thiessen polygons from segmented network input
     arcpy.AddMessage("Creating thiessen polygons")
-    #seg_network_lyr = os.path.join(scratch, "seg_network")
-    #arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
+    seg_network_lyr = "seg_network_lyr"
+    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
     midpoints = scratch + "/midpoints.shp"
     arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
+    # list all fields in midpoints file
     midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
-    midpoint_fields.remove("OBJECTID")
-    midpoint_fields.remove("Shape")
-    midpoint_fields.remove("ORIG_FID")
-    # Error handling if permanent field can't be deleted
+    # remove permanent fields from this list
+    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID"] # remove permanent fields from list
+    for field in remove_list:
+        if field in midpoint_fields:
+            try:
+                midpoint_fields.remove(field)
+            except Exception:
+                pass
+    # delete all miscellaneous fields - with error handling in case Arc won't allow field deletion
     for f in midpoint_fields:
         try:
             arcpy.DeleteField_management(midpoints, f)
         except Exception as err:
-            print "Could not delete all misc. field in midpoints temp file. Error thrown was:"
+            arcpy.AddMessage("Could not delete all miscellaneous fields in midpoints temp file.")
             print err
 
     thiessen = scratch + "/thiessen.shp"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
     valley_buf = scratch + "/valley_buf.shp"
-    arcpy.Buffer_analysis(valley, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
+    #convert valley buffer to layer - JLW
+    valley_lyr = 'valley_lyr'
+    arcpy.MakeFeatureLayer_management(in_features=valley, out_layer=valley_lyr)
+    arcpy.Buffer_analysis(valley_lyr, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
     if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
         os.mkdir(os.path.dirname(seg_network) + "/Thiessen")
     thiessen_valley = os.path.dirname(seg_network) + "/Thiessen/Thiessen_Valley.shp"
@@ -94,13 +109,37 @@ def main(
     tempOut = projPath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
     arcpy.CopyFeatures_management(seg_network, tempOut)
 
+    #reclassify mined areas
+    if mines is not None:
+        mines_dissolved = os.path.join(scratch,'mines_dissolved.shp')
+        arcpy.Dissolve_management(mines, mines_dissolved)
+        arcpy.env.extent = thiessen_valley
+        mines_raster = ExtractByMask(evt, mines_dissolved)
+        cursor = arcpy.UpdateCursor(mines_raster)
+        for row in cursor:
+            row.setValue("VEG_SCORE", 0)
+            cursor.updateRow(row)
+        del row
+        del cursor
+
+        mines_lookup = Lookup(mines_raster, "VEG_SCORE")
+        mines_reclass = Reclassify(mines_lookup, "VALUE", "0 8; NODATA 0")
+        evt_mine_calc = mines_reclass + evt_lookup
+        evt_mines = Reclassify(evt_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
+        evt_mines.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_riparian_mines.tif")
+    else:
+        evt_mines = evt_lookup
+        evt_mines.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_riparian_mines.tif")
+
+    #changed all evt_lookup to evt_mines below
+
     # ----------------------------------------------###
     # RVD analysis for areas without large rivers   ###
     # ----------------------------------------------###
 
     if lg_river == None:
         arcpy.AddMessage("Calculating riparian vegetation departure")
-        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_lookup, "evt_zs", statistics_type="MEAN")
+        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_mines, "evt_zs", statistics_type="MEAN")
         bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_lookup, "bps_zs", statistics_type="MEAN")
         arcpy.JoinField_management(tempOut, "FID", evt_zs, "ORIG_FID", "MEAN")
         arcpy.AddField_management(tempOut, "EVT_MEAN", "DOUBLE")
@@ -156,7 +195,7 @@ def main(
 
         river_lookup = Lookup(lg_river_raster, "VEG_SCORE")
         river_reclass = Reclassify(river_lookup, "VALUE", "8 8; NODATA 0")
-        evt_calc = river_reclass + evt_lookup
+        evt_calc = river_reclass + evt_mines
         bps_calc = river_reclass + bps_lookup
         evt_wo_rivers = Reclassify(evt_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
         bps_wo_rivers = Reclassify(bps_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
@@ -639,6 +678,10 @@ def main(
             newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=getUUID())
             newxml.addRVDInput(newxml.RVDrealizations[0], "LRP", ref="LRP1")
 
+        if mines is not None:
+            newxml.addProjectInput("Vector", "Mines", mines[mines.find("01_Inputs"):], iid="MINES1", guid=getUUID())
+            newxml.addRVDInput(newxml.RVDrealizations[0], "Mines", ref="MINES1")
+
         newxml.addRVDInput(newxml.RVDrealizations[0], "Existing Cover", "Existing Riparian",
                            path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=getUUID())
         newxml.addRVDInput(newxml.RVDrealizations[0], "Historic Cover", "Historic Riparian",
@@ -801,6 +844,9 @@ def main(
             if lg_river is not None:
                 if os.path.abspath(vectorpath[i]) == os.path.abspath(lg_river[lg_river.find("01_Inputs"):]):
                     exxml.addRVDInput(exxml.RVDrealizations[0], "LRP", ref=str(vectorid[i]))
+            if mines is not None:
+                if os.path.abspath(vectorpath[i]) == os.path.abspath(mines[mines.find("01_Inputs"):]):
+                    exxml.addRVDInput(exxml.RVDrealizations[0], "Mines", ref=str(vectorid[i]))
 
         nlist = []
         for j in vectorpath:
@@ -840,6 +886,19 @@ def main(
             else:
                 exxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP" + str(k), guid=getUUID())
                 exxml.addRVDInput(exxml.RVDrealizations[0], "LRP", ref="LRP" + str(k))
+
+        if mines is not None:
+            nlist = []
+            for j in vectorpath:
+                if os.path.abspath(mines[mines.find("01_Inputs"):]) == os.path.abspath(j):
+                    nlist.append("yes")
+                else:
+                    nlist.append("no")
+            if "yes" in nlist:
+                pass
+            else:
+                exxml.addProjectInput("Vector", "Mining Polygon", mines[mines.find("01_Inputs"):], iid="MINES" + str(k), guid=getUUID())
+                exxml.addRVDInput(exxml.RVDrealizations[0], "Mines", ref="MINES" + str(k))
 
         del nlist
 
@@ -1031,4 +1090,5 @@ if __name__ == '__main__':
         sys.argv[7],
         sys.argv[8],
         sys.argv[9],
-        sys.argv[10])
+       sys.argv[10],
+        sys.argv[11])

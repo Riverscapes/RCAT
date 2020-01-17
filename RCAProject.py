@@ -13,13 +13,14 @@
 
 # import modules
 import os
+import glob
 import arcpy
 import shutil
 import sys
 import string
 
 
-def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp):
+def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
     """Create an RVD project and populate the inputs"""
 
     arcpy.env.overwriteOutput = True
@@ -30,7 +31,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp):
     if os.getcwd() is not projPath:
         os.chdir(projPath)
 
-    set_structure(projPath)
+    set_structure(projPath, lrp, mines)
 
     # add the existing veg inputs to project
     inex_cov = ex_cov.split(";")
@@ -63,7 +64,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp):
     for x in range(len(innetwork)):
         if not os.path.exists("Network_" + str(i)):
             os.mkdir("Network_" + str(i))
-        arcpy.Copy_management(innetwork[x], "Network_" + str(i) + "/" + os.path.basename(innetwork[x]))
+        arcpy.CopyFeatures_management(innetwork[x], "Network_" + str(i) + "/" + os.path.basename(innetwork[x]))
         i += 1
 
     # add the valley inputs to the project
@@ -73,7 +74,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp):
     for x in range(len(infragvalley)):
         if not os.path.exists("Frag_Valley_" + str(i)):
             os.mkdir("Frag_Valley_" + str(i))
-        arcpy.Copy_management(infragvalley[x], "Frag_Valley_" + str(i) + "/" + os.path.basename(infragvalley[x]))
+        arcpy.CopyFeatures_management(infragvalley[x], "Frag_Valley_" + str(i) + "/" + os.path.basename(infragvalley[x]))
         i += 1
 
     # add the large river polygons to the project
@@ -84,13 +85,26 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp):
         for x in range(len(inlrp)):
             if not os.path.exists("LRP_" + str(i)):
                 os.mkdir("LRP_" + str(i))
-            arcpy.Copy_management(inlrp[x], "LRP_" + str(i) + "/" + os.path.basename(inlrp[x]))
+            arcpy.CopyFeatures_management(inlrp[x], "LRP_" + str(i) + "/" + os.path.basename(inlrp[x]))
             i += 1
     else:
         pass
 
+    # add the mining polygons to the project
+    if mines is not None:
+        inmines = mines.split(";")
+        folders = glob.glob(projPath + "/01_Inputs/0*_Mines/")
+        os.chdir(folders[0])
+        i = 1
+        for x in range(len(inmines)):
+            if not os.path.exists("Mines_" + str(i)):
+                os.mkdir("Mines_" + str(i))
+            arcpy.CopyFeatures_management(inmines[x], "Mines_" + str(i) + "/" + os.path.basename(inmines[x]))
+            i += 1
+    else:
+        pass
 
-def set_structure(projPath):
+def set_structure(projPath, lrp, mines):
     """Sets up the folder structure for an RVD project"""
 
     if not os.path.exists(projPath):
@@ -112,8 +126,19 @@ def set_structure(projPath):
         os.mkdir("03_Network")
     if not os.path.exists("04_Frag_Valley"):
         os.mkdir("04_Frag_Valley")
-    if not os.path.exists("05_LRP"):
-        os.mkdir("05_LRP")
+    if lrp is not None:
+        if not os.path.exists("05_LRP"):
+            os.mkdir("05_LRP")
+        if mines is not None:
+            if not os.path.exists("06_Mines"):
+                os.mkdir("06_Mines")
+    else:
+        if mines is not None:
+            if not os.path.exists("05_Mines"):
+                os.mkdir("05_Mines")
+        else:
+            pass
+
 
 if __name__ == '__main__':
     main(
@@ -122,4 +147,5 @@ if __name__ == '__main__':
         sys.argv[3],
         sys.argv[4],
         sys.argv[5],
-        sys.argv[6])
+        sys.argv[6],
+        sys.argv[7])
