@@ -963,50 +963,67 @@ class BankfullChannelTool(object):
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Drainage Area Raster",
+            displayName="Drainage Area Raster (in km squared)",
             name="drarea",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param2 = arcpy.Parameter(
-            displayName="Precipitation Vector Dataset",
+            displayName="Precipitation Raster Dataset (in mm)",
             name="precip",
-            datatype="DEFeatureClass",
+            datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Output Name and Location",
-            name="output",
+            displayName="Valley Bottom Shapefile",
+            name="valleybottom",
             datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param4 = arcpy.Parameter(
+            displayName="Output Folder",
+            name="out_dir",
+            datatype="DEFolder",
             parameterType="Required",
             direction="Output")
 
-        param4 = arcpy.Parameter(
-            displayName="Minimum Stream Width",
-            name="min_buf",
+        param5 = arcpy.Parameter(
+            displayName="Minimum Bankfull Width",
+            name="MinBankfullWidth",
             datatype="GPString",
             parameterType="Required",
             direction="Input")
+        param5.value = 5
 
-        param5 = arcpy.Parameter(
+        param6 = arcpy.Parameter(
             displayName="Percent Buffer",
-            name="percent_buf",
+            name="dblPercentBuffer",
             datatype="GPDouble",
             parameterType="Optional",
             direction="Input")
+        param6.value = 100
 
-        param6 = arcpy.Parameter(
-            displayName="Scratch Workspace",
-            name="scratch",
-            datatype="DEWorkspace",
+        param7 = arcpy.Parameter(
+            displayName="Temporary Folder",
+            name="temp_dir",
+            datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        param6.filter.list = ["Local Database"]
-        param6.value = arcpy.env.scratchWorkspace
+        #param6.filter.list = ["Local Database"]
+        #param6.value = arcpy.env.scratchWorkspace
+		
+        param8 = arcpy.Parameter(
+            displayName="Delete Temporary Directory?",
+            name="deleteTemp",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        param8.value = True
 
-        return [param0, param1, param2, param3, param4, param5, param6]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -1032,7 +1049,9 @@ class BankfullChannelTool(object):
                              p[3].valueAsText,
                              p[4].valueAsText,
                              p[5].valueAsText,
-                             p[6].valueAsText)
+                             p[6].valueAsText,
+                             p[7].valueAsText,
+                             p[8].valueAsText)
         return
 
 
