@@ -11,7 +11,7 @@ The Bankfull Channel Tool generates an approximate bankfull channel, with an opt
 
 ## Prepare Inputs
 
-###DEM/Hydrology
+### DEM/Hydrology
 
 A DEM covering the entire Watershed of interest is required. It is highly recommended to use a projection system with equal cell size (i.e. UTM).
 
@@ -23,7 +23,7 @@ A DEM covering the entire Watershed of interest is required. It is highly recomm
    2. Multiply raster by: (cellX size * conversion value to km) * (cellY size * conversion value to km) 
    3. The largest raster value should be in the range of the estimated km area of the watershed.
 
-###Precipitation Raster
+### Precipitation Raster
 
 Download NRCS Annual Precip shapefile of the area. 
 
