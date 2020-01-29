@@ -20,6 +20,7 @@ The Riparian Condition Assessment Toolbox is an ArcGIS python toolbox created to
 **Version 1.0**
 
 - [NHD Network Builder]({{ site.baseurl }}/Documentation/Version_1.0/NHD)
+- [Bankfull Channel Tool]({{site.baseurl }}/Documentation/Version_1.0/BankfullChannelTool)
 - [Valley Bottom Extraction Tool (VBET)]({{ site.baseurl }}/Documentation/Version_1.0/VBET)
 - [Riparian Vegetation Departure (RVD)]({{ site.baseurl }}/Documentation/Version_1.0/RVD)
 - [Riparian Condition Assessment (RCA)]({{ site.baseurl }}/Documentation/Version_1.0/RCA)
