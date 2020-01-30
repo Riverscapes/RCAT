@@ -4,48 +4,47 @@ title: Riparian Condition Assessment (RCA)
 
 The Riparian Condition Assessment (RCA) tool models the condition of riparian areas based on three inputs: riparian vegetation departure (as modeled using the [RVD](http://rcat.riverscapes.xyz/Documentation/Version_1.0/RVD) tool), land use intensity, and floodplain connectivity. Each segment of an input network is attributed with values on continuous scales for each of these three inputs. The output (condition) of each segment is then assessed using a fuzzy inference system. The tool produces an output polyline shapefile which includes the three model inputs as attributes, as well as an output table that contains the calculated condition for each segment which can be joined to the polyline using the "FID" field.
 
-## Pre-Processing
+## Step 1: Run the RCA Project Builder tool.
 
-- Prepare a stream network using the [NHD Network Builder]({{ site.baseurl }}/Documentation/Version_1.0/NHD)
-- Dissolve and segment the network. (~500 meter segments work well.)
-- Produce a valley bottom using [VBET]({{ site.baseurl }}/Documentation/Version_1.0/VBET), and manually edit to desired accuracy.
-- Download the LANDFIRE EVT and BpS layers from the LANDFIRE [website](http://www.landfire.gov/) (for US Only; Equivalent vegetation layers may exist in other countries)
+This tool builds the folder structure for running RCA. [See here for pre-processing steps of input data]({{ site.baseurl }}/Documentation/Version_1.0/Preprocessing).
 
-NOTE: These pre-processing steps are the same as for the RVD tool. If the RVD tool has already been run, these same inputs can be used to run the RCA tool.
+### Parameters
 
-To run this tool, one of the required inputs is a valley bottom polygon that has been fragmented using a transportation infrastructure network (roads, railroads, etc.). The following process describes how to derive this input:
+- **Select project folder**: Select newly created folder to store all RCA inputs, intermediates, and outputs in.
+- **Select existing cover folder**: Select folder holding LANDFIRE existing vegetation data for the area of interest.
+- **Select historic cover folder**: Select folder holding LANDFIRE historic vegetation data for the area of interest.
+- **Select drainage network datasets**: Select pre-processed segmented network shapefile(s) you want to use in this RCA run.
+- **Select fragmented valley bottom datasets**: Select pre-processed valley bottom shapefile(s) you want to use in this RCA run.
+- **Select large river polygons** (optional): Select large river shapefile(s) you want to use in this RCA run. 
+- **Select dredge tailings polygons** (optional): Select dredge tailings shapefile(s) you want to use in this RCA run. 
 
-- Overlay a finalized road/railroad network on a copy of a final, edited valley bottom polygon.
-- Begin editing the valley bottom polygon. Select the whole road/railroad network (right click on the shapefile, go to "Selection" and choose "Select All").
-- Go to "Editor" > "More Editing Tools" > "Advanced Editing"
-- Click on the "Split Polygons" tool and split the valley bottom using the transportation network.
-- Go through the split valley and manually fix polygons that need to be enclosed. (Areas where the stream does not intersect a polygon will be considered disconnected from the floodplain. See figure below.)
+NOTE: See the [RVD page]({{ site.baseurl }}/Documentation/Version_1.0/RVD) for figures showing how including dredge tailings affects vegetation values.
 
-![manual]({{ site.baseurl }}/assets/images/fragvalley.png)
+## Step 2: Run the RCA tool
 
-- Add a field (type short int) to the split valley bottom feature and name it "Connected".
-- Make sure you are still editing the split valley bottom.
-- In "Select by Location" select the portions of the split valley bottom polygon that the stream network intersects. In the attribute table, change value of the "Connected" field to 1 for the highlighted features.
-- All other features should have a value of 0. (If necessary, reverse the selection and give the now highlighted features a value of 0.)
-- Export the feature as a new shapefile with a name referring to floodplain connectivity. This will be used as an input in the RCA tool.
+This tool calculates all intermediates and outputs.
 
-The figure below shows a final split valley bottom, ready for use in the tool.
+### Parameters
 
-![fp_connectivity]({{ site.baseurl }}/assets/images/fp_connectivity.png)
-
-## Parameters
-
-- **Input Segmented Stream Network**: select the stream network that was dissolved and segmented.
+- **Project Name** (optional): Project name to be used in the XML metadata file.
+- **Watershed HUC ID** (optional): Watershed HUC ID to be used in the XML metadata file.
+- **Watershed Name** (optional): Watershed name to be used in the XML metadata file.
+- **Select Project Folder**: Select project folder created in the RCA Project Builder.
+- **Existing Cover Raster**: Select the LANDFIRE EVT layer from the inputs folder within the project folder.
+- **Historic Cover Raster**: Select the LANDFIRE BPS layer from the inputs folder within the project folder. 
+- **Input Segmented Stream Network**: Select the stream network shapefile from the inputs folder within the project folder.
 
 NOTE: In the current version of the tool, if the stream network contains too many features (or segments), the tool will run out of memory and fail to run. Stream networks for watersheds can be clipped down to subwatersheds to run the tool with, and then the outputs can be merged together. For future versions, this issue will be resolved.
 
-- **Input Fragmented Valley Bottom**: select the shapefile of the valley bottom fragmented using transportation infrastructure in the pre-processing steps.
-- **Existing Vegetation Layer**: select the LANDFIRE EVT layer for the area of interest.
-- **Historic Vegetation Layer**: select the LANDFIRE BPS layer for the area of interest.
-- **Valley Bottom Width Threshold**: enter a width value above which streams will be considered "unconfined" and below which the streams will be considered "confined." Note: the process used to calculate valley width gives a rough, over-estimated estimate, so this value should also be over-estimated (for example the default value of 190 meters for the tool is roughly 100 meters on the ground). The value can be decreased from the default value (190) in order to include more of the network as unconfined, or increased in order to include less of the network as unconfined.
-- **Large River Polygon** (optional): In areas with large rivers (ie Green, Colorado, Snake, Columbia), all landcover cells within these large river polygons are coded as no data. In smaller rivers, the open water landcover class is coded as riparian. In development, we found that coding open water in large rivers as riparian skewed them to appear to be in better condition than they are. In small rivers, if open water was *not* coded as riparian, they appeared to be in worse condition than they were. The "Area" shapefile that was downloaded with NHD data can generally be used as this large river polygon.
-- **RCA Output**: Select an output location and name for the final polyline output.
-- **Scratch Workspace**: Select a geodatabase as a workspace to store temporary files. The default is the Arc default geodatabase.
+- **Input Fragmented Valley Bottom**: Select the valley bottom shapefile from the inputs folder within the project folder.
+
+- **Large River Polygon** (optional): Select the large river shapefile from the inputs folder. In areas with large rivers (ie Green, Colorado, Snake, Columbia), all landcover cells within these large river polygons are coded as no data. In smaller rivers, the open water landcover class is coded as riparian. In development, we found that coding open water in large rivers as riparian skewed them to appear to be in better condition than they are. In small rivers, if open water was *not* coded as riparian, they appeared to be in worse condition than they were. The "Area" shapefile that was downloaded with NHD data can generally be used as this large river polygon.
+- **Dredge Tailings Polygon** (optional): Select dredge tailings shapefile from the inputs folder. In areas with dredge tailings, existing riparian landcover is coded with a vegetation score of "0" - i.e., no riparian vegetation.
+- **Valley Bottom Width Threshold**: Enter a width value above which streams will be considered "unconfined" and below which the streams will be considered "confined." 
+
+NOTE: the process used to calculate valley width gives a rough, over-estimated estimate, so this value should also be over-estimated (for example the default value of 190 meters for the tool is roughly 100 meters on the ground). The value can be decreased from the default value (190) in order to include more of the network as unconfined, or increased in order to include less of the network as unconfined.
+
+- **Name RCA Output**: Specify name for the final polyline output which will be saved in the outputs folder within the project folder.
 
 ## Outputs
 

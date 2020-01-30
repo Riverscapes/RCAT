@@ -4,24 +4,39 @@ title: Riparian Vegetation Departure (RVD)
 
 The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to determine the departure of riparian vegetation from pre-settlement conditions. Current riparian vegetation cover is modeled using the LANDFIRE Existing Vegetation Type (EVT) layer. Historic (pre-European settlement) vegetation is modeled using the LANDFIRE Bio-physical Setting (BpS) layer. For more information on these layers see LANDFIRE's [website](http://landfire.gov/vegetation.php). In both of these layers, all native, riparian vegetation is given a value of 1, and all other vegetation is given a value of 0. The valley bottom is broken into polygons that correspond to approximately 500 meter segments of stream network, and within each polygon, the number of existing riparian cells is divided by the number of modeled historic riparian cells. The result is a ratio that represents the proportion of historic riparian vegetation that currently exists on the landscape. This value is then applied to the network. In addition, an analysis is performed that looks at types of riparian conversion and quantifies each type within each stream segment to determine possible causes of riparian degradation.
 
-## Pre-Processing
+## Step 1: Run the RVD Project Builder tool.
 
-- Prepare a network using the [NHD Network Builder]({{ site.baseurl }}/Documentation/Version_1.0/NHD)
-- Dissolve and segment the network. (~500 meter segments work well.)
-- Produce a valley bottom using [VBET]({{ site.baseurl }}/Documentation/Version_1.0/VBET), and manually edit to desired accuracy.
-- Download the LANDFIRE EVT and BpS layers from the LANDFIRE [website](http://www.landfire.gov/) (for US Only; Equivalent vegetation layers may exist in other countries)
+This tool builds the folder structure for running RVD. [See here for pre-processing steps of input data]({{ site.baseurl }}/Documentation/Version_1.0/Preprocessing).
 
-## Parameters
+### Parameters
 
-- **Existing Vegetation layer**: select the LANDFIRE EVT layer for the area of interest.
-- **Historic Vegetation layer**: select the LANDFIRE BPS layer for the area of interest.
-- **Input Segmented Stream Network**: select the stream network that was dissolved and segmented.
-- **Input Valley Bottom Polygon**: select the valley bottom polygon that was created using VBET and manually edited.
-- **Large River Polygon** (optional): In areas with large rivers (ie Green, Colorado, Snake, Columbia), all landcover cells within these large river polygons are coded as no data. In smaller rivers, the open water landcover class is coded as riparian. In development, we found that coding open water in large rivers as riparian skewed them to appear to be in better condition than they are. In small rivers, if open water was *not* coded as riparian, they appeared to be in worse condition than they were. The "Area" shapefile that was downloaded with NHD data can generally be used as this large river polygon.
-- **RVD Output**: select a location and name to store the final polyline output.
-- **Scratch Workspace**: Select a geodatabase as a workspace to store temporary files. The default is the Arc default geodatabase.
+- **Select Project Folder**: Select newly created folder to store all RCA inputs, intermediates, and outputs in.
+- **Select existing vegetation folder**: Select folder holding LANDFIRE existing vegetation data for the area of interest.
+- **Select historic vegetation folder**: Select folder holding LANDFIRE historic vegetation data for the area of interest.
+- **Select drainage network datasets**: Select pre-processed segmented network shapefile(s) you want to use in this RCA run.
+- **Select valley bottom datasets**: Select pre-processed fragmented valley bottom shapefile(s) you want to use in this RCA run.
+- **Select large river polygons** (optional): Select large river shapefile(s) you want to use in this RCA run. 
+- **Select dredge tailings polygons** (optional): Select dredge tailings shapefile(s) you want to use in this RCA run. 
 
-## Outputs
+## Step 2: Run the RVD tool
+
+This tool calculates the riparian vegetation departure and conversion types outputs
+
+### Parameters
+
+- **Project Name** (optional): Project name to be used in the XML metadata file.
+- **Watershed HUC ID** (optional): Watershed HUC ID to be used in the XML metadata file.
+- **Watershed Name** (optional): Watershed name to be used in the XML metadata file.
+- **Select Project Folder**: Select project folder created by the RVD Project Builder.
+- **Existing Vegetation Raster**: Select the LANDFIRE EVT layer for the area of interest.
+- **Historic Vegetation Raster**: Select the LANDFIRE BPS layer for the area of interest.
+- **Input Segmented Stream Network**: Select the stream network shapefile from the inputs folder within the project folder.
+- **Input Valley Bottom Polygon**: Select the fragmented valley bottom polygon shapefile from the inputs folder within the project folder. 
+- **Large River Polygon** (optional): Select the large river polygon shapefile from the inputs folder. In areas with large rivers (ie Green, Colorado, Snake, Columbia), all landcover cells within these large river polygons are coded as no data. In smaller rivers, the open water landcover class is coded as riparian. In development, we found that coding open water in large rivers as riparian skewed them to appear to be in better condition than they are. In small rivers, if open water was *not* coded as riparian, they appeared to be in worse condition than they were. The "Area" shapefile that was downloaded with NHD data can generally be used as this large river polygon.
+- **Dredge Tailings Polygon** (optional): Select the dredge tailings shapefile from the inputs folder. In areas with dredge tailings, existing riparian landcover is coded with a vegetation score of "0" - i.e., no riparian vegetation.
+- **Name RVD Output**: Specify a name to store the final polyline output, which will be found in the outputs folder within the project folder.
+
+## Standard Outputs
 
 - Riparian Vegetation Departure ratio `DEP_RATIO`
 
@@ -30,6 +45,16 @@ The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to d
 - Riparian Vegetation Conversion Type `CONV_TYPE`
 
 ![RCToutput]({{ site.baseurl }}/assets/images/RCToutput.png)
+
+## Comparison of Outputs with and without Dredge Tailings Input
+
+- Riparian Vegetation Departure ratio without adjustment for dredge tailings
+
+![RVDNoTailings]({{ site.baseurl }}/assets/images/RVDWithoutTailings.png)
+
+- Riparian Vegetation Departure ratio with adjustment for dredge tailings
+
+![RVDTailings]({{ site.baseurl }}/assets/images/RVDWithTailings.png)
 
 ### Additional RCA Output Fields
 

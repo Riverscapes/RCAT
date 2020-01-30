@@ -539,7 +539,7 @@ class RVDBuilder(object):
             multiValue=True)
 
         param6 = arcpy.Parameter(
-            displayName="Select mining polygons",
+            displayName="Select dredge tailings polygons",
             name="mines",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -652,7 +652,7 @@ class RVDtool(object):
         param8.filter.list = ["Polygon"]
 
         param9 = arcpy.Parameter(
-            displayName="Mining polygon",
+            displayName="Dredge Tailings Polygon",
             name="mines",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -767,7 +767,7 @@ class RCABuilder(object):
             multiValue=True)
 
         param6 = arcpy.Parameter(
-            displayName="Select mining polygons",
+            displayName="Select dredge tailings polygons",
             name="mining",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -880,7 +880,7 @@ class RCAtool(object):
         param8.filter.list = ["Polygon"]
 
         param9 = arcpy.Parameter(
-            displayName="Mining Polygon",
+            displayName="Dredge Tailings Polygon",
             name="mines",
             datatype="DEFeatureClass",
             parameterType="Optional",
