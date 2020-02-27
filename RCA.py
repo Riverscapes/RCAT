@@ -60,7 +60,7 @@ def main(
     thiessen = scratch + "/thiessen.shp"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
     buf_valley = scratch + "/buf_valley.shp"
-    arcpy.Buffer_analysis(frag_valley, buf_valley, "10 Meters", "FULL", "ROUND", "ALL")
+    arcpy.Buffer_analysis(frag_valley, buf_valley, "30 Meters", "FULL", "ROUND", "ALL")
     if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
         os.mkdir(os.path.dirname(seg_network) + "/Thiessen")
     thiessen_valley = os.path.dirname(seg_network) + "/Thiessen/Thiessen_Valley.shp"
