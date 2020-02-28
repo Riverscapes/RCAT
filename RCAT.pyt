@@ -3,7 +3,6 @@ import arcpy
 import VBETProject
 import VBET
 import NHDNetworkBuilder
-import RVDProject
 import RVD
 import RCAProject
 import RCA
@@ -19,14 +18,15 @@ class Toolbox(object):
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
-        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDBuilder, RVDtool, RCABuilder, RCAtool,
+        self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDtool, RCATBuilder, RCAtool,
                       BankfullChannelTool, Promotertool]
 
 
 class VBETBuilder(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Build VBET Project"
+        self.label = "01-Build VBET Project"
+        self.category = "02-VBET"
         self.description = "Sets up a VBET project folder and defines the inputs"
         self.canRunInBackground = False
 
@@ -93,7 +93,8 @@ class VBETBuilder(object):
 class VBETtool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Valley Bottom Extraction Tool"
+        self.label = "2-Valley Bottom Extraction Tool"
+        self.category = "02-VBET"
         self.description = "Uses a DEM and stream network to extract a valley bottom polygon"
         self.canRunInBackground = False
 
@@ -314,6 +315,7 @@ class NHDNetworkBuildertool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "NHD Network Builder"
+        self.category = "Misc"
         self.description = "Creates a user specified stream network using attributes from NHD hydrography data"
         self.canRunInBackground = False
 
@@ -482,104 +484,12 @@ class NHDNetworkBuildertool(object):
                                p[16].valueAsText)
         return
 
-class RVDBuilder(object):
-    def __init__(self):
-        """Define the tool (tool name is the name of the class)."""
-        self.label = "Build RVD Project"
-        self.description = "Sets up an RVD project folder and defines the inputs"
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        """Define parameter definitions"""
-        param0 = arcpy.Parameter(
-            displayName="Select Project Folder",
-            name="projPath",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        param1 = arcpy.Parameter(
-            displayName="Select existing vegetation folder",
-            name="ex_veg",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-
-        param2 = arcpy.Parameter(
-            displayName="Select historic vegetation folder",
-            name="hist_veg",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-
-        param3 = arcpy.Parameter(
-            displayName="Select drainage network datasets",
-            name="network",
-            datatype="DEFeatureClass",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-
-        param4 = arcpy.Parameter(
-            displayName="Select valley bottom datasets",
-            name="valley",
-            datatype="DEFeatureClass",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-
-        param5 = arcpy.Parameter(
-            displayName="Select large river polygons",
-            name="lrp",
-            datatype="DEFeatureClass",
-            parameterType="Optional",
-            direction="Input",
-            multiValue=True)
-
-        param6 = arcpy.Parameter(
-            displayName="Select dredge tailings polygons",
-            name="mines",
-            datatype="DEFeatureClass",
-            parameterType="Optional",
-            direction="Input",
-            multiValue=True)
-
-        return [param0, param1, param2, param3, param4, param5, param6]
-
-    def isLicensed(self):
-        """Set whether tool is licensed to execute."""
-        return True
-
-    def updateParameters(self, parameters):
-        """Modify the values and properties of parameters before internal
-        validation is performed.  This method is called whenever a parameter
-        has been changed."""
-        return
-
-    def updateMessages(self, parameters):
-        """Modify the messages created by internal validation for each tool
-        parameter.  This method is called after internal validation."""
-        return
-
-    def execute(self, p, messages):
-        """The source code of the tool."""
-        reload(RVDProject)
-        RVDProject.main(p[0].valueAsText,
-                        p[1].valueAsText,
-                        p[2].valueAsText,
-                        p[3].valueAsText,
-                        p[4].valueAsText,
-                        p[5].valueAsText,
-                        p[6].valueAsText)
-        return
-
 
 class RVDtool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Riparian Vegetation Departure"
+        self.label = "2-Riparian Vegetation Departure"
+        self.category = "01-RCAT"
         self.description = "Models current departure from historic riparian vegetation cover"
         self.canRunInBackground = False
 
@@ -653,7 +563,7 @@ class RVDtool(object):
 
         param9 = arcpy.Parameter(
             displayName="Dredge Tailings Polygon",
-            name="mines",
+            name="dredge_tailings",
             datatype="DEFeatureClass",
             parameterType="Optional",
             direction="Input")
@@ -710,11 +620,12 @@ class RVDtool(object):
         return
 
 
-class RCABuilder(object):
+class RCATBuilder(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Build RCA Project"
-        self.description = "Sets up an RCA project folder and defines the inputs"
+        self.label = "1-Build RCAT Project"
+        self.category = "01-RCAT"
+        self.description = "Sets up an RCAT project folder and defines the inputs"
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -768,7 +679,7 @@ class RCABuilder(object):
 
         param6 = arcpy.Parameter(
             displayName="Select dredge tailings polygons",
-            name="mining",
+            name="dredge_tailings",
             datatype="DEFeatureClass",
             parameterType="Optional",
             direction="Input",
@@ -807,7 +718,8 @@ class RCABuilder(object):
 class RCAtool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Riparian Condition Assessment"
+        self.label = "3-Riparian Condition Assessment"
+        self.category = "01-RCAT"
         self.description = "Models riparian area condition based on riparian departure, land use intensity, and floodplain accessibility"
         self.canRunInBackground = False
 
@@ -835,7 +747,7 @@ class RCAtool(object):
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Select Project Folder",
+            displayName="Select Output Folder for Run",
             name="projPath",
             datatype="DEFolder",
             parameterType="Required",
@@ -856,7 +768,7 @@ class RCAtool(object):
             direction="Input")
 
         param6 = arcpy.Parameter(
-            displayName="Input Segmented Stream Network",
+            displayName="Input Stream Network from Riparian Vegetation Departure",
             name="seg_network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -950,6 +862,7 @@ class BankfullChannelTool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "Bankfull Channel"
+        self.category = "Misc"
         self.description = "Generates a polygon representing the bankfull channel"
         self.canRunInBackground = False
 
@@ -1059,6 +972,7 @@ class Promotertool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "Realization Promoter"
+        self.category = "Misc"
         self.description = "Promotes a selected realization within a RCAT project"
         self.canRunInBackground = False
 

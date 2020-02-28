@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------------
-# Name:        RCA Project Builder
-# Purpose:     Gathers and structures the inputs for an RCA project
-#              the valley bottom
+# Name:        RCAT Project Builder
+# Purpose:     Gathers and structures the inputs for an RCAT project
+#              
 # Author:      Jordan Gilbert
 #
 # Created:     09/25/2015
@@ -20,8 +20,8 @@ import sys
 import string
 
 
-def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
-    """Create an RVD project and populate the inputs"""
+def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, dredge_tailings):
+    """Create an RCA project and populate the inputs"""
 
     arcpy.env.overwriteOutput = True
 
@@ -31,11 +31,11 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
     if os.getcwd() is not projPath:
         os.chdir(projPath)
 
-    set_structure(projPath, lrp, mines)
+    set_structure(projPath, lrp, dredge_tailings)
 
     # add the existing veg inputs to project
     inex_cov = ex_cov.split(";")
-    os.chdir(projPath + "/01_Inputs/01_Ex_Cov/")
+    os.chdir(projPath + "/Inputs/01_Ex_Cov/")
     i = 1
     for x in range(len(inex_cov)):
         if not os.path.exists("Ex_Cov_" + str(i)):
@@ -47,7 +47,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
 
     # add the historic veg inputs to project
     inhist_cov = hist_cov.split(";")
-    os.chdir(projPath + "/01_Inputs/02_Hist_Cov/")
+    os.chdir(projPath + "/Inputs/02_Hist_Cov/")
     i = 1
     for x in range(len(inhist_cov)):
         if not os.path.exists("Hist_Cov_" + str(i)):
@@ -59,7 +59,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
 
     # add the network inputs to project
     innetwork = network.split(";")
-    os.chdir(projPath + "/01_Inputs/03_Network/")
+    os.chdir(projPath + "/Inputs/03_Network/")
     i = 1
     for x in range(len(innetwork)):
         if not os.path.exists("Network_" + str(i)):
@@ -69,7 +69,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
 
     # add the valley inputs to the project
     infragvalley = frag_valley.split(";")
-    os.chdir(projPath + "/01_Inputs/04_Frag_Valley/")
+    os.chdir(projPath + "/Inputs/04_Frag_Valley/")
     i = 1
     for x in range(len(infragvalley)):
         if not os.path.exists("Frag_Valley_" + str(i)):
@@ -80,7 +80,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
     # add the large river polygons to the project
     if lrp is not None:
         inlrp = lrp.split(";")
-        os.chdir(projPath + "/01_Inputs/05_LRP/")
+        os.chdir(projPath + "/Inputs/05_LRP/")
         i = 1
         for x in range(len(inlrp)):
             if not os.path.exists("LRP_" + str(i)):
@@ -90,21 +90,21 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, mines):
     else:
         pass
 
-    # add the mining polygons to the project
-    if mines is not None:
-        inmines = mines.split(";")
-        folders = glob.glob(projPath + "/01_Inputs/0*_Mines/")
+    # add the dredge tailings polygons to the project
+    if dredge_tailings is not None:
+        indredge_tailings = dredge_tailings.split(";")
+        folders = glob.glob(projPath + "/Inputs/0*_DredgeTailings/")
         os.chdir(folders[0])
         i = 1
-        for x in range(len(inmines)):
-            if not os.path.exists("Mines_" + str(i)):
-                os.mkdir("Mines_" + str(i))
-            arcpy.CopyFeatures_management(inmines[x], "Mines_" + str(i) + "/" + os.path.basename(inmines[x]))
+        for x in range(len(indredge_tailings)):
+            if not os.path.exists("DredgeTailings_" + str(i)):
+                os.mkdir("DredgeTailings_" + str(i))
+            arcpy.CopyFeatures_management(indredge_tailings[x], "DredgeTailings_" + str(i) + "/" + os.path.basename(indredge_tailings[x]))
             i += 1
     else:
         pass
 
-def set_structure(projPath, lrp, mines):
+def set_structure(projPath, lrp, dredge_tailings):
     """Sets up the folder structure for an RVD project"""
 
     if not os.path.exists(projPath):
@@ -113,11 +113,9 @@ def set_structure(projPath, lrp, mines):
     if os.getcwd() is not projPath:
         os.chdir(projPath)
 
-    if not os.path.exists("01_Inputs"):
-        os.mkdir("01_Inputs")
-    if not os.path.exists("02_Analyses"):
-        os.mkdir("02_Analyses")
-    os.chdir("01_Inputs")
+    if not os.path.exists("Inputs"):
+        os.mkdir("Inputs")
+    os.chdir("Inputs")
     if not os.path.exists("01_Ex_Cov"):
         os.mkdir("01_Ex_Cov")
     if not os.path.exists("02_Hist_Cov"):
@@ -129,13 +127,13 @@ def set_structure(projPath, lrp, mines):
     if lrp is not None:
         if not os.path.exists("05_LRP"):
             os.mkdir("05_LRP")
-        if mines is not None:
-            if not os.path.exists("06_Mines"):
-                os.mkdir("06_Mines")
+        if dredge_tailings is not None:
+            if not os.path.exists("06_Dredge_Tailings"):
+                os.mkdir("06_DredgeTailings")
     else:
-        if mines is not None:
-            if not os.path.exists("05_Mines"):
-                os.mkdir("05_Mines")
+        if dredge_tailings is not None:
+            if not os.path.exists("06_Dredge_Tailings"):
+                os.mkdir("06_Dredge_Tailings")
         else:
             pass
 

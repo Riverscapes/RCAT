@@ -1,4 +1,4 @@
-# -------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------
 # Name:        Riparian Condition Assessment (RCA)
 # Purpose:     Models floodplain/riparian area condition using three inputs: riparian departure,
 #              land use intensity, and floodplain accessibility
@@ -10,7 +10,8 @@
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
-# -------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------
+
 import arcpy
 from arcpy.sa import *
 import sys
@@ -28,16 +29,17 @@ def main(
     projName,
     hucID,
     hucName,
-    projPath,
-    evt,
-    bps,
+    output_folder,
+    ex_veg,
+    hist_veg,
     seg_network,
     frag_valley,
     lg_river,
-    mines,
+    dredge_tailings,
     width_thresh,
     outName):
 
+    projPath = os.path.dirname(os.path.dirname(output_folder))
     scratch = os.path.join(projPath, 'Temp')
     if not os.path.exists(scratch):
         os.mkdir(scratch)
@@ -46,36 +48,22 @@ def main(
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
 
-    # make sure that the fragmented valley input has a field called "connected"
-    valley_fields = [f.name for f in arcpy.ListFields(frag_valley)]
-    if "Connected" not in valley_fields:
-        raise Exception("Valley input has no field 'Connected'")
+    # double check all needed fields
+    check_fields(frag_valley, seg_network, ex_veg, hist_veg)
 
-    # create thiessen polygons clipped to the extent of a buffered valley bottom
-    arcpy.AddMessage("Creating thiessen polygons")
-    seg_network_lyr = "seg_network_lyr"
-    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
-    midpoints = scratch + "/midpoints.shp"
-    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
-    thiessen = scratch + "/thiessen.shp"
-    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
-    buf_valley = scratch + "/buf_valley.shp"
-    arcpy.Buffer_analysis(frag_valley, buf_valley, "30 Meters", "FULL", "ROUND", "ALL")
-    if not os.path.exists(os.path.dirname(seg_network) + "/Thiessen"):
-        os.mkdir(os.path.dirname(seg_network) + "/Thiessen")
-    thiessen_valley = os.path.dirname(seg_network) + "/Thiessen/Thiessen_Valley.shp"
-    arcpy.Clip_analysis(thiessen, buf_valley, thiessen_valley)
-
+    # find thiessen polygons clipped to the extent of a buffered valley bottom, or create if not existent
+    intermediates_folder = os.path.join(output_folder, "01_Intermediates")
+    thiessen_valley = os.path.join(intermediates_folder, "02_ValleyThiessen/Thiessen_Valley_Clip.shp")
+    if not os.path.exists(thiessen_valley):
+        arcpy.AddMessage("Creating thiessen polygons")
+        create_thiessen_polygons_in_valley(seg_network, frag_valley, intermediates_folder, scratch)
+    
     # create rca input network and output directory
-    j = 1
-    while os.path.exists(projPath + "/02_Analyses/Output_" + str(j)):
-        j += 1
-
-    os.mkdir(projPath + "/02_Analyses/Output_" + str(j))
-    fcOut = projPath + "/02_Analyses/Output_" + str(j) + "/rca_table.shp"
+    fcOut = output_folder + "/rca_table.shp"
     arcpy.CopyFeatures_management(seg_network, fcOut)
 
     # Add width field to thiessen polygons and then output network
+    arcpy.AddMessage("Adding width field to output network")
     arcpy.AddField_management(thiessen_valley, "Perim", "DOUBLE")
     arcpy.AddField_management(thiessen_valley, "Area", "DOUBLE")
     arcpy.CalculateField_management(thiessen_valley, "Perim", "!SHAPE.LENGTH@METERS!", "PYTHON_9.3")
@@ -86,31 +74,20 @@ def main(
             perim, area, width = row
             row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
             cur.updateRow(row)
-    del row
-    del cur
-
     arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "ORIG_FID", "Width")
 
     # add model input attributes to input network
-
-    arcpy.AddMessage("Classifying vegetation rasters")
-    score_landfire(evt, bps)
-
-    arcpy.AddMessage("Calculating riparian departure")
-    calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, mines, scratch)
-
     arcpy.AddMessage("Assessing land use intensity")
-    calc_lui(evt, thiessen_valley, fcOut)
+    calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut)
 
     arcpy.AddMessage("Assessing floodplain connectivity")
-    calc_connectivity(frag_valley, thiessen_valley, fcOut, mines, scratch)
+    calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, intermediates_folder, scratch)
 
-    arcpy.AddMessage("Calculating overall vegetation departure")
-    calc_veg(evt, bps, thiessen_valley, fcOut)
+    arcpy.AddMessage("Assessing overall vegetation departure")
+    calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut)
 
     # # # calculate rca for segments in unconfined valleys # # #
-
-    arcpy.AddMessage("Calculating riparian condition")
+    arcpy.AddMessage("Calculating riparian condition for segments in unconfined valleys")
 
     arcpy.MakeFeatureLayer_management(fcOut, "rca_in_lyr")
     arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" >= {0}'.format(width_thresh))
@@ -122,7 +99,7 @@ def main(
     if count is not 0:
 
         # fix values outside of range of membership functions.
-        cursor = arcpy.da.UpdateCursor(rca_u, ["RVD", "LUI", "CONNECT"])
+        cursor = arcpy.da.UpdateCursor(rca_u, ["NATIV_DEP", "LUI", "CONNECT"])
         for row in cursor:
             if row[0] < 0:
                 row[0] = 0.01
@@ -141,7 +118,7 @@ def main(
         del cursor
 
         # get arrays from the fields of interest
-        RVDa = arcpy.da.FeatureClassToNumPyArray(rca_u, "RVD")
+        RVDa = arcpy.da.FeatureClassToNumPyArray(rca_u, "NATIV_DEP")
         LUIa = arcpy.da.FeatureClassToNumPyArray(rca_u, "LUI")
         CONNECTa = arcpy.da.FeatureClassToNumPyArray(rca_u, "CONNECT")
 
@@ -163,9 +140,9 @@ def main(
         RVD["minor"] = fuzz.trimf(RVD.universe, [0.5, 0.85, 0.95])
         RVD["negligible"] = fuzz.trapmf(RVD.universe, [0.85, 0.95, 1, 1])
 
-        LUI["high"] = fuzz.trapmf(LUI.universe, [0, 0, 0.416, 0.583])
-        LUI["moderate"] = fuzz.trapmf(LUI.universe, [0.416, 0.583, 0.83, 0.983])
-        LUI["low"] = fuzz.trapmf(LUI.universe, [0.83, 0.983, 1, 1])
+        LUI["low"] = fuzz.trapmf(LUI.universe, [0, 0, 0.017, 0.17])
+        LUI["moderate"] = fuzz.trapmf(LUI.universe, [0.017, 0.17, 0.416, 0.583])
+        LUI["high"] = fuzz.trapmf(LUI.universe, [0.416, 0.583, 1, 1])
 
         CONNECT["low"] = fuzz.trapmf(CONNECT.universe, [0, 0, 0.5, 0.7])
         CONNECT["moderate"] = fuzz.trapmf(CONNECT.universe, [0.5, 0.7, 0.9, 0.95])
@@ -232,7 +209,7 @@ def main(
         raise Exception("There are no 'unconfined' segments to assess using FIS. Lower width threshold parameter.")
 
     # # # calculate rca for segments in confined valleys # # #
-
+    arcpy.AddMessage("Calculating riparian condition for segments in confined valleys")
     arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" < {0}'.format(width_thresh))
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c.shp")
     rca_c = scratch + "/rca_c.shp"
@@ -240,7 +217,7 @@ def main(
     arcpy.AddField_management(rca_c, "CONDITION", "TEXT")
     cursor = arcpy.da.UpdateCursor(rca_c, ["LUI", "CONNECT", "VEG", "CONDITION"])
     for row in cursor:
-        if row[0] >= 0.96 and row[1] == 1 and row[2] > 0.8:
+        if row[0] <= 0.04 and row[1] == 1 and row[2] > 0.8:
             row[3] = "Confined - Unimpacted"
         else:
             row[3] = "Confined - Impacted"
@@ -249,8 +226,10 @@ def main(
     del cursor
 
     # merge the results of the rca for confined and unconfined valleys
-    tempOut = projPath + "/02_Analyses/Output_" + str(j) + "/tempout.shp"
-    output = projPath + "/02_Analyses/Output_" + str(j) + "/" + str(outName) + ".shp"
+    if not outName.endswith(".shp"):
+        outName = outName+".shp"
+    tempOut = output_folder + "/tempout.shp"
+    output = os.path.join(output_folder, outName)
 
     arcpy.Merge_management([rca_u_final, rca_c], tempOut)
 
@@ -273,14 +252,14 @@ def main(
     del row
     del cursor
 
+    # If any segments are found outside of the valley bottom, set the fields to a NoData value
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", frag_valley)
     arcpy.SelectLayerByLocation_management("outlyr", selection_type="SWITCH_SELECTION")
     getcount = arcpy.GetCount_management("outlyr")
     count = int(getcount.getOutput(0))
     if count != 0:
-        cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "Width", "EVT_MEAN", "BPS_MEAN", "RVD", "LUI",
-                                                  "CONNECT", "EX_VEG", "HIST_VEG", "VEG"])
+        cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "Width", "EX_VEG", "HIST_VEG", "VEG"])
         for row in cursor:
             row[0] = -9999
             row[1] = "None"
@@ -288,11 +267,6 @@ def main(
             row[3] = -9999
             row[4] = -9999
             row[5] = -9999
-            row[6] = -9999
-            row[7] = -9999
-            row[8] = -9999
-            row[9] = -9999
-            row[10] = -9999
             cursor.updateRow(row)
         del row
         del cursor
@@ -303,28 +277,193 @@ def main(
     arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
 
-    write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_valley, lg_river, mines, width_thresh, output)
-
+    # write xml
+    arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
+    write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, width_thresh, output)
     
     arcpy.CheckInExtension('spatial')
 
-    #arcpy.AddMessage("Deleting temporary files.....")
-    #temp_files = [seg_network_lyr, midpoints, thiessen, buf_valley, bps_zs, evt_zs, exveg_zs, histveg_zs,
-    #              fp_conn, lui_zs, final_table, rca_u_final, rca_u, rca_c]
-    #for tf in temp_files:
-    #   try:
-    #        arcpy.Delete_management(tf)
-    #    except Exception as err:
-    #        print "Delete failed for " + tf + ": try manually deleting"
+
+def check_fields(frag_valley, seg_network, ex_veg, hist_veg):
+    # make sure that the fragmented valley input has a field called "connected"
+    valley_fields = [f.name for f in arcpy.ListFields(frag_valley)]
+    if "Connected" not in valley_fields:
+        raise Exception("Valley input has no field 'Connected'")
+    # double check that input network has "NATIV_DEP" field from RVD
+    network_fields = [f.name for f in arcpy.ListFields(seg_network)]
+    if "NATIV_DEP" not in network_fields:
+        raise Exception("Network has no field 'NATIV_DEP'. Rerun RVD on network")
+    # double check that input existing veg has a "LU_CODE" field
+    ex_veg_fields = [f.name for f in arcpy.ListFields(ex_veg)]
+    if "LU_CODE" not in ex_veg_fields:
+        raise Exception("Field 'LU_CODE' must be added to existing vegetation raster before RCA can be run")
+    # double check both vegetation rasters have "VEGETATED" field
+    if "VEGETATED" not in ex_veg_fields:
+        raise Exception("Field 'VEGETATED' must be added to existing vegetation raster before RCA can be run")
+    hist_veg_fields = [f.name for f in arcpy.ListFields(hist_veg)]
+    if "VEGETATED" not in hist_veg_fields:
+        raise Exception("Field 'VEGETATED' must be added to historic vegetation raster before RCA can be run")
+
+    
+def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder, scratch):
+    # find midpoints of all reaches in segmented network
+    seg_network_lyr = "seg_network_lyr"
+    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
+    midpoints = scratch + "/midpoints.shp"
+    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
+
+    # list all fields in midpoints file
+    midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
+    # remove permanent fields from this list
+    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID"] # remove permanent fields from list
+    for field in remove_list:
+        if field in midpoint_fields:
+            try:
+                midpoint_fields.remove(field)
+            except Exception:
+                pass
+    # delete all miscellaneous fields - with error handling in case Arc won't allow field deletion
+    for f in midpoint_fields:
+        try:
+            arcpy.DeleteField_management(midpoints, f)
+        except Exception as err:
+            pass
+
+    # create thiessen polygons surrounding reach midpoints
+    thiessen_folder = os.path.join(intermediates_folder, "01_MidpointsThiessen")
+    if not os.path.exists(thiessen_folder):
+        os.mkdir(thiessen_folder)
+    thiessen = thiessen_folder + "/midpoints_thiessen.shp"
+    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
+
+    # buffer fragmented valley bottom
+    valley_buf = scratch + "/valley_buf.shp"
+    valley_lyr = 'valley_lyr'
+    arcpy.MakeFeatureLayer_management(in_features=valley, out_layer=valley_lyr) #convert valley buffer to layer - JLW
+    arcpy.Buffer_analysis(valley_lyr, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
+
+    # clip thiessen polygons to buffered valley bottom
+    thiessen_valley_folder = os.path.join(intermediates_folder, "02_ValleyThiessen")
+    if not os.path.exists(thiessen_valley_folder):
+        os.mkdir(thiessen_valley_folder)
+    thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley_Clip.shp"
+    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
+
+    return thiessen_valley, valley_buf
+
+
+def calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut):
+    lui_lookup = Lookup(ex_veg, "LU_CODE")
+    lui_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", lui_lookup, "lui_zs", statistics_type="MEAN")
+    ex_veg_folder = os.path.join(intermediates_folder, "03_VegetationRasters", "01_Ex_Veg")
+    lui_lookup.save(ex_veg_folder + "/Land_Use_Intensity.tif")
+    arcpy.JoinField_management(fcOut, "FID", lui_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "LUI", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "LUI"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
     return
 
-    # # # Write xml file # # #
-def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_valley, lg_river, mines, width_thresh, output):
-    """ Writes project XML file to document all input paths and other metadata """
-    if not os.path.exists(projPath + "/project.rs.xml"):
-        # xml file
-        xmlfile = projPath + "/project.rs.xml"
 
+def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, intermediates_folder, scratch):
+    connect_folder = os.path.join(intermediates_folder, "04_Connectivity")
+    if not os.path.exists(connect_folder):
+        os.mkdir(connect_folder)
+    fp_conn = scratch + '/fp_conn'
+    arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
+    #fp_conn.save(connect_folder + '/fp_conn.tif')
+
+    if dredge_tailings is not None:
+        dredge_tailings_dissolved = arcpy.Dissolve_management(dredge_tailings)
+        arcpy.env.extent = thiessen_valley
+        dredge_tailings_raster = ExtractByMask(fp_conn, dredge_tailings_dissolved)
+
+        dredge_tailings_reclass = Reclassify(dredge_tailings_raster, "VALUE", "0 8; 1 8; NODATA 0")
+        connect_mine_calc = dredge_tailings_reclass + fp_conn
+        fp_conn_out = Reclassify(connect_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
+    else:
+        fp_conn_out = fp_conn
+
+    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", fp_conn_out, "fp_conn_zs", statistics_type="MEAN")
+    fp_conn_out.save(connect_folder + '/Floodplain_Connectivity.tif')
+
+    arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "CONNECT", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "CONNECT"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
+    return
+
+
+def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
+    # set up vegetation intermediates folder structure
+    veg_rasters_folder = intermediates_folder + "/03_VegetationRasters"
+    ex_veg_folder = veg_rasters_folder + "/01_Ex_Veg"
+    hist_veg_folder = veg_rasters_folder + "/02_Hist_Veg"
+    folders = veg_rasters_folder, ex_veg_folder, hist_veg_folder
+    for f in folders:
+        if not os.path.exists(f):
+            os.mkdir(f)
+    # make lookup raster for existing and historic VEGETATED
+    exveg_lookup = Lookup(ex_veg, "VEGETATED")
+    exveg_lookup.save(ex_veg_folder+"/Existing_Vegetated.tif")
+    histveg_lookup = Lookup(hist_veg, "VEGETATED")
+    histveg_lookup.save(hist_veg_folder+"/Hist_Vegetated.tif")
+
+    exveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", exveg_lookup, "exveg_zs", statistics_type="MEAN")
+    histveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", histveg_lookup, "histveg_zs", statistics_type="MEAN")
+
+    arcpy.JoinField_management(fcOut, "FID", exveg_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "EX_VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EX_VEG"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+        if row[1] == 0:
+            row[1] = 0.0001
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
+    arcpy.JoinField_management(fcOut, "FID", histveg_zs, "ORIG_FID", "MEAN")
+    arcpy.AddField_management(fcOut, "HIST_VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "HIST_VEG"])
+    for row in cursor:
+        row[1] = row[0]
+        cursor.updateRow(row)
+        if row[1] == 0:
+            row[1] = 0.0001
+        cursor.updateRow(row)
+    del row
+    del cursor
+    arcpy.DeleteField_management(fcOut, "MEAN")
+
+    arcpy.AddField_management(fcOut, "VEG", "DOUBLE")
+    cursor = arcpy.da.UpdateCursor(fcOut, ["EX_VEG", "HIST_VEG", "VEG"])
+    for row in cursor:
+        row[2] = row[0] / row[1]
+        cursor.updateRow(row)
+    del row
+    del cursor
+
+    return
+
+
+def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, width_thresh, output):
+    """ Writes project XML file to document all input paths and other metadata """
+    xmlfile = projPath + "/RCAproject.rs.xml" # xml file name
+    if not os.path.exists(projPath + "/project.rs.xml"):
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "RCA", projName)
 
@@ -343,11 +482,11 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
         newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
 
         # add inputs and outputs to xml file
-        newxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV1",
+        newxml.addProjectInput("Raster", "Existing Cover", ex_veg[ex_veg.find("01_Inputs"):], iid="EXCOV1",
                                guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Vegetation", ref="EXCOV1")
 
-        newxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV1",
+        newxml.addProjectInput("Raster", "Historic Cover", hist_veg[hist_veg.find("01_Inputs"):], iid="HISTCOV1",
                                guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Historic Vegetation", ref="HISTCOV1")
 
@@ -363,20 +502,20 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
             newxml.addProjectInput("Vector", "Large River Polygon", lg_river[lg_river.find("01_Inputs"):], iid="LRP1", guid=getUUID())
             newxml.addRCAInput(newxml.RCArealizations[0], "LRP", ref="LRP1")
 
-        if mines is not None:
-            newxml.addProjectInput("Vector", "Mining Polygon", mines[mines.find("01_Inputs"):], iid="MINES1", guid=getUUID())
-            newxml.addRCAInput(newxml.RCArealizations[0], "Mines", ref="MINES1")
+        if dredge_tailings is not None:
+            newxml.addProjectInput("Vector", "Mining Polygon", dredge_tailings[dredge_tailings.find("01_Inputs"):], iid="dredge_tailings1", guid=getUUID())
+            newxml.addRCAInput(newxml.RCArealizations[0], "dredge_tailings", ref="dredge_tailings1")
 
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=getUUID())
+                           path=os.path.dirname(os.path.dirname(ex_veg[ex_veg.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
-                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=getUUID())
+                           path=os.path.dirname(os.path.dirname(hist_veg[hist_veg.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif", guid=getUUID())
+                           path=os.path.dirname(os.path.dirname(ex_veg[ex_veg.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
-                           path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs")])) + "/Hist_Rasters/Hist_Veg_Cover.tif", guid=getUUID())
+                           path=os.path.dirname(os.path.dirname(hist_veg[hist_veg.find("01_Inputs")])) + "/Hist_Rasters/Hist_Veg_Cover.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
-                           path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif", guid=getUUID())
+                           path=os.path.dirname(os.path.dirname(ex_veg[ex_veg.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif", guid=getUUID())
         newxml.addRCAInput(newxml.RCArealizations[0], "Thiessen Polygons", "Thiessen Polygons",
                            path=os.path.dirname(seg_network[seg_network.find("01_Inputs")]) + "/Thiessen/Thiessen_Valley.shp", guid=getUUID())
 
@@ -385,8 +524,6 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
         newxml.write()
 
     else:
-        xmlfile = projPath + "/project.rs.xml"
-
         exxml = projectxml.ExistingXML(xmlfile)
 
         rcar = exxml.rz.findall("RCA")
@@ -421,7 +558,7 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
             rasterpath[i] = raster[i].find("Path").text
 
         for i in range(len(rasterpath)):
-            if os.path.abspath(rasterpath[i]) == os.path.abspath(evt[evt.find("01_Inputs"):]):
+            if os.path.abspath(rasterpath[i]) == os.path.abspath(ex_veg[ex_veg.find("01_Inputs"):]):
                 EV = exxml.root.findall(".//ExistingVegetation")
                 for x in range(len(EV)):
                     if EV[x].attrib['ref'] == rasterid[i]:
@@ -449,7 +586,7 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
                                       path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif")
                     exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
                                       path=os.path.dirname(os.path.dirname(rasterpath[i][rasterpath[i].find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif")
-            elif os.path.abspath(rasterpath[i]) == os.path.abspath(bps[bps.find("01_Inputs"):]):
+            elif os.path.abspath(rasterpath[i]) == os.path.abspath(hist_veg[hist_veg.find("01_Inputs"):]):
                 HV = exxml.root.findall(".//HistoricVegetation")
                 for x in range(len(HV)):
                     if HV[x].attrib['ref'] == rasterid[i]:
@@ -474,40 +611,40 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
 
         nlist = []
         for j in rasterpath:
-            if os.path.abspath(evt[evt.find("01_Inputs"):]) == os.path.abspath(j):
+            if os.path.abspath(ex_veg[ex_veg.find("01_Inputs"):]) == os.path.abspath(j):
                 nlist.append("yes")
             else:
                 nlist.append("no")
         if "yes" in nlist:
             pass
         else:
-            exxml.addProjectInput("Raster", "Existing Cover", evt[evt.find("01_Inputs"):], iid="EXCOV" + str(k), guid=getUUID())
+            exxml.addProjectInput("Raster", "Existing Cover", ex_veg[ex_veg.find("01_Inputs"):], iid="EXCOV" + str(k), guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Vegetation", ref="EXCOV" + str(k))
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Riparian",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif",
+                              path=os.path.dirname(os.path.dirname(ex_veg[ex_veg.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Riparian.tif",
                               guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Existing Vegetation Cover",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif",
+                              path=os.path.dirname(os.path.dirname(ex_veg[ex_veg.find("01_Inputs"):])) + "/Ex_Rasters/Ex_Veg_Cover.tif",
                               guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Existing Raster", "Land Use Intensity",
-                              path=os.path.dirname(os.path.dirname(evt[evt.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif",
+                              path=os.path.dirname(os.path.dirname(ex_veg[ex_veg.find("01_Inputs"):])) + "/Ex_Rasters/Land_Use_Intensity.tif",
                               guid=getUUID())
         nlist2 = []
         for j in rasterpath:
-            if os.path.abspath(bps[bps.find("01_Inputs"):]) == os.path.abspath(j):
+            if os.path.abspath(hist_veg[hist_veg.find("01_Inputs"):]) == os.path.abspath(j):
                 nlist2.append("yes")
             else:
                 nlist2.append("no")
         if "yes" in nlist2:
             pass
         else:
-            exxml.addProjectInput("Raster", "Historic Cover", bps[bps.find("01_Inputs"):], iid="HISTCOV" + str(k), guid=getUUID())
+            exxml.addProjectInput("Raster", "Historic Cover", hist_veg[hist_veg.find("01_Inputs"):], iid="HISTCOV" + str(k), guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Historic Vegetation", ref="HISTCOV" + str(k))
             exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Riparian",
-                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif",
+                              path=os.path.dirname(os.path.dirname(hist_veg[hist_veg.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Riparian.tif",
                               guid=getUUID())
             exxml.addRCAInput(exxml.RCArealizations[0], "Historic Raster", "Historic Vegetation Cover",
-                              path=os.path.dirname(os.path.dirname(bps[bps.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif",
+                              path=os.path.dirname(os.path.dirname(hist_veg[hist_veg.find("01_Inputs"):])) + "/Hist_Rasters/Hist_Veg_Cover.tif",
                               guid=getUUID())
         del nlist, nlist2
 
@@ -541,9 +678,9 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
             if lg_river is not None:
                 if os.path.abspath(vectorpath[i]) == os.path.abspath(lg_river[lg_river.find("01_Inputs"):]):
                     exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref=str(vectorid[i]))
-            if mines is not None:
-                if os.path.abspath(vectorpath[i]) == os.path.abspath(mines[mines.find("01_Inputs"):]):
-                    exxml.addRVDInput(exxml.RCArealizations[0], "Mines", ref=str(vectorid[i]))
+            if dredge_tailings is not None:
+                if os.path.abspath(vectorpath[i]) == os.path.abspath(dredge_tailings[dredge_tailings.find("01_Inputs"):]):
+                    exxml.addRVDInput(exxml.RCArealizations[0], "dredge_tailings", ref=str(vectorid[i]))
         nlist = []
         for j in vectorpath:
             if os.path.abspath(seg_network[seg_network.find("01_Inputs"):]) == os.path.abspath(j):
@@ -586,18 +723,18 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
                                       iid="LRP" + str(k), guid=getUUID())
                 exxml.addRCAInput(exxml.RCArealizations[0], "LRP", ref="LRP" + str(k))
 
-        if mines is not None:
+        if dredge_tailings is not None:
             nlist = []
             for j in vectorpath:
-                if os.path.abspath(mines[mines.find("01_Inputs"):]) == os.path.abspath(j):
+                if os.path.abspath(dredge_tailings[dredge_tailings.find("01_Inputs"):]) == os.path.abspath(j):
                     nlist.append("yes")
                 else:
                     nlist.append("no")
             if "yes" in nlist:
                 pass
             else:
-                exxml.addProjectInput("Vector", "Mining Polygon", mines[mines.find("01_Inputs"):], iid="MINES" + str(k), guid=getUUID())
-                exxml.addRVDInput(exxml.RVDrealizations[0], "Mines", ref="MINES" + str(k))
+                exxml.addProjectInput("Vector", "Mining Polygon", dredge_tailings[dredge_tailings.find("01_Inputs"):], iid="dredge_tailings" + str(k), guid=getUUID())
+                exxml.addRVDInput(exxml.RVDrealizations[0], "dredge_tailings", ref="dredge_tailings" + str(k))
 
         del nlist
 
@@ -606,434 +743,6 @@ def write_xml(projName, hucID, hucName, projPath, evt, bps, seg_network, frag_va
 
         exxml.write()
 
-
-def score_landfire(evt, bps):
-    evt_fields = arcpy.ListFields(evt, "VEG_SCORE")
-    if len(evt_fields) is not 1:
-        arcpy.AddField_management(evt, "VEG_SCORE", "DOUBLE")
-
-    cursor = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "EVT_GP", "VEG_SCORE"])
-    for row in cursor:
-        if row[0] == "Riparian":
-            row[2] = 1
-        elif row[0] == "Open Water":
-            row[2] = 1
-        elif row[0] == "Hardwood":
-            row[2] = 1
-        elif row[0] == "Conifer-Hardwood":
-            row[2] = 1
-        elif row[1] == 708:
-            row[2] = 0
-        elif row[1] == 709:
-            row[2] = 0
-        elif row[1] == 701:
-            row[2] = 0
-        elif row[1] == 602:
-            row[2] = 1
-        elif row[1] == 603:
-            row[2] = 1
-        else:
-            row[2] = 0
-        cursor.updateRow(row)
-    del row
-    del cursor
-
-    bps_fields = arcpy.ListFields(bps, "VEG_SCORE")
-    if len(bps_fields) is not 1:
-        arcpy.AddField_management(bps, "VEG_SCORE", "DOUBLE")
-
-    cursor2 = arcpy.da.UpdateCursor(bps, ["GROUPVEG", "VEG_SCORE"])
-    for row in cursor2:
-        if row[0] == "Riparian":
-            row[1] = 1
-        elif row[0] == "Open Water":
-            row[1] = 1
-        elif row[0] == "Hardwood":
-            row[1] = 1
-        elif row[0] == "Hardwood-Conifer":
-            row[1] = 1
-        else:
-            row[1] = 0
-        cursor2.updateRow(row)
-    del row
-    del cursor2
-
-    evt_fields2 = arcpy.ListFields(evt, "LUI")
-    if len(evt_fields2) is not 1:
-        arcpy.AddField_management(evt, "LUI", "DOUBLE")
-
-    cursor3 = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "EVT_GP", "LUI"])
-    for row in cursor3:
-        if row[0] == "Barren":
-            row[2] = 1
-        elif row[0] == "Conifer":
-            row[2] = 1
-        elif row[0] == "Conifer-Hardwood":
-            row[2] = 1
-        elif row[0] == "Developed":
-            row[2] = 0.6
-        elif row[0] == "Developed-High Intensity":
-            row[2] = 0
-        elif row[0] == "Developed-Low Intensity":
-            row[2] = 0
-        elif row[0] == "Developed-Medium Intensity":
-            row[2] = 0
-        elif row[0] == "Developed-Roads":
-            row[2] = 0
-        elif row[0] == "Exotic Herbaceous":
-            row[2] = 0.66
-        elif row[0] == "Exotic Tree-Shrub":
-            row[2] = 1
-        elif row[0] == "Grassland":
-            row[2] = 1
-        elif row[0] == "Hardwood":
-            row[2] = 1
-        elif row[0] == "Open Water":
-            row[2] = 1
-        elif row[0] == "Quarries-Strip Mines-Gravel Pits":
-            row[2] = 0.33
-        elif row[0] == "Riparian":
-            row[2] = 1
-        elif row[0] == "Shrubland":
-            row[2] = 1
-        elif row[0] == "Snow-Ice":
-            row[2] = 1
-        elif row[0] == "Sparsely Vegetated":
-            row[2] = 1
-        elif row[1] == "60":
-            row[2] = 0.33
-        elif row[1] == "61":
-            row[2] = 0.33
-        elif row[1] == "62":
-            row[2] = 0.33
-        elif row[1] == "63":
-            row[2] = 0.33
-        elif row[1] == "64":
-            row[2] = 0.33
-        elif row[1] == "65":
-            row[2] = 0.33
-        elif row[1] == "66":
-            row[2] = 0.66
-        elif row[1] == "67":
-            row[2] = 0.66
-        elif row[1] == "68":
-            row[2] = 0.33
-        elif row[1] == "69":
-            row[2] = 0.33
-        elif row[1] == "81":
-            row[2] = 0.66
-        elif row[1] == "82":
-            row[2] = 0.33
-        cursor3.updateRow(row)
-    del row
-    del cursor3
-
-    evt_fields3 = arcpy.ListFields(evt, "VEGETATED")
-    if len(evt_fields3) is not 1:
-        arcpy.AddField_management(evt, "VEGETATED", "SHORT")
-
-    cursor4 = arcpy.da.UpdateCursor(evt, ["EVT_PHYS", "VEGETATED"])
-    for row in cursor4:
-        if row[0] == "Open Water":
-            row[1] = 0
-        elif row[0] == "Non-vegetated":
-            row[1] = 0
-        elif row[0] == "Snow-Ice":
-            row[1] = 0
-        elif row[0] == "Developed-Low Intensity":
-            row[1] = 0
-        elif row[0] == "Developed-Medium Intensity":
-            row[1] = 0
-        elif row[0] == "Developed-High Intensity":
-            row[1] = 0
-        elif row[0] == "Developed-Roads":
-            row[1] = 0
-        elif row[0] == "Barren":
-            row[1] = 0
-        elif row[0] == "Quarries-Strip Mines-Gravel Pits":
-            row[1] = 0
-        elif row[0] == "Agricultural":
-            row[1] = 0
-        elif row[0] == "Exotic Herbaceous":
-            row[1] = 0
-        elif row[0] == "Exotic Tree-Shrub":
-            row[0] = 0
-        else:
-            row[1] = 1
-        cursor4.updateRow(row)
-    del row
-    del cursor4
-
-    bps_fields2 = arcpy.ListFields(bps, "VEGETATED")
-    if len(bps_fields2) is not 1:
-        arcpy.AddField_management(bps, "VEGETATED", "SHORT")
-
-    cursor5 = arcpy.da.UpdateCursor(bps, ["GROUPVEG", "VEGETATED"])
-    for row in cursor5:
-        if row[0] == "Open Water":
-            row[1] = 0
-        elif row[0] == "Perrennial Ice/Snow":
-            row[1] = 0
-        elif row[0] == "Barren-Rock/Sand/Clay":
-            row[1] = 0
-        elif row[0] == "Sparse":
-            row[1] = 0
-        else:
-            row[1] = 1
-        cursor5.updateRow(row)
-    del row
-    del cursor5
-
-
-def calc_rvd(evt, bps, thiessen_valley, fcOut, lg_river, mines, scratch):
-    evt_lookup = Lookup(evt, "VEG_SCORE")
-    if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
-        os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
-    evt_lookup.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_Riparian.tif")
-    bps_lookup = Lookup(bps, "VEG_SCORE")
-    if not os.path.exists(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters"):
-        os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
-    bps_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Riparian.tif")
-
-    if mines is not None:
-        mines_dissolved = arcpy.Dissolve_management(mines)
-        arcpy.env.extent = thiessen_valley
-        mines_raster = ExtractByMask(evt, mines_dissolved)
-        cursor = arcpy.UpdateCursor(mines_raster)
-        for row in cursor:
-            row.setValue("VEG_SCORE", 0)
-            cursor.updateRow(row)
-        del row
-        del cursor
-
-        mines_lookup = Lookup(mines_raster, "VEG_SCORE")
-        mines_reclass = Reclassify(mines_lookup, "VALUE", "0 8; NODATA 0")
-        evt_mine_calc = mines_reclass + evt_lookup
-        evt_mines = Reclassify(evt_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
-        evt_mines.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_riparian_mines.tif")
-
-    else:
-        evt_mines = evt_lookup
-        evt_mines.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_riparian_mines.tif")
-
-    if lg_river == None:
-        # create raster output of riparian vegetation departure for areas without large rivers
-        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_mines, "evt_zs", statistics_type="MEAN")
-        bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_lookup, "bps_zs", statistics_type="MEAN")
-
-        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
-        for row in cursor:
-            row[1] = row[0]
-            cursor.updateRow(row)
-            if row[1] == 0:
-                row[1] = 0.0001
-            cursor.updateRow(row)
-        del row
-        del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
-
-        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
-        for row in cursor:
-            row[1] = row[0]
-            cursor.updateRow(row)
-            if row[1] == 0:
-                row[1] = 0.0001
-            cursor.updateRow(row)
-        del row
-        del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
-
-        arcpy.AddField_management(fcOut, "RVD", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "RVD"])
-        for row in cursor:
-            index = row[0] / row[1]
-            row[2] = index
-            cursor.updateRow(row)
-            if row[2] > 1 and row[1] == 0.0001:
-                row[2] = 1
-            cursor.updateRow(row)
-        del row
-        del cursor
-
-    else:
-        # create raster output of riparian vegetation departure for areas with large rivers
-        arcpy.env.extent = thiessen_valley
-        lg_river_raster = ExtractByMask(evt, lg_river)
-        cursor = arcpy.UpdateCursor(lg_river_raster)
-        for row in cursor:
-            row.setValue("VEG_SCORE", 8)
-            cursor.updateRow(row)
-        del row
-        del cursor
-
-        river_lookup = Lookup(lg_river_raster, "VEG_SCORE")
-        river_reclass = Reclassify(river_lookup, "VALUE", "8 8; NODATA 0")
-        evt_calc = river_reclass + evt_mines
-        bps_calc = river_reclass + bps_lookup
-        evt_wo_rivers = Reclassify(evt_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
-        bps_wo_rivers = Reclassify(bps_calc, "VALUE", "0 0; 1 1; 8 NODATA; 9 NODATA")
-
-        evt_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", evt_wo_rivers, "evt_zs", statistics_type="MEAN")
-        bps_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", bps_wo_rivers, "bps_zs", statistics_type="MEAN")
-
-        arcpy.JoinField_management(fcOut, "FID", evt_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "EVT_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EVT_MEAN"])
-        for row in cursor:
-            row[1] = row[0]
-            cursor.updateRow(row)
-            if row[1] == 0:
-                row[1] = 0.0001
-            cursor.updateRow(row)
-        del row
-        del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
-
-        arcpy.JoinField_management(fcOut, "FID", bps_zs, "ORIG_FID", "MEAN")
-        arcpy.AddField_management(fcOut, "BPS_MEAN", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "BPS_MEAN"])
-        for row in cursor:
-            row[1] = row[0]
-            cursor.updateRow(row)
-            if row[1] == 0:
-                row[1] = 0.0001
-            cursor.updateRow(row)
-        del row
-        del cursor
-        arcpy.DeleteField_management(fcOut, "MEAN")
-
-        arcpy.AddField_management(fcOut, "RVD", "DOUBLE")
-        cursor = arcpy.da.UpdateCursor(fcOut, ["EVT_MEAN", "BPS_MEAN", "RVD"])
-        for row in cursor:
-            index = row[0] / row[1]
-            row[2] = index
-            cursor.updateRow(row)
-            if row[2] > 1 and row[1] == 0.0001:
-                row[2] = 1
-            cursor.updateRow(row)
-        del row
-        del cursor
-
-    return
-
-
-def calc_lui(evt, thiessen_valley, fcOut):
-    lui_lookup = Lookup(evt, "LUI")
-    lui_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", lui_lookup, "lui_zs", statistics_type="MEAN")
-    if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
-        os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
-    lui_lookup.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Land_Use_Intensity.tif")
-
-    arcpy.JoinField_management(fcOut, "FID", lui_zs, "ORIG_FID", "MEAN")
-    arcpy.AddField_management(fcOut, "LUI", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "LUI"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(fcOut, "MEAN")
-
-    return
-
-
-def calc_connectivity(frag_valley, thiessen_valley, fcOut, mines, scratch):
-    fp_conn = scratch + '/fp_conn'
-    arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
-    #connect_lookup = Lookup(fp_conn, "VALUE")
-
-    if mines is not None:
-        mines_dissolved = arcpy.Dissolve_management(mines)
-        arcpy.env.extent = thiessen_valley
-        mines_raster = ExtractByMask(fp_conn, mines_dissolved)
-
-#        cursor = arcpy.UpdateCursor(mines_raster)
-#        for row in cursor:
-#            row.setValue("VALUE", 8)
-#            cursor.updateRow(row)
-#        del row
-#        del cursor
-#row.setValue() (above) gives error that field not editable
-
-        #mines_lookup = Lookup(mines_raster, "VALUE")
-        mines_reclass = Reclassify(mines_raster, "VALUE", "0 8; 1 8; NODATA 0")
-        connect_mine_calc = mines_reclass + fp_conn
-        fp_conn_out = Reclassify(connect_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
-        fp_conn_out.save(scratch + "/fp_conn_out.tif")
-    else:
-        fp_conn_out = fp_conn
-        #fp_conn_out.save(os.path.dirname(os.path.dirname(scratch)) + "/fp_conn_out.tif")
-        #fp_conn_out.save throws error?
-
-    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", fp_conn_out, "fp_conn_zs", statistics_type="MEAN")
-    #fp_conn.save(scratch + '/Floodplain_Connectivity')
-
-    arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "ORIG_FID", "MEAN")
-    arcpy.AddField_management(fcOut, "CONNECT", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "CONNECT"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(fcOut, "MEAN")
-
-    return
-
-
-def calc_veg(evt, bps, thiessen_valley, fcOut):
-    exveg_lookup = Lookup(evt, "VEGETATED")
-    if not os.path.exists(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters"):
-        os.mkdir(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters")
-    exveg_lookup.save(os.path.dirname(os.path.dirname(evt)) + "/Ex_Rasters/Ex_Veg_Cover.tif")
-    histveg_lookup = Lookup(bps, "VEGETATED")
-    if not os.path.exists(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters"):
-        os.mkdir(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters")
-    histveg_lookup.save(os.path.dirname(os.path.dirname(bps)) + "/Hist_Rasters/Hist_Veg_Cover.tif")
-
-    exveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", exveg_lookup, "exveg_zs", statistics_type="MEAN")
-    histveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", histveg_lookup, "histveg_zs", statistics_type="MEAN")
-
-    arcpy.JoinField_management(fcOut, "FID", exveg_zs, "ORIG_FID", "MEAN")
-    arcpy.AddField_management(fcOut, "EX_VEG", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EX_VEG"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-        if row[1] == 0:
-            row[1] = 0.0001
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(fcOut, "MEAN")
-
-    arcpy.JoinField_management(fcOut, "FID", histveg_zs, "ORIG_FID", "MEAN")
-    arcpy.AddField_management(fcOut, "HIST_VEG", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "HIST_VEG"])
-    for row in cursor:
-        row[1] = row[0]
-        cursor.updateRow(row)
-        if row[1] == 0:
-            row[1] = 0.0001
-        cursor.updateRow(row)
-    del row
-    del cursor
-    arcpy.DeleteField_management(fcOut, "MEAN")
-
-    arcpy.AddField_management(fcOut, "VEG", "DOUBLE")
-    cursor = arcpy.da.UpdateCursor(fcOut, ["EX_VEG", "HIST_VEG", "VEG"])
-    for row in cursor:
-        index = row[0] / row[1]
-        row[2] = index
-        cursor.updateRow(row)
-    del row
-    del cursor
-
-    return
 
 def getUUID():
     return str(uuid.uuid4()).upper()
