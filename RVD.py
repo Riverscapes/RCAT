@@ -118,7 +118,7 @@ def main(
         
     # write XML file
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
-    write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, fcOut) 
+    write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analyses_folder)
 
 
 def build_output_folder(projPath, seg_network):
@@ -279,9 +279,10 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     final_conversion_raster = Reclassify(int_conversion_raster, "VALUE", remap, "NODATA")
     # make list of all values in conversion raster
     valueList = []
-    with arcpy.SearchCursor(final_conversion_raster) as cursor:
-        for row in cursor:
-            valueList.append(row.getValue("VALUE"))
+    cursor = arcpy.SearchCursor(final_conversion_raster)
+    for row in cursor:
+        valueList.append(row.getValue("VALUE"))
+    del row, cursor
 
     # make individual rasters for each conversion value - value gets a "1", everything else is "NODATA"
     if 0 in valueList:
