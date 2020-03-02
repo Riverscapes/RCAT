@@ -260,6 +260,7 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
             if row[1] == 0:
                 row[1] = 0.0001
             cursor.updateRow(row)
+    arcpy.DeleteField_management(tempOut, "MEAN")
     return veg_field
 
 
