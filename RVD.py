@@ -322,7 +322,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     calculate_conversion_proportion(conversion_80, thiessen_valley, tempOut, valueList, 80, "conif")
     calculate_conversion_proportion(conversion_97, thiessen_valley, tempOut, valueList, 97, "inv")
     calculate_conversion_proportion(conversion_98, thiessen_valley, tempOut, valueList, 98, "dev")
-    calculate_conversion_proportion(conversion_0, thiessen_valley, tempOut, valueList, 99, "agr")
+    calculate_conversion_proportion(conversion_99, thiessen_valley, tempOut, valueList, 99, "agr")
 
     # create numpy arrays for proportion of each conversion type
     prop0_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_noch")
