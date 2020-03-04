@@ -81,7 +81,7 @@ def main(
     calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut)
 
     arcpy.AddMessage("Assessing floodplain connectivity")
-    calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, intermediates_folder, scratch)
+    calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_veg, intermediates_folder, scratch)
 
     arcpy.AddMessage("Assessing overall vegetation departure")
     calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut)
@@ -370,7 +370,12 @@ def calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut):
     return
 
 
-def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, intermediates_folder, scratch):
+def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_veg, intermediates_folder, scratch):
+    # set raster environment
+    arcpy.env.extent = dredge_tailings
+    arcpy.env.snapRaster = ex_veg
+    
+    # set up folder structure
     connect_folder = os.path.join(intermediates_folder, "04_Connectivity")
     if not os.path.exists(connect_folder):
         os.mkdir(connect_folder)
