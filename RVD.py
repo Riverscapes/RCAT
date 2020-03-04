@@ -281,7 +281,7 @@ def reclassify_adjusted_veg(masked_raster, veg_lookup, field_name, out_name, fol
 def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tempOut):
     # set raster environment for mask
     arcpy.env.extent = thiessen_valley
-    arcpy.env.snapRaster = veg_raster
+    arcpy.env.snapRaster = veg_lookup
     # calculate proportion of area with coded vegetation (riparian or native riparian) for each reach based on thiessen polygons
     # Note: since raster values are 0 and 1, "MEAN" is the same as the proportion of area for all values=1
     veg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", veg_lookup, veg_type+"_veg_zs_"+out_type, statistics_type="MEAN")
