@@ -313,10 +313,16 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     conversion_raster = hist_conversion_lookup - ex_veg_conversion_lookup
     int_conversion_raster = Int(conversion_raster)
 
+    # get raster of pixels with historic or existing riparian
+    riparian_sum = ex_veg_conversion_lookup + hist_conversion_lookup
+    all_riparian = Reclassify(riparian_sum, "VALUE", "0 NODATA; 1 1; 2 2", "NODATA")
+    all_riparian.save(os.path.join(os.path.dirname(ex_veg_lookup_folder), "All_Riparian_recl.tif"))
+    riparian_conversion_raster = ExtractByMask(int_conversion_raster, all_riparian)
+    
     # reclassify change raster to include only values pertaining to riparian conversion; all non-riparian conversion gets a NODATA value
-    remap = "-460 NODATA; -450 NODATA; -400 NODATA; -480 NODATA; -80 NODATA; -60 NODATA; -50 NODATA; -30 NODATA; -20 NODATA; -10 NODATA; 0 0; 10 NODATA; 17 NODATA; 18 NODATA; 19 NODATA; " \
+    remap = "-460 NODATA; -450 NODATA; -400 NODATA; -480 NODATA; -80 -50; -60 -50; -50 -50; -30 NODATA; -20 NODATA; -10 NODATA; 0 0; 10 NODATA; 17 NODATA; 18 NODATA; 19 NODATA; " \
             "20 NODATA; 30 NODATA; 37 NODATA; 38 NODATA; 39 NODATA; 47 NODATA; 48 NODATA; 49 NODATA; 400 NODATA; 450 NODATA; 460 NODATA; 497 NODATA; 498 NODATA; 499 NODATA; 50 50; 60 60; 80 80; 97 97; 98 98; 99 99"
-    final_conversion_raster = Reclassify(int_conversion_raster, "VALUE", remap, "NODATA")
+    final_conversion_raster = Reclassify(riparian_conversion_raster, "VALUE", remap, "NODATA")
     # make list of all values in conversion raster
     valueList = []
     cursor = arcpy.SearchCursor(final_conversion_raster)
@@ -326,19 +332,21 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
 
     # make individual rasters for each conversion value - value gets a "1", everything else is "NODATA"
     if 0 in valueList:
-        conversion_0 = Reclassify(final_conversion_raster, "VALUE", "0 1; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+        conversion_0 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 1; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
     if 50 in valueList:
-        conversion_50 = Reclassify(final_conversion_raster, "VALUE", "0 NODATA; 50 1; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+        conversion_50 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 1; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
     if 60 in valueList:
-        conversion_60 = Reclassify(final_conversion_raster, "VALUE", "0 NODATA; 50 NODATA; 60 1; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+        conversion_60 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 1; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
     if 80 in valueList:
-        conversion_80 = Reclassify(final_conversion_raster, "VALUE", "0 NODATA; 50 NODATA; 60 NODATA; 80 1; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+        conversion_80 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 1; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
     if 97 in valueList:
-        conversion_97 = Reclassify(final_conversion_raster, "VALUE", "0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 1; 98 NODATA; 99 NODATA", "NODATA")
+        conversion_97 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 1; 98 NODATA; 99 NODATA", "NODATA")
     if 98 in valueList:
-        conversion_98 = Reclassify(final_conversion_raster, "VALUE", "0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 1; 99 NODATA", "NODATA")
+        conversion_98 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 1; 99 NODATA", "NODATA")
     if 99 in valueList:
-        conversion_99 = Reclassify(final_conversion_raster, "VALUE", "0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 1", "NODATA")
+        conversion_99 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 1", "NODATA")
+    if -50 in valueList:
+        conversion_min50 = Reclassify(final_conversion_raster, "VALUE", "-50 1; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
 
     # pull section of reclassified raster within buffered valley bottom and save
     out_conversion_raster = ExtractByMask(final_conversion_raster, valley_buf)
@@ -362,6 +370,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     calculate_conversion_proportion(conversion_97, thiessen_valley, tempOut, valueList, 97, "inv")
     calculate_conversion_proportion(conversion_98, thiessen_valley, tempOut, valueList, 98, "dev")
     calculate_conversion_proportion(conversion_99, thiessen_valley, tempOut, valueList, 99, "agr")
+    calculate_conversion_proportion(conversion_min50, thiessen_valley, tempOut, valueList, -50, "exp")
 
     # create numpy arrays for proportion of each conversion type
     prop0_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_noch")
@@ -378,7 +387,9 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     array98 = np.asarray(prop98_array, np.float64)
     prop99_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_agr")
     array99 = np.asarray(prop99_array, np.float64)
-    del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array # clear up memory
+    propMin50_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_exp")
+    arrayMin50 = np.asarray(propMin50_array, np.float64)
+    del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array, propMin50 # clear up memory
 
     # flag conversion type based on proportions of all conversions
     out_conv_code = np.zeros(len(array0), dtype=np.float64)
@@ -386,48 +397,55 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
         if array0[i] >= 0.85:  # if no change proportion is greater than or equal to 0.9
             out_conv_code[i] = 1  # no change
         else:  # if no change proportion is less than 0.9, move on to next greatest proportion
-            if array50[i] > array60[i] and array50[i] > array80[i] and array50[i] > array97[i] and array50[i] > array98[i] and array50[i] > array99[i]:  # if grass/shrubland is next most dominant
+            if array50[i] > array60[i] and array50[i] > array80[i] and array50[i] > array97[i] and array50[i] > array98[i] and array50[i] > array99[i] and array50[i] > arrayMin50[i]:  # if grass/shrubland is next most dominant
                 if array50[i] <= 0.25:
                     out_conv_code[i] = 11  # minor conversion to grass/shrubland
                 elif array50[i] > 0.25 and array50[i] <= 0.5:
                     out_conv_code[i] = 12  # moderate conversion to grass/shrubland
                 else:
                     out_conv_code[i] = 13  # significant conversion to grass/shrubland
-            elif array60[i] > array50[i] and array60[i] > array80[i] and array60[i] > array97[i] and array60[i] > array98[i] and array60[i] > array99[i]:  # if barren is next most dominant
+            elif array60[i] > array50[i] and array60[i] > array80[i] and array60[i] > array97[i] and array60[i] > array98[i] and array60[i] > array99[i] and array60[i] > arrayMin50[i]:  # if barren is next most dominant
                 if array60[i] <= 0.25:
                     out_conv_code[i] = 21  # minor devegetation
                 elif array60[i] > 0.25 and array60[i] <= 0.5:
                     out_conv_code[i] = 22  # moderate devegetation
                 else:
                     out_conv_code[i] = 23  # significant devegetation
-            elif array80[i] > array50[i] and array80[i] > array60[i] and array80[i] > array97[i] and array80[i] > array98[i] and array80[i] > array99[i]:  # if conifer encroachment is next most dominant
+            elif array80[i] > array50[i] and array80[i] > array60[i] and array80[i] > array97[i] and array80[i] > array98[i] and array80[i] > array99[i] and array80[i] > arrayMin50[i]:  # if conifer encroachment is next most dominant
                 if array80[i] <= 0.25:
                     out_conv_code[i] = 31  # minor conifer encroachment
                 elif array80[i] > 0.25 and array80[i] <= 0.5:
                     out_conv_code[i] = 32  # moderate conifer encroachment
                 else:
                     out_conv_code[i] = 33  # significant conifer encroachment
-            elif array97[i] > array50[i] and array97[i] > array60[i] and array97[i] > array80[i] and array97[i] > array98[i] and array97[i] > array99[i]:  # if conversion to invasive is next most dominant
+            elif array97[i] > array50[i] and array97[i] > array60[i] and array97[i] > array80[i] and array97[i] > array98[i] and array97[i] > array99[i] and array97[i] > arrayMin50[i]:  # if conversion to invasive is next most dominant
                 if array97[i] <= 0.25:
                     out_conv_code[i] = 41  # minor conversion to invasive
                 elif array97[i] > 0.25 and array97[i] <= 0.5:
                     out_conv_code[i] = 42  # moderate conversion to invasive
                 else:
                     out_conv_code[i] = 43  # significant conversion to invasive
-            elif array98[i] > array50[i] and array98[i] > array60[i] and array98[i] > array80[i] and array98[i] > array97[i] and array98[i] > array99[i]:  # if urbanization is next most dominant
+            elif array98[i] > array50[i] and array98[i] > array60[i] and array98[i] > array80[i] and array98[i] > array97[i] and array98[i] > array99[i] and array98[i] > arrayMin50[i]:  # if urbanization is next most dominant
                 if array98[i] <= 0.25:
                     out_conv_code[i] = 51  # minor urbanization
                 elif array98[i] > 0.25 and array98[i] <= 0.5:
                     out_conv_code[i] = 52  # moderate urbanization
                 else:
                     out_conv_code[i] = 53  # significant urbanization
-            elif array99[i] > array50[i] and array99[i] > array60[i] and array99[i] > array80[i] and array99[i] > array97[i] and array99[i] > array98[i]:  # if conversion to agriculture is next most dominant
+            elif array99[i] > array50[i] and array99[i] > array60[i] and array99[i] > array80[i] and array99[i] > array97[i] and array99[i] > array98[i] and array99[i] > arrayMin50[i]:  # if conversion to agriculture is next most dominant
                 if array99[i] <= 0.25:
                     out_conv_code[i] = 61  # minor conversion to agriculture
                 elif array99[i] > 0.25 and array99[i] <= 0.5:
                     out_conv_code[i] = 62  # moderate conversion to agriculture
                 else:
                     out_conv_code[i] = 63  # significant conversion to agriculture
+            elif arrayMin50[i] > array50[i] and arrayMin50[i] > array60[i] and arrayMin50[i] > array80[i] and arrayMin50[i] > array97[i] and arrayMin50[i] > array98[i] and arrayMin50[i] > array99[i]:  # if riparian expansion is next most dominant
+                if arrayMin50[i] <= 0.25:
+                    out_conv_code[i] = 71  # minor riparian expansion
+                elif arrayMin50[i] > 0.25 and arrayMin50[i] <= 0.5:
+                    out_conv_code[i] = 72  # moderate riparian expansion
+                else:
+                    out_conv_code[i] = 73  # significant riparian expansion
             else:
                 out_conv_code[i] = 0
 
@@ -487,6 +505,12 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 row[1] = "Moderate Conversion to Agriculture"
             elif row[0] == 63:
                 row[1] = "Significant Conversion to Agriculture"
+            elif row[0] == 71:
+                row[1] = "Significant Riparian Expansion"
+            elif row[0] == 72:
+                row[1] = "Moderate Riparian Expansion"
+            elif row[0] == 73:
+                row[1] = "Minor Riparian Expansion"
             elif row[0] == 0:
                 row[1] = "Multiple Dominant Conversion Types"
             cursor.updateRow(row)
@@ -501,7 +525,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
         with arcpy.da.UpdateCursor("outlyr", ["RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean", "HsRip_Mean",
                                               "ExNtv_Mean",  "HsNtv_Mean", "COUNT", "sum_noch", "sum_grsh", "sum_deveg",
                                               "sum_conif", "sum_inv", "sum_dev", "sum_agr", "prop_noch", "prop_grsh", "prop_deveg",
-                                              "prop_conif", "prop_inv", "prop_dev", "prop_agr"]) as cursor:
+                                              "prop_conif", "prop_inv", "prop_dev", "prop_agr", "prop_exp"]) as cursor:
             for row in cursor:
                 row[0] = -9999
                 row[1] = -9999
@@ -526,6 +550,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 row[20] = -9999
                 row[21] = -9999
                 row[22] = -9999
+                row[23] = -9999
                 cursor.updateRow(row)
 
     # save to output shapefile
