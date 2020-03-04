@@ -51,17 +51,21 @@ def main(
     arcpy.env.workspace = 'in_memory'
     arcpy.CheckOutExtension("spatial")
 
+    # check inputs
+    arcpy.AddMessage("Validating inputs...")
+    validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tailings)
+
     # create clean outputs and intermediates folders
-    arcpy.AddMessage("Building output folder structure")
+    arcpy.AddMessage("Building output folder structure...")
     intermediates_folder, analysis_folder, tempOut = build_output_folder(projPath, seg_network)
 
     # create thiessen polygons and clip to fragmented valley bottom
-    arcpy.AddMessage("Creating thiessen polygons")
+    arcpy.AddMessage("Creating thiessen polygons...")
     thiessen_valley, valley_buf = create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder, scratch)
 
     # create lookup tables for existing and historic veg scores
     # create folder structure
-    arcpy.AddMessage("Creating vegetation lookup rasters")
+    arcpy.AddMessage("Creating vegetation lookup rasters...")
     veg_rasters_folder = os.path.join(intermediates_folder, "03_VegetationRasters")
     ex_veg_lookup_folder = os.path.join(veg_rasters_folder, "01_Ex_Veg")
     hist_veg_lookup_folder = os.path.join(veg_rasters_folder, "02_Hist_Veg")
@@ -75,17 +79,17 @@ def main(
         
     # reclassify areas within dredge tailings polygons
     if dredge_tailings is not None:
-        arcpy.AddMessage("Reclassifying vegetation within dredge tailings")
+        arcpy.AddMessage("Reclassifying vegetation within dredge tailings...")
         ex_riparian, ex_native = vegetation_adjustment(dredge_tailings, ex_veg, ex_riparian, ex_native, thiessen_valley, scratch, ex_veg_lookup_folder, "Ex", "DrgTailngs")
 
     # reclassify areas within the large river polygon
     if lg_river is not None:
-        arcpy.AddMessage("Reclassifying vegetation within large river polygons")
+        arcpy.AddMessage("Reclassifying vegetation within large river polygons...")
         ex_riparian, ex_native = vegetation_adjustment(lg_river, ex_veg, ex_riparian, ex_native, thiessen_valley, scratch, ex_veg_lookup_folder, "Ex", "LgRiver")
         hist_riparian, hist_native = vegetation_adjustment(lg_river, hist_veg, hist_riparian, hist_native, thiessen_valley, scratch, hist_veg_lookup_folder, "Hist", "LgRiver")
 
     # calculate overall riparian vegetation departure
-    arcpy.AddMessage("Calculating overall riparian vegetation departure")
+    arcpy.AddMessage("Calculating overall riparian vegetation departure...")
     ex_rip_field = calc_veg_mean_per_reach(thiessen_valley, ex_riparian, "ex", "rip", tempOut)
     hist_rip_field = calc_veg_mean_per_reach(thiessen_valley, hist_riparian, "hs", "rip", tempOut)
     arcpy.AddField_management(tempOut, "RIPAR_DEP", "DOUBLE")
@@ -113,12 +117,40 @@ def main(
     if not outName.endswith(".shp"):
         outName = outName+".shp"
     fcOut = os.path.join(analysis_folder, outName) # specify output path
-    arcpy.AddMessage("Calculating riparian vegetation conversion types")
+    arcpy.AddMessage("Calculating riparian vegetation conversion types...")
     calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, ex_veg_lookup_folder, hist_veg_lookup_folder, intermediates_folder, scratch)
         
     # write XML file
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
     write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analyses_folder)
+
+
+def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tailings):
+    # Checks if the spatial references are correct and that the inputs are what we want
+    try:
+        network_sr = arcpy.Describe(seg_network).spatialReference
+    except:
+        raise Exception("There was a problem finding the spatial reference of the stream network. "
+                       + "This is commonly caused by trying to run the Table tool directly after running the project "
+                       + "builder. Restarting ArcGIS fixes this problem most of the time.")
+    try:
+        if not network_sr.type == "Projected":
+            arcpy.AddMessage("WARNING: Input stream network must have a projected coordinate system!")
+            #raise Exception("Input stream network must have a projected coordinate system")
+    if not arcpy.Describe(ex_veg).spatialReference.name == network_sr.name:
+        #raise Exception("Input existing vegetation raster must have the same coordinate system as input network for accurate calculations.")
+        arcpy.AddMessage("WARNING: Input existing vegetation raster must have the same coordinate system as the input network for accurate calculations!")
+    if not arcpy.Describe(hist_veg).spatialReference.name == network_sr.name:
+        #raise Exception("Input historic vegetation raster must have the same coordinate system as input network for accurate calculations.")
+        arcpy.AddMessage("WARNING: Input historic vegetation raster must have the same coordinate system as the input network for accurate calculations!")
+    if lg_river is not None:
+        if not arcpy.Describe(lg_river).spatialReference.name == network_sr.name:
+            #raise Exception("Input large river polygon must have the same coordinate system as input network for accurate calculations.")
+            arcpy.AddMessage("WARNING: Input large river polygon must have the same coordinate system as the input network for accurate calculations!")
+    if dredge_tailings is not None:
+        if not arcpy.Describe(dredge_tailings).spatialReference.name == network_sr.name:
+            #raise Exception("Input dredge tailings polygons must have the same coordinate system as input network for accurate calculations.")
+            arcpy.AddMessage("WARNING: Input dredge tailings polygons must have the same coordinate system as the input network for accurate calculations!")
 
 
 def build_output_folder(projPath, seg_network):
@@ -217,10 +249,12 @@ def make_veg_lookup_rasters(veg, folder, type):
 
 
 def vegetation_adjustment(polygons, veg_raster, riparian, native, thiessen_valley, scratch, veg_folder, veg_type, polygon_type):
+    # set raster environment for mask
+    arcpy.env.extent = thiessen_valley
+    arcpy.env.snapRaster = veg_raster
     # dissolve polygons into single feature
     polygons_dissolved = os.path.join(scratch, polygon_type+'_dissolved.shp')
     arcpy.Dissolve_management(polygons, polygons_dissolved)
-    arcpy.env.extent = thiessen_valley
     # extract raster values within polygon feature
     raster_in_polygons = ExtractByMask(veg_raster, polygons_dissolved)
     # set all values within extracted raster to 0 (i.e., not riparian or native riparian)
@@ -237,15 +271,18 @@ def vegetation_adjustment(polygons, veg_raster, riparian, native, thiessen_valle
     
 
 def reclassify_adjusted_veg(masked_raster, veg_lookup, field_name, out_name, folder):
-        masked_raster_lookup = Lookup(masked_raster, field_name)
-        masked_raster_reclass = Reclassify(masked_raster_lookup, "VALUE", "0 8; NODATA 0")
-        raster_adjustment = masked_raster_reclass + veg_lookup
-        adjusted_raster_output = Reclassify(raster_adjustment, "VALUE", "0 0; 1 1; 8 0; 9 0")
-        adjusted_raster_output.save(os.path.join(folder, out_name + ".tif"))
-        return adjusted_raster_output
+    masked_raster_lookup = Lookup(masked_raster, field_name)
+    masked_raster_reclass = Reclassify(masked_raster_lookup, "VALUE", "0 8; NODATA 0")
+    raster_adjustment = masked_raster_reclass + veg_lookup
+    adjusted_raster_output = Reclassify(raster_adjustment, "VALUE", "0 0; 1 1; 8 0; 9 0")
+    adjusted_raster_output.save(os.path.join(folder, out_name + ".tif"))
+    return adjusted_raster_output
 
 
 def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tempOut):
+    # set raster environment for mask
+    arcpy.env.extent = thiessen_valley
+    arcpy.env.snapRaster = veg_raster
     # calculate proportion of area with coded vegetation (riparian or native riparian) for each reach based on thiessen polygons
     # Note: since raster values are 0 and 1, "MEAN" is the same as the proportion of area for all values=1
     veg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", veg_lookup, veg_type+"_veg_zs_"+out_type, statistics_type="MEAN")
@@ -267,6 +304,7 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
 def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, ex_veg_lookup_folder, hist_veg_lookup_folder, intermediates_folder, scratch):
     # set extent for all rasters
     arcpy.env.extent = thiessen_valley
+    arcpy.env.snapRaster = ex_veg
     # create existing and historic rasters based on vegetation "conversion" fields
     ex_veg_conversion_lookup = Lookup(ex_veg, "CONVERSION")
     ex_veg_conversion_lookup.save(os.path.join(ex_veg_lookup_folder, "Ex_Cover.tif"))
