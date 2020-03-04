@@ -265,6 +265,8 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
 
 
 def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, ex_veg_lookup_folder, hist_veg_lookup_folder, intermediates_folder, scratch):
+    # set extent for all rasters
+    arcpy.env.extent = thiessen_valley
     # create existing and historic rasters based on vegetation "conversion" fields
     ex_veg_conversion_lookup = Lookup(ex_veg, "CONVERSION")
     ex_veg_conversion_lookup.save(os.path.join(ex_veg_lookup_folder, "Ex_Cover.tif"))
