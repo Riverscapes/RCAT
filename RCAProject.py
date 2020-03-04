@@ -93,7 +93,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, dredge_tailings)
     # add the dredge tailings polygons to the project
     if dredge_tailings is not None:
         indredge_tailings = dredge_tailings.split(";")
-        folders = glob.glob(projPath + "/Inputs/0*_DredgeTailings/")
+        folders = glob.glob(projPath + "/Inputs/0*_Dredge_Tailings/")
         os.chdir(folders[0])
         i = 1
         for x in range(len(indredge_tailings)):
@@ -132,8 +132,8 @@ def set_structure(projPath, lrp, dredge_tailings):
                 os.mkdir("06_DredgeTailings")
     else:
         if dredge_tailings is not None:
-            if not os.path.exists("06_Dredge_Tailings"):
-                os.mkdir("06_Dredge_Tailings")
+            if not os.path.exists("05_Dredge_Tailings"):
+                os.mkdir("05_Dredge_Tailings")
         else:
             pass
 
