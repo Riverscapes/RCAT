@@ -133,10 +133,9 @@ def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tail
         raise Exception("There was a problem finding the spatial reference of the stream network. "
                        + "This is commonly caused by trying to run the Table tool directly after running the project "
                        + "builder. Restarting ArcGIS fixes this problem most of the time.")
-    try:
-        if not network_sr.type == "Projected":
-            arcpy.AddMessage("WARNING: Input stream network must have a projected coordinate system!")
-            #raise Exception("Input stream network must have a projected coordinate system")
+    if not network_sr.type == "Projected":
+        arcpy.AddMessage("WARNING: Input stream network must have a projected coordinate system!")
+        #raise Exception("Input stream network must have a projected coordinate system")
     if not arcpy.Describe(ex_veg).spatialReference.name == network_sr.name:
         #raise Exception("Input existing vegetation raster must have the same coordinate system as input network for accurate calculations.")
         arcpy.AddMessage("WARNING: Input existing vegetation raster must have the same coordinate system as the input network for accurate calculations!")
