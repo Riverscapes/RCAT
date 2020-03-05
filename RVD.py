@@ -328,7 +328,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     cursor = arcpy.SearchCursor(final_conversion_raster)
     for row in cursor:
         valueList.append(row.getValue("VALUE"))
-    del row, cursor
+    del cursor
 
     # make individual rasters for each conversion value - value gets a "1", everything else is "NODATA"
     if 0 in valueList:
