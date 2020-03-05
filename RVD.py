@@ -333,20 +333,36 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     # make individual rasters for each conversion value - value gets a "1", everything else is "NODATA"
     if 0 in valueList:
         conversion_0 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 1; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+    else:
+        conversion_0 = None
     if 50 in valueList:
         conversion_50 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 1; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+    else:
+        conversion_50 = None
     if 60 in valueList:
         conversion_60 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 1; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+    else:
+        conversion_60 = None
     if 80 in valueList:
         conversion_80 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 1; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+    else:
+        conversion_80 = None
     if 97 in valueList:
         conversion_97 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 1; 98 NODATA; 99 NODATA", "NODATA")
+    else:
+        conversion_97 = None
     if 98 in valueList:
         conversion_98 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 1; 99 NODATA", "NODATA")
+    else:
+        conversion_98 = None
     if 99 in valueList:
         conversion_99 = Reclassify(final_conversion_raster, "VALUE", "-50 NODATA; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 1", "NODATA")
+    else:
+        conversion_99 = None
     if -50 in valueList:
         conversion_min50 = Reclassify(final_conversion_raster, "VALUE", "-50 1; 0 NODATA; 50 NODATA; 60 NODATA; 80 NODATA; 97 NODATA; 98 NODATA; 99 NODATA", "NODATA")
+    else:
+        conversion_min50 = None
 
     # pull section of reclassified raster within buffered valley bottom and save
     out_conversion_raster = ExtractByMask(final_conversion_raster, valley_buf)
