@@ -405,7 +405,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     array99 = np.asarray(prop99_array, np.float64)
     propMin50_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_exp")
     arrayMin50 = np.asarray(propMin50_array, np.float64)
-    del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array, propMin50 # clear up memory
+    del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array, propMin50_array # clear up memory
 
     # flag conversion type based on proportions of all conversions
     out_conv_code = np.zeros(len(array0), dtype=np.float64)
@@ -606,7 +606,7 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
             cursor.updateRow(row)
 
 
-def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analyses_folder):
+def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder):
     xmlfile = projPath + "/RVDproject.rs.xml"
     if not os.path.exists(xml_file):
         # initiate xml file creation
