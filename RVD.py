@@ -12,7 +12,7 @@
 # Updated: 07/25/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Latest Update: 02/27/2020  -   Maggie Hallerud   -  maggie.hallerud@aggiemail.usu.edu
-# Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+# License:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
 # --------------------------------------------------------------------------------------------------------------------------
 
@@ -536,6 +536,21 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 row[1] = "Multiple Dominant Conversion Types"
             cursor.updateRow(row)
 
+    # set everything with count 1 (i.e. only 0 or 1 pixels in polygon) with nodata values, type as no riparian
+    with arcpy.da.UpdateCursor(tempOut, ["COUNT", "RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean",
+                                         "HsRip_Mean", "ExNtv_Mean", "HsNtv_Mean"]) as cursor:
+        for row in cursor:
+            if row[0] == 1:
+                row[1] = -9999
+                row[2] = -9999
+                row[3] = 74
+                row[4] = "No data - Narrow riparian zone"
+                row[5] = -9999
+                row[6] = -9999
+                row[7] = -9999
+                row[8] = -9999
+                cursor.updateRow(row)
+    
     # if any features in temp output shp are outside of valley bottom, set all conversion fields to NoData value
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", valley)
