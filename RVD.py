@@ -118,7 +118,7 @@ def main(
         outName = outName+".shp"
     fcOut = os.path.join(analysis_folder, outName) # specify output path
     arcpy.AddMessage("Calculating riparian vegetation conversion types...")
-    calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, ex_veg_lookup_folder, hist_veg_lookup_folder, intermediates_folder, scratch)
+    calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, intermediates_folder, scratch)
         
     # write XML file
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
@@ -300,10 +300,13 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
     return veg_field
 
 
-def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, ex_veg_lookup_folder, hist_veg_lookup_folder, intermediates_folder, scratch):
+def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, intermediates_folder, scratch):
     # set extent for all rasters
     arcpy.env.extent = thiessen_valley
     arcpy.env.snapRaster = ex_veg
+    # setting folder paths
+    ex_veg_lookup_folder = os.path.join(intermediates_folder, "03_VegetationRasters/01_Ex_Veg")
+    hist_veg_lookup_folder = os.path.join(intermediates_folder, "03_VegetationRasters/02_Hist_Veg")
     # create existing and historic rasters based on vegetation "conversion" fields
     ex_veg_conversion_lookup = Lookup(ex_veg, "CONVERSION")
     ex_veg_conversion_lookup.save(os.path.join(ex_veg_lookup_folder, "Ex_Cover.tif"))
@@ -314,7 +317,9 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     int_conversion_raster = Int(conversion_raster)
 
     # get raster of pixels with historic or existing riparian
-    riparian_sum = ex_veg_conversion_lookup + hist_conversion_lookup
+    ex_riparian_lookup = Lookup(ex_veg, "RIPARIAN")
+    hist_riparian_lookup = Lookup(hist_veg, "RIPARIAN")
+    riparian_sum = ex_riparian_lookup + hist_riparian_lookup
     all_riparian = Reclassify(riparian_sum, "VALUE", "0 NODATA; 1 1; 2 2", "NODATA")
     all_riparian.save(os.path.join(os.path.dirname(ex_veg_lookup_folder), "All_Riparian_recl.tif"))
     riparian_conversion_raster = ExtractByMask(int_conversion_raster, all_riparian)
