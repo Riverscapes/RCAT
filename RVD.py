@@ -587,6 +587,10 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
     if value in valueList:
         # calculate count of pixels with given value within each thiessen polygon
         # NOTE: sum only works here because input raster has 0/1 values, so sum is count of all "1"s
+        if value == -50:
+            string_val = "min50"
+        else:
+            string_val = str(value)
         table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_raster, "table_"+str(value), "", "SUM")
         # add zonal stats calculations to temporary output shp
         arcpy.JoinField_management(tempOut, "FID", table, "ORIG_FID", "SUM")
