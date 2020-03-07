@@ -5,72 +5,162 @@
 # Author: Jordan Gilbert
 # Created: 05/2015
 # Updated: 01/2020 - Maggie Hallerud
-# License:
+# Adapted to RCAT: 03/2020 - Maggie Hallerud
+# License:This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+#              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
 # ----------------------------------------------------------------------------------------------------------------------
 
 import arcpy
 from arcpy.sa import *
 import sys
 import os
-import shutil
+from SupportingFunctions import make_folder, find_available_num_prefix
+arcpy.CheckOutExtension('Spatial')
 
 
-def main(network, drarea, precip, valleybottom, out_dir, MinBankfullWidth, dblPercentBuffer, temp_dir, deleteTemp):
-
+def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_name):
+    # process inputs
+    if drarea == "None":
+        drarea = None
+    # set up environment
     arcpy.env.overwriteOutput = True
-    arcpy.CheckOutExtension('Spatial')
+    
+    # set up folder structure
+    intermediates_folder, temp_dir, scratch = build_folder_structure(output_folder)
+    
+    # get thiessen polygons clipped to buffered valley bottom, or make new one if none exists
+    thiessen_clip = os.path.join(intermediates_folder, "02_ValleyThiessen/Thiessen_Valley_Clip.shp")
+    if not os.path.exists(thiessen_clip):
+        arcpy.AddMessage("Creating thiessen polygons within valley bottom...")
+        thiessen_clip, valley_buffer = create_thiessen_polygons_in_valley(network, valleybottom, intermediates_folder, scratch)
 
-    # clean and make new temp_dir
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-    os.mkdir(temp_dir)
-
-    # make output directory
-    if not os.path.exists(out_dir):
-        os.mkdir(out_dir)
-
-    #create thiessen polygons from segmented stream network
-    midpoints = os.path.join(temp_dir, "midpoints.shp")
-    arcpy.FeatureVerticesToPoints_management(network, midpoints, "MID")
-    arcpy.AddMessage("Creating thiessen polygons")
-    thiessen = os.path.join(temp_dir, "thiessen.shp")
-    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen)
-
-    # clip thiessen polygons to buffered valley bottom
-    thiessen_clip = os.path.join(temp_dir, "thiessen_clip.shp")
-    valley_buffer = os.path.join(temp_dir, "valley_buffer.shp")
-    arcpy.Buffer_analysis(valleybottom, valley_buffer, "15 Meters", "FULL", "ROUND", "ALL")
-    arcpy.Clip_analysis(thiessen, valley_buffer, thiessen_clip)
-
+    # calculate drainage area
+    if drarea is None:
+        arcpy.AddMessage("Creating drainage area raster...")
+        drarea = calc_drain_area(dem)
+    
     # calculate precip and drarea values for each thiessen polygon
-    arcpy.AddMessage("Adding drainage area values to thiessen polygons")
+    arcpy.AddMessage("Adding drainage area values to thiessen polygons...")
     add_raster_values(thiessen_clip, drarea, "drarea", temp_dir)
-    arcpy.AddMessage("Adding precipitation values to thiessen polygons")
+    arcpy.AddMessage("Adding precipitation values to thiessen polygons...")
     add_raster_values(thiessen_clip, precip, "precip", temp_dir)
     
     # dissolve network 
-    arcpy.AddMessage("Applying precip and drainage area data to line network")
+    arcpy.AddMessage("Applying precip and drainage area data to line network...")
     dissolved_network = os.path.join(temp_dir, "dissolved_network.shp")
     arcpy.Dissolve_management(network, dissolved_network)
 
     # intersect dissolved network with thiessen polygons
-    intersect = os.path.join(out_dir, "network_buffer_values.shp")
+    intersect = os.path.join(output_folder, "network_buffer_values.shp")
     arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
 
     # calculate buffer width
-    arcpy.AddMessage("Calculating bankfull buffer width")
+    arcpy.AddMessage("Calculating bankfull buffer width...")
     calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer)
 
     # create final bankfull polygon
-    create_bankfull_polygon(network, intersect, MinBankfullWidth, out_dir, temp_dir)
+    arcpy.AddMessage("Creating final bankfull polygon...")
+    create_bankfull_polygon(network, intersect, MinBankfullWidth, output_folder, temp_dir, out_name)
 
-    # delete temporary files
-    if deleteTemp == "True":
-        arcpy.AddMessage("Deleting temporary directory")
+
+def build_folder_structure(output_folder):
+    scratch = os.path.join(os.path.dirname(os.path.dirname(output_folder)), "Temp")
+    make_folder(scratch)
+    intermediates_folder = os.path.join(output_folder, "01_Intermediates")
+    make_folder(intermediates_folder)
+    temp_dir = os.path.join(intermediates_folder, find_available_num_prefix(intermediates_folder)+"_BankfullChannel")
+    make_folder(temp_dir)
+    return intermediates_folder, temp_dir, scratch
+
+
+def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder, scratch):
+    # find midpoints of all reaches in segmented network
+    seg_network_lyr = "seg_network_lyr"
+    arcpy.MakeFeatureLayer_management(seg_network, seg_network_lyr)
+    midpoints = scratch + "/midpoints.shp"
+    arcpy.FeatureVerticesToPoints_management(seg_network, midpoints, "MID")
+
+    # list all fields in midpoints file
+    midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
+    # remove permanent fields from this list
+    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID"] # remove permanent fields from list
+    for field in remove_list:
+        if field in midpoint_fields:
+            try:
+                midpoint_fields.remove(field)
+            except Exception:
+                pass
+    # delete all miscellaneous fields - with error handling in case Arc won't allow field deletion
+    for f in midpoint_fields:
         try:
-            shutil.rmtree(temp_dir)
+            arcpy.DeleteField_management(midpoints, f)
         except Exception as err:
-            arcpy.AddMessage("Could not delete temp_dir, but final outputs are saved")
+            pass
+
+    # create thiessen polygons surrounding reach midpoints
+    thiessen_folder = os.path.join(intermediates_folder, "01_MidpointsThiessen")
+    if not os.path.exists(thiessen_folder):
+        os.mkdir(thiessen_folder)
+    thiessen = thiessen_folder + "/midpoints_thiessen.shp"
+    arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
+
+    # buffer fragmented valley bottom
+    valley_buf = scratch + "/valley_buf.shp"
+    valley_lyr = 'valley_lyr'
+    arcpy.MakeFeatureLayer_management(in_features=valley, out_layer=valley_lyr) #convert valley buffer to layer - JLW
+    arcpy.Buffer_analysis(valley_lyr, valley_buf, "30 Meters", "FULL", "ROUND", "ALL")
+
+    # clip thiessen polygons to buffered valley bottom
+    thiessen_valley_folder = os.path.join(intermediates_folder, "02_ValleyThiessen")
+    if not os.path.exists(thiessen_valley_folder):
+        os.mkdir(thiessen_valley_folder)
+    thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley_Clip.shp"
+    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
+
+    return thiessen_valley, valley_buf
+
+
+def calc_drain_area(DEM):
+    """
+    Calculate drainage area function
+    :param DEM: The original input DEM
+    :return:
+    """
+    #  --smooth input dem by 3x3 cell window--
+    #  define raster environment settings
+    desc = arcpy.Describe(DEM)
+    arcpy.env.extent = desc.Extent
+    arcpy.env.outputCoordinateSystem = desc.SpatialReference
+    arcpy.env.cellSize = desc.meanCellWidth
+    # calculate mean z over 3x3 cell window
+    neighborhood = NbrRectangle(3, 3, "CELL")
+    tmp_dem = FocalStatistics(DEM, neighborhood, 'MEAN')
+    # clip smoothed dem to input dem
+    smoothedDEM = ExtractByMask(tmp_dem, DEM)
+    #  define raster environment settings
+    desc = arcpy.Describe(smoothedDEM)
+    arcpy.env.extent = desc.Extent
+    arcpy.env.outputCoordinateSystem = desc.SpatialReference
+    arcpy.env.cellSize = desc.meanCellWidth
+    #  calculate cell area for use in drainage area calcultion
+    height = desc.meanCellHeight
+    width = desc.meanCellWidth
+    cell_area = height * width
+    # derive drainage area raster (in square km) from input DEM
+    # note: draiange area calculation assumes input dem is in meters
+    filledDEM = Fill(smoothedDEM) # fill sinks in dem
+    flow_direction = FlowDirection(filledDEM) # calculate flow direction
+    flow_accumulation = FlowAccumulation(flow_direction) # calculate flow accumulation
+    drain_area = flow_accumulation * cell_area / 1000000 # calculate drainage area in square kilometers
+    # save drainage area raster
+    drain_area_path = os.path.dirname(DEM) + "/Flow/DrainArea_sqkm.tif"
+    if os.path.exists(drain_area_path):
+        arcpy.Delete_management(drain_area_path)
+        drain_area. save(drain_area_path)
+    else:
+        os.mkdir(os.path.dirname(DEM) + "/Flow")
+        drain_area.save(drain_area_path)
+    return drain_area_path
 
 
 def add_raster_values(thiessen_clip, raster, field_type, temp_dir):
@@ -85,7 +175,7 @@ def add_raster_values(thiessen_clip, raster, field_type, temp_dir):
         field_name = "PRECIP"
 
     # Zonal statistics of drainage area and precip using thiessen polygons
-    tbl_out = os.path.join(temp_dir, "zonal_table_" + field_type + ".dbf")
+    tbl_out = os.path.join(temp_dir, "zonal_tbl_" + field_type + ".dbf")
     tbl_zs = ZonalStatisticsAsTable(thiessen_clip, "FID", raster, tbl_out, "DATA", "MAXIMUM")
 
     # join thiessen clip to zonal statas table and calculate raster value for each thiessen polygon    
@@ -143,25 +233,28 @@ def calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer):
     arcpy.AddField_management(intersect, "BFWIDTH", "FLOAT")
     with arcpy.da.UpdateCursor(intersect, ["DRAREA", "PRECIP", "BFWIDTH"])as cursor:
         for row in cursor:
-            # if row[0] == ' ' or row[1] == ' ':
-                precip_cm = row[1]/10
-                drarea = row[0]
+            # calculate bankfull width
+            drarea = row[0]
+            precip_cm = row[1]/10
+            if precip_cm > 0 and drarea > 0:
                 row[2] = 0.177*(pow(drarea,0.397))*(pow(precip_cm,0.453))
-                if row[2] < float(MinBankfullWidth):
-                    row[2] = float(MinBankfullWidth)
-            #else:
-                #   row[2] = ' '
-                cursor.updateRow(row)
+            else:
+                row[2] = -9999
+            # adjust for min bankfull width
+            if row[2] < float(MinBankfullWidth):
+                row[2] = float(MinBankfullWidth)
+            cursor.updateRow(row)
 
     # adjust buffer width based on percent buffer
     arcpy.AddField_management(intersect, "BUFWIDTH", "DOUBLE")
     with arcpy.da.UpdateCursor(intersect, ["BFWIDTH", "BUFWIDTH"]) as cursor:
         for row in cursor:
-            row[1] = row[0]/2 + ((row[0]/2) * (float(dblPercentBuffer)/100))
+            if row[0] > 0:
+                row[1] = row[0]/2 + ((row[0]/2) * (float(dblPercentBuffer)/100))
             cursor.updateRow(row)
 
 
-def create_bankfull_polygon(network, intersect, MinBankfullWidth, out_dir, temp_dir):
+def create_bankfull_polygon(network, intersect, MinBankfullWidth, output_folder, temp_dir, out_name):
     # buffer network by bufwidth field to create bankfull polygon
     arcpy.AddMessage("Buffering network")
     bankfull = os.path.join(temp_dir, "bankfull.shp")
@@ -179,12 +272,17 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, out_dir, temp_
 
     #smooth for final bankfull polygon
     arcpy.AddMessage("Smoothing final bankfull polygon")
-    output = os.path.join(out_dir, "final_bankfull_channel.shp")
+    analysis_folder = os.path.join(output_folder, "02_Analyses")
+    make_folder(analysis_folder)
+    if not out_name.endswith(".shp"):
+        output = os.path.join(output_folder, out_name+".shp")
+    else:
+        output = os.path.join(output_folder, out_name)
     arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
     
     # Todo: add params as fields to shp.
 
-    
+
 if __name__ == '__main__':
 
     main(sys.argv[1],
@@ -193,4 +291,6 @@ if __name__ == '__main__':
          sys.argv[4],
          sys.argv[5],
          sys.argv[6],
-         sys.argv[7])
+         sys.argv[7],
+         sys.argv[8],
+         sys.argv[9])
