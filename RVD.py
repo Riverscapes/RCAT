@@ -122,7 +122,7 @@ def main(
         
     # write XML file
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
-    write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analyses_folder)
+    write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder)
 
 
 def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tailings):
