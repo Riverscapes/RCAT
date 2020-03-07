@@ -606,7 +606,7 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
             string_val = "min50"
         else:
             string_val = str(value)
-        table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_raster, "table_"+string_val), "", "SUM")
+        table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_raster, "table_"+string_val, "", "SUM")
         # add zonal stats calculations to temporary output shp
         arcpy.JoinField_management(tempOut, "FID", table, "ORIG_FID", "SUM")
         with arcpy.da.UpdateCursor(tempOut, ["SUM", sum_field]) as cursor:
