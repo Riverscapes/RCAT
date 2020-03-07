@@ -18,58 +18,67 @@ import arcpy
 import shutil
 import sys
 import string
+from SupportingFunctions import make_folder, find_available_num_prefix
 
 
-def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, dredge_tailings):
+def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings, dem, precip):
     """Create an RCA project and populate the inputs"""
+    # clean up inputs
+    if lrp == "None":
+        lrp = None
+    if dredge_tailings == "None":
+        dredge_tailings = None
+    if dem == "None":
+        dem = None
+    if precip == "None":
+        precip = None
 
+    # set environment parameters
     arcpy.env.overwriteOutput = True
 
-    if not os.path.exists(projPath):
-        os.mkdir(projPath)
-
+    # set up main project folder
+    make_folder(projPath)
     if os.getcwd() is not projPath:
         os.chdir(projPath)
-
-    set_structure(projPath, lrp, dredge_tailings)
-
-    # add the existing veg inputs to project
-    inex_cov = ex_cov.split(";")
-    os.chdir(projPath + "/Inputs/01_Ex_Cov/")
-    i = 1
-    for x in range(len(inex_cov)):
-        if not os.path.exists("Ex_Cov_" + str(i)):
-            os.mkdir("Ex_Cov_" + str(i))
-        if not os.path.exists("Ex_Cov_" + str(i) + "/" + os.path.basename(inex_cov[x])):
-            src = string.replace(inex_cov[x], "'", "")
-            shutil.copytree(src, "Ex_Cov_" + str(i) + "/" + os.path.basename(inex_cov[x]))
-        i += 1
-
-    # add the historic veg inputs to project
-    inhist_cov = hist_cov.split(";")
-    os.chdir(projPath + "/Inputs/02_Hist_Cov/")
-    i = 1
-    for x in range(len(inhist_cov)):
-        if not os.path.exists("Hist_Cov_" + str(i)):
-            os.mkdir("Hist_Cov_" + str(i))
-        if not os.path.exists("Hist_Cov_" + str(i) + "/" + os.path.basename(inhist_cov[x])):
-            src = string.replace(inhist_cov[x], "'", "")
-            shutil.copytree(src, "Hist_Cov_" + str(i) + "/" + os.path.basename(inhist_cov[x]))
-        i += 1
+    set_structure(projPath, lrp, dredge_tailings, dem, precip)
 
     # add the network inputs to project
     innetwork = network.split(";")
-    os.chdir(projPath + "/Inputs/03_Network/")
+    os.chdir(projPath + "/Inputs/01_Network/")
     i = 1
     for x in range(len(innetwork)):
         if not os.path.exists("Network_" + str(i)):
             os.mkdir("Network_" + str(i))
         arcpy.CopyFeatures_management(innetwork[x], "Network_" + str(i) + "/" + os.path.basename(innetwork[x]))
         i += 1
+        
+    # add the existing veg inputs to project
+    inex_cov = ex_cov.split(";")
+    os.chdir(projPath + "/Inputs/02_Existing_Vegetation/")
+    i = 1
+    for x in range(len(inex_cov)):
+        make_folder("Ex_Cov_" + str(i))
+        if not os.path.exists("Ex_Veg_" + str(i) + "/" + os.path.basename(inex_cov[x])):
+            src = string.replace(inex_cov[x], "'", "")
+            shutil.copytree(src, "Ex_Veg_" + str(i) + "/" + os.path.basename(inex_cov[x]))
+        i += 1
+
+    # add the historic veg inputs to project
+    inhist_cov = hist_cov.split(";")
+    os.chdir(projPath + "/Inputs/03_Historic_Vegetation/")
+    i = 1
+    for x in range(len(inhist_cov)):
+        if not os.path.exists("Hist_Veg_" + str(i)):
+            os.mkdir("Hist_Veg_" + str(i))
+        if not os.path.exists("Hist_Veg_" + str(i) + "/" + os.path.basename(inhist_cov[x])):
+            src = string.replace(inhist_cov[x], "'", "")
+            shutil.copytree(src, "Hist_Veg_" + str(i) + "/" + os.path.basename(inhist_cov[x]))
+        i += 1
+
 
     # add the valley inputs to the project
     infragvalley = frag_valley.split(";")
-    os.chdir(projPath + "/Inputs/04_Frag_Valley/")
+    os.chdir(projPath + "/Inputs/04_Fragmented_Valley/")
     i = 1
     for x in range(len(infragvalley)):
         if not os.path.exists("Frag_Valley_" + str(i)):
@@ -80,7 +89,8 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, dredge_tailings)
     # add the large river polygons to the project
     if lrp is not None:
         inlrp = lrp.split(";")
-        os.chdir(projPath + "/Inputs/05_LRP/")
+        folders = glob.glob(projPath + "/Inputs/05_Large_River_Polygon/")
+        os.chdir(folders[-1])
         i = 1
         for x in range(len(inlrp)):
             if not os.path.exists("LRP_" + str(i)):
@@ -94,7 +104,7 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, dredge_tailings)
     if dredge_tailings is not None:
         indredge_tailings = dredge_tailings.split(";")
         folders = glob.glob(projPath + "/Inputs/0*_Dredge_Tailings/")
-        os.chdir(folders[0])
+        os.chdir(folders[-1])
         i = 1
         for x in range(len(indredge_tailings)):
             if not os.path.exists("DredgeTailings_" + str(i)):
@@ -104,7 +114,36 @@ def main(projPath, ex_cov, hist_cov, network, frag_valley, lrp, dredge_tailings)
     else:
         pass
 
-def set_structure(projPath, lrp, dredge_tailings):
+    # add the dem raster to the project
+    if dem is not None:
+        indems = dem.split(";")
+        folders = glob.glob(projPath + "/Inputs/0*_Topography/")
+        os.chdir(folders[-1])
+        i = 1
+        for x in range(len(indems)):
+            if not os.path.exists("DEM_" + str(i)):
+                os.mkdir("DEM_" + str(i))
+            arcpy.CopyFeatures_management(indems[x], "DEM_" + str(i) + "/" + os.path.basename(indems[x]))
+            i += 1
+    else:
+        pass
+
+    # add the precip raster to the project
+    if precip is not None:
+        inprecips = precip.split(";")
+        folders = glob.glob(projPath + "/Inputs/0*_Precipitation/")
+        os.chdir(folders[-1])
+        i = 1
+        for x in range(len(inprecips)):
+            if not os.path.exists("Precip_" + str(i)):
+                os.mkdir("Precip_" + str(i))
+            arcpy.CopyFeatures_management(inprecips[x], "Precip_" + str(i) + "/" + os.path.basename(inprecips[x]))
+            i += 1
+    else:
+        pass
+
+
+def set_structure(projPath, lrp, dredge_tailings, dem, precip):
     """Sets up the folder structure for an RVD project"""
 
     if not os.path.exists(projPath):
@@ -113,29 +152,23 @@ def set_structure(projPath, lrp, dredge_tailings):
     if os.getcwd() is not projPath:
         os.chdir(projPath)
 
-    if not os.path.exists("Inputs"):
-        os.mkdir("Inputs")
-    os.chdir("Inputs")
-    if not os.path.exists("01_Ex_Cov"):
-        os.mkdir("01_Ex_Cov")
-    if not os.path.exists("02_Hist_Cov"):
-        os.mkdir("02_Hist_Cov")
-    if not os.path.exists("03_Network"):
-        os.mkdir("03_Network")
-    if not os.path.exists("04_Frag_Valley"):
-        os.mkdir("04_Frag_Valley")
+    inputs = "Inputs"
+    if not os.path.exists(inputs):
+        os.mkdir(inputs)
+    os.chdir(inputs)
+    
+    make_folder("01_Network")
+    make_folder("02_Existing_Vegetation")
+    make_folder("03_Historic_Vegetation")
+    make_folder("04_Fragmented_Valley")
     if lrp is not None:
-        if not os.path.exists("05_LRP"):
-            os.mkdir("05_LRP")
-        if dredge_tailings is not None:
-            if not os.path.exists("06_Dredge_Tailings"):
-                os.mkdir("06_DredgeTailings")
-    else:
-        if dredge_tailings is not None:
-            if not os.path.exists("05_Dredge_Tailings"):
-                os.mkdir("05_Dredge_Tailings")
-        else:
-            pass
+        make_folder(find_available_num_prefix(inputs) + "_Large_River_Polygon")
+    if dredge_tailings is not None:
+        make_folder(find_available_num_prefix(inputs) + "_Dredge_Tailings")
+    if dem is not None:
+        make_folder(find_available_num_prefix(inputs) + "_Topography")
+    if precip is not None:
+        make_folder(find_available_num_prefix(inputs) + "_Precipitation")
 
 
 if __name__ == '__main__':
@@ -146,4 +179,6 @@ if __name__ == '__main__':
         sys.argv[4],
         sys.argv[5],
         sys.argv[6],
-        sys.argv[7])
+        sys.argv[7],
+        sys.argv[8],
+        sys.argv[9])

@@ -7,6 +7,7 @@ import RVD
 import RCAProject
 import RCA
 import BankfullChannel
+import ConfiningMargins
 import Promoter
 
 
@@ -19,7 +20,7 @@ class Toolbox(object):
 
         # List of tool classes associated with this toolbox
         self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDtool, RCATBuilder, RCAtool,
-                      BankfullChannelTool, Promotertool]
+                      BankfullChannelTool, ConfinementTool, Promotertool]
 
 
 class VBETBuilder(object):
@@ -638,6 +639,14 @@ class RCATBuilder(object):
             direction="Input")
 
         param1 = arcpy.Parameter(
+            displayName="Select drainage network datasets",
+            name="network",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+
+        param2 = arcpy.Parameter(
             displayName="Select existing cover folder",
             name="ex_cov",
             datatype="DEFolder",
@@ -645,18 +654,10 @@ class RCATBuilder(object):
             direction="Input",
             multiValue=True)
 
-        param2 = arcpy.Parameter(
+        param3 = arcpy.Parameter(
             displayName="Select historic cover folder",
             name="hist_cov",
             datatype="DEFolder",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-
-        param3 = arcpy.Parameter(
-            displayName="Select drainage network datasets",
-            name="network",
-            datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input",
             multiValue=True)
@@ -685,7 +686,23 @@ class RCATBuilder(object):
             direction="Input",
             multiValue=True)
 
-        return [param0, param1, param2, param3, param4, param5, param6]
+        param7 = arcpy.Parameter(
+            displayName="Select DEM",
+            name="dem",
+            datatype="DERasterDataset",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        param8 = arcpy.Parameter(
+            displayName="Select precipitation raster",
+            name="dredge_tailings",
+            datatype="DERasterDataset",
+            parameterType="Optional",
+            direction="Input",
+            multiValue=True)
+
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -711,14 +728,106 @@ class RCATBuilder(object):
                         p[3].valueAsText,
                         p[4].valueAsText,
                         p[5].valueAsText,
-                        p[6].valueAsText)
+                        p[6].valueAsText,
+						p[7].valueAsText,
+						p[8].valueAsText)
+        return
+
+
+class ConfinementTool(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "4-Confinement Tool"
+        self.category = "01-RCAT"
+        self.description = "Determine the Confining Margins using the stream network, bankfull channel polygon, and valley bottom polygon."
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Stream network from RVD",
+            name="network",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Valley bottom polygon",
+            name="valley_bottom",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param2 = arcpy.Parameter(
+            displayName="Bankfull channel polygon",
+            name="bankfull_channel",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param3 = arcpy.Parameter(
+            displayName="Output folder",
+            name="output_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param4 = arcpy.Parameter(
+            displayName="Raw confinement output name",
+            name="output_raw_confinement",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Input")
+
+        param5 = arcpy.Parameter(
+            displayName="Confining margins output name",
+            name="output_confining_margins",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Input")
+
+        param6 = arcpy.Parameter(
+            displayName="Calculate integrated width attributes?",
+            name="integrate_width_attributes",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        param6.value = "False"
+
+        return [param0, param1, param2, param3, param4, param5, param6]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(ConfiningMargins)
+        ConfiningMargins.main(p[0].valueAsText,
+                  p[1].valueAsText,
+                  p[2].valueAsText,
+                  p[3].valueAsText,
+                  p[4].valueAsText,
+                  p[5].valueAsText,
+                  p[6].valueAsText)
         return
 
 
 class RCAtool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "3-Riparian Condition Assessment"
+        self.label = "5-Riparian Condition Assessment"
         self.category = "01-RCAT"
         self.description = "Models riparian area condition based on riparian departure, land use intensity, and floodplain accessibility"
         self.canRunInBackground = False
@@ -861,47 +970,47 @@ class RCAtool(object):
 class BankfullChannelTool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Bankfull Channel"
-        self.category = "Misc"
+        self.label = "3-Bankfull Channel"
+        self.category = "01-RCAT"
         self.description = "Generates a polygon representing the bankfull channel"
         self.canRunInBackground = False
 
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Segmented Input Network",
+            displayName="Segmented network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Drainage Area Raster (in km squared)",
-            name="drarea",
-            datatype="DERasterDataset",
-            parameterType="Required",
-            direction="Input")
-
-        param2 = arcpy.Parameter(
-            displayName="Precipitation Raster Dataset (in mm)",
-            name="precip",
-            datatype="DERasterDataset",
-            parameterType="Required",
-            direction="Input")
-
-        param3 = arcpy.Parameter(
-            displayName="Valley Bottom Shapefile",
+            displayName="Valley bottom polygon",
             name="valleybottom",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
-        param4 = arcpy.Parameter(
-            displayName="Output Folder",
-            name="out_dir",
-            datatype="DEFolder",
+        param2 = arcpy.Parameter(
+            displayName="DEM",
+            name="dem",
+            datatype="DERasterDataset",
             parameterType="Required",
-            direction="Output")
+            direction="Input")
+
+        param3 = arcpy.Parameter(
+            displayName="Drainage area (in square kilometers)",
+            name="drarea",
+            datatype="DERasterDataset",
+            parameterType="Optional",
+            direction="Input")
+
+        param4 = arcpy.Parameter(
+            displayName="Precipitation raster (in mm)",
+            name="precip",
+            datatype="DERasterDataset",
+            parameterType="Required",
+            direction="Input")
 
         param5 = arcpy.Parameter(
             displayName="Minimum Bankfull Width",
@@ -920,21 +1029,18 @@ class BankfullChannelTool(object):
         param6.value = 100
 
         param7 = arcpy.Parameter(
-            displayName="Temporary Folder",
-            name="temp_dir",
+            displayName="Output Folder",
+            name="output_folder",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        #param6.filter.list = ["Local Database"]
-        #param6.value = arcpy.env.scratchWorkspace
 		
         param8 = arcpy.Parameter(
-            displayName="Delete Temporary Directory?",
-            name="deleteTemp",
-            datatype="GPBoolean",
+            displayName="Output name",
+            name="out_name",
+            datatype="GPString",
             parameterType="Required",
             direction="Input")
-        param8.value = True
 
         return [param0, param1, param2, param3, param4, param5, param6, param7, param8]
 
@@ -964,7 +1070,7 @@ class BankfullChannelTool(object):
                              p[5].valueAsText,
                              p[6].valueAsText,
                              p[7].valueAsText,
-                             p[8].valueAsText)
+							 p[8].valueAsText)
         return
 
 
