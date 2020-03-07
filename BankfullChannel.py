@@ -47,11 +47,10 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     
     # dissolve network 
     arcpy.AddMessage("Applying precip and drainage area data to line network...")
-    dissolved_network = os.path.join(temp_dir, "dissolved_network.shp")
-    arcpy.Dissolve_management(network, dissolved_network)
+    dissolved_network = arcpy.Dissolve_management(network, dissolved_network)
 
     # intersect dissolved network with thiessen polygons
-    intersect = os.path.join(output_folder, "network_buffer_values.shp")
+    intersect = os.path.join(temp_dir, "network_buffer_values.shp")
     arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
 
     # calculate buffer width
