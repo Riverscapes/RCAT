@@ -235,7 +235,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     arcpy.Clip_analysis(thiessen, valley_buf, thiessen_clip)
 
     # convert multipart features to single part
-    arcpy.AddField_management(thiessen_clip, "RCH_FID", "DOUBLE")
+    arcpy.AddField_management(thiessen_clip, "RCH_FID", "SHORT")
     with arcpy.da.UpdateCursor(thiessen_clip, ["ORIG_FID", "RCH_FID"]) as cursor:
         for row in cursor:
             row[1] = row[0]
