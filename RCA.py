@@ -74,7 +74,7 @@ def main(
             perim, area, width = row
             row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
             cur.updateRow(row)
-    arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "ORIG_FID", "Width")
+    arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "RCH_FID", "Width")
 
     # add model input attributes to input network
     arcpy.AddMessage("Assessing land use intensity")
@@ -315,7 +315,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     # list all fields in midpoints file
     midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
     # remove permanent fields from this list
-    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID"] # remove permanent fields from list
+    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID", "RCH_ID"] # remove permanent fields from list
     for field in remove_list:
         if field in midpoint_fields:
             try:
@@ -354,10 +354,10 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
 
 def calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut):
     lui_lookup = Lookup(ex_veg, "LU_CODE")
-    lui_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", lui_lookup, "lui_zs", statistics_type="MEAN")
+    lui_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", lui_lookup, "lui_zs", statistics_type="MEAN")
     ex_veg_folder = os.path.join(intermediates_folder, "03_VegetationRasters", "01_Ex_Veg")
     lui_lookup.save(ex_veg_folder + "/Land_Use_Intensity.tif")
-    arcpy.JoinField_management(fcOut, "FID", lui_zs, "ORIG_FID", "MEAN")
+    arcpy.JoinField_management(fcOut, "FID", lui_zs, "RCH_FID", "MEAN")
     arcpy.AddField_management(fcOut, "LUI", "DOUBLE")
     cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "LUI"])
     for row in cursor:
@@ -394,10 +394,10 @@ def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_v
     else:
         fp_conn_out = fp_conn
 
-    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", fp_conn_out, "fp_conn_zs", statistics_type="MEAN")
+    fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", fp_conn_out, "fp_conn_zs", statistics_type="MEAN")
     fp_conn_out.save(connect_folder + '/Floodplain_Connectivity.tif')
 
-    arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "ORIG_FID", "MEAN")
+    arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "RCH_FID", "MEAN")
     arcpy.AddField_management(fcOut, "CONNECT", "DOUBLE")
     cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "CONNECT"])
     for row in cursor:
@@ -425,10 +425,10 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
     histveg_lookup = Lookup(hist_veg, "VEGETATED")
     histveg_lookup.save(hist_veg_folder+"/Hist_Vegetated.tif")
 
-    exveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", exveg_lookup, "exveg_zs", statistics_type="MEAN")
-    histveg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", histveg_lookup, "histveg_zs", statistics_type="MEAN")
+    exveg_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", exveg_lookup, "exveg_zs", statistics_type="MEAN")
+    histveg_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", histveg_lookup, "histveg_zs", statistics_type="MEAN")
 
-    arcpy.JoinField_management(fcOut, "FID", exveg_zs, "ORIG_FID", "MEAN")
+    arcpy.JoinField_management(fcOut, "FID", exveg_zs, "RCH_FID", "MEAN")
     arcpy.AddField_management(fcOut, "EX_VEG", "DOUBLE")
     cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "EX_VEG"])
     for row in cursor:
@@ -441,7 +441,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
     del cursor
     arcpy.DeleteField_management(fcOut, "MEAN")
 
-    arcpy.JoinField_management(fcOut, "FID", histveg_zs, "ORIG_FID", "MEAN")
+    arcpy.JoinField_management(fcOut, "FID", histveg_zs, "RCH_FID", "MEAN")
     arcpy.AddField_management(fcOut, "HIST_VEG", "DOUBLE")
     cursor = arcpy.da.UpdateCursor(fcOut, ["MEAN", "HIST_VEG"])
     for row in cursor:
