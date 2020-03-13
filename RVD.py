@@ -203,12 +203,17 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
                 midpoint_fields.remove(field)
             except Exception:
                 pass
+
     # delete all miscellaneous fields - with error handling in case Arc won't allow field deletion
     for f in midpoint_fields:
         try:
             arcpy.DeleteField_management(midpoints, f)
         except Exception as err:
             pass
+    # create layer from midpoints
+    midpoints_lyr = "midpoints_lyr"
+    arcpy.MakeFeatureLayer_management(midpoints, midpoints_lyr)
+    arcpy.CopyFeatures_management(midpoints_lyr, scratch + "/midpoints_test.shp")
 
     # create thiessen polygons surrounding reach midpoints
     thiessen_folder = os.path.join(intermediates_folder, "01_MidpointsThiessen")
@@ -227,11 +232,28 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     thiessen_valley_folder = os.path.join(intermediates_folder, "02_ValleyThiessen")
     if not os.path.exists(thiessen_valley_folder):
         os.mkdir(thiessen_valley_folder)
-    thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley_Clip.shp"
-    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
+    thiessen_clip = scratch + "/Thiessen_Valley_Clip.shp"
+    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_clip)
+
+    # convert multipart features to single part
+    arcpy.AddField_management(thiessen_clip, "RCH_FID", "SHORT")
+    with arcpy.da.UpdateCursor(thiessen_clip, ["ORIG_FID", "RCH_FID"]) as cursor:
+        for row in cursor:
+            row[1] = row[0]
+            cursor.updateRow(row)
+    thiessen_singlepart = scratch + "/Thiessen_Valley_Singlepart.shp"
+    arcpy.MultipartToSinglepart_management(thiessen_clip, thiessen_singlepart)
+    valley_single_lyr = arcpy.MakeFeatureLayer_management(in_features=thiessen_singlepart)
+    # out_layer= scratch +"/valley_single.lyr")
+    arcpy.CopyFeatures_management(valley_single_lyr, scratch + "/valley_test.shp")
+
+    # Select only polygon features that intersect network midpoints
+    thiessen_select = arcpy.SelectLayerByLocation_management(valley_single_lyr, "INTERSECT", midpoints_lyr,
+                                                             selection_type="NEW_SELECTION")
+    thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley.shp"
+    arcpy.CopyFeatures_management(thiessen_select, thiessen_valley)
 
     return thiessen_valley, valley_buf
-
 
 def make_veg_lookup_rasters(veg, folder, type):
     if type=="ex_veg":
@@ -284,9 +306,9 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
     arcpy.env.snapRaster = veg_lookup
     # calculate proportion of area with coded vegetation (riparian or native riparian) for each reach based on thiessen polygons
     # Note: since raster values are 0 and 1, "MEAN" is the same as the proportion of area for all values=1
-    veg_zs = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", veg_lookup, veg_type+"_veg_zs_"+out_type, statistics_type="MEAN")
+    veg_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", veg_lookup, veg_type+"_veg_zs_"+out_type, statistics_type="MEAN")
     # add existing veg field to temp output by reach ids & calculate based on joined zonal stats
-    arcpy.JoinField_management(tempOut, "FID", veg_zs, "ORIG_FID", "MEAN")
+    arcpy.JoinField_management(tempOut, "FID", veg_zs, "RCH_FID", "MEAN")
     veg_field = veg_type.capitalize() + out_type.capitalize() + "_Mean"
     arcpy.AddField_management(tempOut, veg_field, "DOUBLE")
     with arcpy.da.UpdateCursor(tempOut, ["MEAN", veg_field]) as cursor:
@@ -374,14 +396,17 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     out_conversion_raster.save(os.path.join(intermediates_folder, "Conversion_Raster.tif"))
 
     # calculate total pixel count for each reach based on zonal stats within thiessen polygons 
-    count_table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", final_conversion_raster, "count_table", statistics_type="VARIETY")
-    arcpy.JoinField_management(tempOut, "FID", count_table, "ORIG_FID", "COUNT")
-    # set counts of 0 as 1 to avoid division issues
-    with arcpy.da.UpdateCursor(tempOut, "COUNT") as cursor:
+    count_table = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", final_conversion_raster, "count_table", statistics_type="VARIETY")
+    arcpy.JoinField_management(tempOut, "FID", count_table, "RCH_FID", "COUNT")
+    # add count field for calculations and set counts of 0 to 1 to avoid division issues
+    arcpy.AddField_management(tempOut, "count_calc", "SHORT")
+    with arcpy.da.UpdateCursor(tempOut, ["COUNT", "count_calc"]) as cursor:
         for row in cursor:
-            if row[0] == 0:
-                row[0] = 1
-                cursor.updateRow(row)
+            row[1] = row[0]
+            cursor.updateRow(row)
+            if row[1] == 0:
+                row[1] = 1
+            cursor.updateRow(row)
 
     # calculate count and proportion of each conversion type per reach and join to temporary output shp
     calculate_conversion_proportion(conversion_0, thiessen_valley, tempOut, valueList, 0, "noch")
@@ -564,15 +589,15 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 row[1] = "Multiple Dominant Conversion Types"
             cursor.updateRow(row)
 
-    # set everything with count 1 (i.e. only 0 or 1 pixels in polygon) with nodata values, type as no riparian
+    # set everything with count 0 with nodata values, type as no riparian
     with arcpy.da.UpdateCursor(tempOut, ["COUNT", "RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean",
                                          "HsRip_Mean", "ExNtv_Mean", "HsNtv_Mean"]) as cursor:
         for row in cursor:
-            if row[0] == 1:
+            if row[0] == 0:
                 row[1] = -9999
                 row[2] = -9999
                 row[3] = 74
-                row[4] = "No data - Narrow riparian zone"
+                row[4] = "No Riparian Vegetation Detected"
                 row[5] = -9999
                 row[6] = -9999
                 row[7] = -9999
@@ -589,7 +614,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
         with arcpy.da.UpdateCursor("outlyr", ["RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean", "HsRip_Mean",
                                               "ExNtv_Mean",  "HsNtv_Mean", "COUNT", "sum_noch", "sum_grsh", "sum_deveg",
                                               "sum_conif", "sum_inv", "sum_dev", "sum_agr", "prop_noch", "prop_grsh", "prop_deveg",
-                                              "prop_conif", "prop_inv", "prop_dev", "prop_agr", "prop_exp"]) as cursor:
+                                              "prop_conif", "prop_inv", "prop_dev", "prop_agr", "prop_exp",  "count_calc"]) as cursor:
             for row in cursor:
                 row[0] = -9999
                 row[1] = -9999
@@ -615,6 +640,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 row[21] = -9999
                 row[22] = -9999
                 row[23] = -9999
+                row[24] = -9999
                 cursor.updateRow(row)
 
     # save to output shapefile
@@ -634,9 +660,9 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
             string_val = "min50"
         else:
             string_val = str(value)
-        table = ZonalStatisticsAsTable(thiessen_valley, "ORIG_FID", conversion_raster, "table_"+string_val, "", "SUM")
+        table = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", conversion_raster, "table_"+string_val, "", "SUM")
         # add zonal stats calculations to temporary output shp
-        arcpy.JoinField_management(tempOut, "FID", table, "ORIG_FID", "SUM")
+        arcpy.JoinField_management(tempOut, "FID", table, "RCH_FID", "SUM")
         with arcpy.da.UpdateCursor(tempOut, ["SUM", sum_field]) as cursor:
             for row in cursor:
                 row[1] = row[0]
@@ -652,7 +678,7 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
     # calculate proportion of conversion type based on sum/count fields
     prop_field = "prop_"+field_suffix # new prop field for conversion type
     arcpy.AddField_management(tempOut, prop_field, "DOUBLE")
-    with arcpy.da.UpdateCursor(tempOut, ["COUNT", sum_field, prop_field]) as cursor:
+    with arcpy.da.UpdateCursor(tempOut, ["count_calc", sum_field, prop_field]) as cursor:
         for row in cursor:
             row[2] = row[1] / row[0]
             cursor.updateRow(row)
