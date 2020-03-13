@@ -696,7 +696,7 @@ class RCATBuilder(object):
 
         param8 = arcpy.Parameter(
             displayName="Select precipitation raster",
-            name="dredge_tailings",
+            name="precip",
             datatype="DERasterDataset",
             parameterType="Optional",
             direction="Input",

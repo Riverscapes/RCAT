@@ -57,7 +57,8 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
     os.chdir(projPath + "/Inputs/02_Existing_Vegetation/")
     i = 1
     for x in range(len(inex_cov)):
-        make_folder("Ex_Cov_" + str(i))
+        if not os.path.exists("Ex_Veg_" + str(i)):
+            os.mkdir("Ex_Veg_" + str(i))
         if not os.path.exists("Ex_Veg_" + str(i) + "/" + os.path.basename(inex_cov[x])):
             src = string.replace(inex_cov[x], "'", "")
             shutil.copytree(src, "Ex_Veg_" + str(i) + "/" + os.path.basename(inex_cov[x]))
@@ -68,8 +69,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
     os.chdir(projPath + "/Inputs/03_Historic_Vegetation/")
     i = 1
     for x in range(len(inhist_cov)):
-        if not os.path.exists("Hist_Veg_" + str(i)):
-            os.mkdir("Hist_Veg_" + str(i))
+        make_folder("Hist_Veg_" + str(i))
         if not os.path.exists("Hist_Veg_" + str(i) + "/" + os.path.basename(inhist_cov[x])):
             src = string.replace(inhist_cov[x], "'", "")
             shutil.copytree(src, "Hist_Veg_" + str(i) + "/" + os.path.basename(inhist_cov[x]))
@@ -152,9 +152,8 @@ def set_structure(projPath, lrp, dredge_tailings, dem, precip):
     if os.getcwd() is not projPath:
         os.chdir(projPath)
 
-    inputs = "Inputs"
-    if not os.path.exists(inputs):
-        os.mkdir(inputs)
+    inputs = os.path.join(projPath, "Inputs")
+    make_folder(inputs)
     os.chdir(inputs)
     
     make_folder("01_Network")
