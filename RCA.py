@@ -287,23 +287,32 @@ def main(
 def check_fields(frag_valley, seg_network, ex_veg, hist_veg):
     # make sure that the fragmented valley input has a field called "connected"
     valley_fields = [f.name for f in arcpy.ListFields(frag_valley)]
+    missing_fields = []
     if "Connected" not in valley_fields:
-        raise Exception("Valley input has no field 'Connected'")
+        missing_fields.append("Valley input has no field 'Connected'")
     # double check that input network has "NATIV_DEP" field from RVD
     network_fields = [f.name for f in arcpy.ListFields(seg_network)]
     if "NATIV_DEP" not in network_fields:
-        raise Exception("Network has no field 'NATIV_DEP'. Rerun RVD on network")
+        missing_fields.append("Network has no field 'NATIV_DEP'. Rerun RVD on network")
     # double check that input existing veg has a "LU_CODE" field
     ex_veg_fields = [f.name for f in arcpy.ListFields(ex_veg)]
     if "LU_CODE" not in ex_veg_fields:
-        raise Exception("Field 'LU_CODE' must be added to existing vegetation raster before RCA can be run")
+        missing_fields.append("Field 'LU_CODE' must be added to existing vegetation raster before RCA can be run")
     # double check both vegetation rasters have "VEGETATED" field
     if "VEGETATED" not in ex_veg_fields:
-        raise Exception("Field 'VEGETATED' must be added to existing vegetation raster before RCA can be run")
+        missing_fields.append("Field 'VEGETATED' must be added to existing vegetation raster before RCA can be run")
     hist_veg_fields = [f.name for f in arcpy.ListFields(hist_veg)]
     if "VEGETATED" not in hist_veg_fields:
-        raise Exception("Field 'VEGETATED' must be added to historic vegetation raster before RCA can be run")
-
+        missing_fields.append("Field 'VEGETATED' must be added to historic vegetation raster before RCA can be run")
+    # return messages for each missing field and then raise exception to stop script
+    if len(missing_fields) > 0:
+        i = 0
+        arcpy.AddMessage("------------------------------------------------------------------------------------------")
+        while i+1 <= len(missing_fields):
+            arcpy.AddMessage(missing_fields[i])
+            i += 1
+        raise Exception("Required fields missing from input files. See list above to fix missing fields in input data.")
+        
     
 def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder, scratch):
     # find midpoints of all reaches in segmented network
