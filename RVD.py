@@ -25,6 +25,7 @@ import projectxml
 import uuid
 import datetime
 import shutil
+from SupportingFunctions import make_folder
 
 
 def main(
@@ -62,7 +63,6 @@ def main(
     # create thiessen polygons and clip to fragmented valley bottom
     arcpy.AddMessage("Creating thiessen polygons...")
     thiessen_valley, valley_buf = create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder, scratch)
-
     # create lookup tables for existing and historic veg scores
     # create folder structure
     arcpy.AddMessage("Creating vegetation lookup rasters...")
@@ -71,8 +71,7 @@ def main(
     hist_veg_lookup_folder = os.path.join(veg_rasters_folder, "02_Hist_Veg")
     folders = [veg_rasters_folder, ex_veg_lookup_folder, hist_veg_lookup_folder]
     for f in folders:
-        if not os.path.exists(f):
-            os.mkdir(f)
+        make_folder(f)
     # make lookup rasters
     ex_riparian, ex_native = make_veg_lookup_rasters(ex_veg, ex_veg_lookup_folder, type="ex_veg")
     hist_riparian, hist_native = make_veg_lookup_rasters(hist_veg, hist_veg_lookup_folder, type="hist_veg")
@@ -173,8 +172,7 @@ def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tail
 def build_output_folder(projPath, seg_network):
     # make master output folder if not present
     master_outputs_folder = os.path.join(projPath, "Outputs")
-    if not os.path.exists(master_outputs_folder):
-        os.mkdir(master_outputs_folder)
+    make_folder(master_outputs_folder))
 
     # make new output folder for current run
     j = 1
@@ -231,12 +229,10 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     # create layer from midpoints
     midpoints_lyr = "midpoints_lyr"
     arcpy.MakeFeatureLayer_management(midpoints, midpoints_lyr)
-    arcpy.CopyFeatures_management(midpoints_lyr, scratch + "/midpoints_test.shp")
 
     # create thiessen polygons surrounding reach midpoints
     thiessen_folder = os.path.join(intermediates_folder, "01_MidpointsThiessen")
-    if not os.path.exists(thiessen_folder):
-        os.mkdir(thiessen_folder)
+    make_folder(thiessen_folder)
     thiessen = thiessen_folder + "/midpoints_thiessen.shp"
     arcpy.CreateThiessenPolygons_analysis(midpoints, thiessen, "ALL")
 
@@ -248,8 +244,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
 
     # clip thiessen polygons to buffered valley bottom
     thiessen_valley_folder = os.path.join(intermediates_folder, "02_ValleyThiessen")
-    if not os.path.exists(thiessen_valley_folder):
-        os.mkdir(thiessen_valley_folder)
+    make_folder(thiessen_valley_folder)
     thiessen_clip = scratch + "/Thiessen_Valley_Clip.shp"
     arcpy.Clip_analysis(thiessen, valley_buf, thiessen_clip)
 

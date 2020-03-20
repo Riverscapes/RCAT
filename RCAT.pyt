@@ -788,15 +788,15 @@ class ConfinementTool(object):
             parameterType="Required",
             direction="Input")
 
-        param6 = arcpy.Parameter(
-            displayName="Calculate integrated width attributes?",
-            name="integrate_width_attributes",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        param6.value = "False"
+        #param6 = arcpy.Parameter(
+        #    displayName="Calculate integrated width attributes?",
+        #    name="integrate_width_attributes",
+        #    datatype="GPBoolean",
+        #    parameterType="Required",
+        #    direction="Input")
+        #param6.value = "False"
 
-        return [param0, param1, param2, param3, param4, param5, param6]
+        return [param0, param1, param2, param3, param4, param5]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -821,8 +821,7 @@ class ConfinementTool(object):
                   p[2].valueAsText,
                   p[3].valueAsText,
                   p[4].valueAsText,
-                  p[5].valueAsText,
-                  p[6].valueAsText)
+                  p[5].valueAsText)
         return
 
 

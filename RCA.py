@@ -62,19 +62,20 @@ def main(
     fcOut = output_folder + "/rca_table.shp"
     arcpy.CopyFeatures_management(seg_network, fcOut)
 
+    # PREVIOUS METRIC OF CONFINEMENT BEFORE CONFINEMENT TOOL ADDED TO RCAT
     # Add width field to thiessen polygons and then output network
-    arcpy.AddMessage("Adding width field to output network")
-    arcpy.AddField_management(thiessen_valley, "Perim", "DOUBLE")
-    arcpy.AddField_management(thiessen_valley, "Area", "DOUBLE")
-    arcpy.CalculateField_management(thiessen_valley, "Perim", "!SHAPE.LENGTH@METERS!", "PYTHON_9.3")
-    arcpy.CalculateField_management(thiessen_valley, "Area", "!SHAPE.AREA@SQUAREMETERS!", "PYTHON_9.3")
-    arcpy.AddField_management(thiessen_valley, "Width", "DOUBLE")
-    with arcpy.da.UpdateCursor(thiessen_valley, ["Perim", "Area", "Width"]) as cur:
-        for row in cur:
-            perim, area, width = row
-            row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
-            cur.updateRow(row)
-    arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "RCH_FID", "Width")
+    #arcpy.AddMessage("Adding width field to output network")
+    #arcpy.AddField_management(thiessen_valley, "Perim", "DOUBLE")
+    #arcpy.AddField_management(thiessen_valley, "Area", "DOUBLE")
+    #arcpy.CalculateField_management(thiessen_valley, "Perim", "!SHAPE.LENGTH@METERS!", "PYTHON_9.3")
+    #arcpy.CalculateField_management(thiessen_valley, "Area", "!SHAPE.AREA@SQUAREMETERS!", "PYTHON_9.3")
+    #arcpy.AddField_management(thiessen_valley, "Width", "DOUBLE")
+    #with arcpy.da.UpdateCursor(thiessen_valley, ["Perim", "Area", "Width"]) as cur:
+    #    for row in cur:
+    #        perim, area, width = row
+    #        row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
+    #        cur.updateRow(row)
+    #arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "RCH_FID", "Width")
 
     # add model input attributes to input network
     arcpy.AddMessage("Assessing land use intensity")
@@ -90,7 +91,8 @@ def main(
     arcpy.AddMessage("Calculating riparian condition for segments in unconfined valleys")
 
     arcpy.MakeFeatureLayer_management(fcOut, "rca_in_lyr")
-    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" >= {0}'.format(width_thresh))
+    #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" >= {0}'.format(width_thresh))
+    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type != "BOTH" """)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_u")
     rca_u = scratch + "/rca_u.shp"
 
@@ -210,7 +212,8 @@ def main(
 
     # # # calculate rca for segments in confined valleys # # #
     arcpy.AddMessage("Calculating riparian condition for segments in confined valleys")
-    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" < {0}'.format(width_thresh))
+    #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" < {0}'.format(width_thresh))
+    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type == "BOTH" """)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c.shp")
     rca_c = scratch + "/rca_c.shp"
 
