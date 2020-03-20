@@ -9,6 +9,8 @@ import RCA
 import BankfullChannel
 import ConfiningMargins
 import Promoter
+import segmentNetwork
+import LANDFIRE_RCAT_fields
 
 
 class Toolbox(object):
@@ -20,7 +22,7 @@ class Toolbox(object):
 
         # List of tool classes associated with this toolbox
         self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDtool, RCATBuilder, RCAtool,
-                      BankfullChannelTool, ConfinementTool, Promotertool]
+                      BankfullChannelTool, ConfinementTool, Promotertool, SegmentNetworkTool, LANDFIREfields]
 
 
 class VBETBuilder(object):
@@ -34,14 +36,14 @@ class VBETBuilder(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Select Project Folder",
+            displayName="Select project folder",
             name="projPath",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Select DEM inputs",
+            displayName="Select DEM raster(s)",
             name="dem",
             datatype="DERasterDataset",
             parameterType="Required",
@@ -49,7 +51,7 @@ class VBETBuilder(object):
             multiValue=True)
 
         param2 = arcpy.Parameter(
-            displayName="Select drainage network datasets",
+            displayName="Select drainage network shapefile(s)",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -57,7 +59,7 @@ class VBETBuilder(object):
             multiValue=True)
 
         param3 = arcpy.Parameter(
-            displayName="Select drainage area raster datasets",
+            displayName="Select drainage area raster(s)",
             name="drar",
             datatype="DERasterDataset",
             parameterType="Optional",
@@ -316,7 +318,7 @@ class NHDNetworkBuildertool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "NHD Network Builder"
-        self.category = "Misc"
+        self.category = "Supporting Tools"
         self.description = "Creates a user specified stream network using attributes from NHD hydrography data"
         self.canRunInBackground = False
 
@@ -497,7 +499,7 @@ class RVDtool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Project Name",
+            displayName="Project name",
             name="projName",
             datatype="GPString",
             parameterType="Optional",
@@ -511,35 +513,35 @@ class RVDtool(object):
             direction="Input")
 
         param2 = arcpy.Parameter(
-            displayName="Watershed Name",
+            displayName="Watershed name",
             name="hucName",
             datatype="GPString",
             parameterType="Optional",
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Select Project Folder",
+            displayName="Select project folder",
             name="projPath",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 
         param4 = arcpy.Parameter(
-            displayName="Existing Vegetation Raster",
+            displayName="Select existing vegetation raster",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param5 = arcpy.Parameter(
-            displayName="Historic Vegetation Raster",
+            displayName="Select historic vegetation raster",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param6 = arcpy.Parameter(
-            displayName="Input Segmented Stream Network",
+            displayName="Select segmented stream network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -547,7 +549,7 @@ class RVDtool(object):
         param6.filter.list = ["Polyline"]
 
         param7 = arcpy.Parameter(
-            displayName="Input Valley Bottom Polygon",
+            displayName="Select valley bottom polygon",
             name="valley",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -555,7 +557,7 @@ class RVDtool(object):
         param7.filter.list = ["Polygon"]
 
         param8 = arcpy.Parameter(
-            displayName="Large River Polygon",
+            displayName="Select large river polygon",
             name="lg_river",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -563,7 +565,7 @@ class RVDtool(object):
         param8.filter.list = ["Polygon"]
 
         param9 = arcpy.Parameter(
-            displayName="Dredge Tailings Polygon",
+            displayName="Select dredge tailings polygon",
             name="dredge_tailings",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -624,7 +626,7 @@ class RVDtool(object):
 class RCATBuilder(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "1-Build RCAT Project"
+        self.label = "1-RCAT Project Builder"
         self.category = "01-RCAT"
         self.description = "Sets up an RCAT project folder and defines the inputs"
         self.canRunInBackground = False
@@ -745,42 +747,42 @@ class ConfinementTool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Stream network from RVD",
+            displayName="Select RVD network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Valley bottom polygon",
+            displayName="Select valley bottom polygon",
             name="valley_bottom",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
         param2 = arcpy.Parameter(
-            displayName="Bankfull channel polygon",
+            displayName="Select bankfull channel polygon",
             name="bankfull_channel",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Output folder",
+            displayName="Select output folder for run",
             name="output_folder",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 
         param4 = arcpy.Parameter(
-            displayName="Raw confinement output name",
+            displayName="Name confinement network output",
             name="output_raw_confinement",
             datatype="GPString",
             parameterType="Required",
             direction="Input")
 
         param5 = arcpy.Parameter(
-            displayName="Confining margins output name",
+            displayName="Name confining margins output",
             name="output_confining_margins",
             datatype="GPString",
             parameterType="Required",
@@ -835,7 +837,7 @@ class RCAtool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Project Name",
+            displayName="Project name",
             name="projName",
             datatype="GPString",
             parameterType="Optional",
@@ -849,35 +851,35 @@ class RCAtool(object):
             direction="Input")
 
         param2 = arcpy.Parameter(
-            displayName="Watershed HUC Name",
+            displayName="Watershed name",
             name="hucName",
             datatype="GPString",
             parameterType="Optional",
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Select Output Folder for Run",
+            displayName="Select output folder for run",
             name="projPath",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 
         param4 = arcpy.Parameter(
-            displayName="Existing Cover Raster",
+            displayName="Select existing cover raster",
             name="evt",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param5 = arcpy.Parameter(
-            displayName="Historic Cover Raster",
+            displayName="Select historic cover raster",
             name="bps",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param6 = arcpy.Parameter(
-            displayName="Input Stream Network from Riparian Vegetation Departure",
+            displayName="Select confinement network",
             name="seg_network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -885,7 +887,7 @@ class RCAtool(object):
         param6.filter.list = ["Polyline"]
 
         param7 = arcpy.Parameter(
-            displayName="Input Fragmented Valley Bottom",
+            displayName="Select fragmented valley bottom",
             name="frag_valley",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -893,7 +895,7 @@ class RCAtool(object):
         param7.filter.list = ["Polygon"]
 
         param8 = arcpy.Parameter(
-            displayName="Large River Polygon",
+            displayName="Select large river polygon",
             name="lg_river",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -901,7 +903,7 @@ class RCAtool(object):
         param8.filter.list = ["Polygon"]
 
         param9 = arcpy.Parameter(
-            displayName="Dredge Tailings Polygon",
+            displayName="Select dredge tailings polygon",
             name="mines",
             datatype="DEFeatureClass",
             parameterType="Optional",
@@ -909,15 +911,15 @@ class RCAtool(object):
         param9.filter.list = ["Polygon"]
 
         param10 = arcpy.Parameter(
-            displayName="Valley Bottom Width Threshold",
+            displayName="Valley bottom width threshold",
             name="width_thresh",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param10.value = 120
+        param10.value = 160
 
         param11 = arcpy.Parameter(
-            displayName="Name RCA Output",
+            displayName="Name RCA output",
             name="output",
             datatype="GPString",
             parameterType="Required",
@@ -1078,7 +1080,7 @@ class Promotertool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "Realization Promoter"
-        self.category = "Misc"
+        self.category = "Supporting Tools"
         self.description = "Promotes a selected realization within a RCAT project"
         self.canRunInBackground = False
 
@@ -1145,4 +1147,120 @@ class Promotertool(object):
                       p[1].valueAsText,
                       p[2].valueAsText,
                       p[3].valueAsText)
+        return
+
+
+class SegmentNetworkTool(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Segment Network"
+        self.category = "Supporting Tools"
+        self.description = "Segments a stream network into reaches of the specified length"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select input stream network",
+            name="nhd_flowline_path",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Select output file path",
+            name="type",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Output")
+
+        param2 = arcpy.Parameter(
+            displayName="Segmentation interval (in meters)",
+            name="interval",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        param2.value = 300.0
+
+        param3 = arcpy.Parameter(
+            displayName="Minimum segment length (in meters)",
+            name="min_segLength",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        param3.value = 50.05
+
+        return [param0, param1, param2, param3]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(segmentNetwork)
+        segmentNetwork.main(p[0].valueAsText,
+                      p[1].valueAsText,
+                      p[2].valueAsText,
+                      p[3].valueAsText)
+        return
+
+
+class LANDFIREfields(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Add LANDFIRE Fields"
+        self.category = "Supporting Tools"
+        self.description = "Adds required fields for RCAT to LANDFIRE vegetation inputs"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select existing vegetation raster",
+            name="ex_veg",
+            datatype="DERasterDataset",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Select historic vegetation raster",
+            name="hist_veg",
+            datatype="DERasterDataset",
+            parameterType="Required",
+            direction="Input")
+
+        return [param0, param1]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(segmentNetwork)
+        LANDFIRE_RCAT_fields.main(p[0].valueAsText,
+                      p[1].valueAsText)
         return
