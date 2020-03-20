@@ -150,6 +150,24 @@ def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tail
         if not arcpy.Describe(dredge_tailings).spatialReference.name == network_sr.name:
             #raise Exception("Input dredge tailings polygons must have the same coordinate system as input network for accurate calculations.")
             arcpy.AddMessage("WARNING: Input dredge tailings polygons must have the same coordinate system as the input network for accurate calculations!")
+    # check for needed veg fields in each veg raster
+    needed_fields = ["RIPARIAN", "NATIVE_RIP", "CONVERSION"]
+    ex_veg_fields = [f.name for f in arcpy.ListFields(ex_veg)]
+    hist_veg_fields = [f.name for f in arcpy.ListFields(hist_veg)]
+    missing_fields = []
+    for f in needed_fields:
+        if f not in ex_veg_fields:
+            missing_fields.append("Existing vegetation raster is missing required attribute " + f)
+        if f not in hist_veg_fields:
+            missing_fields.append("Historic vegetation raster is missing required attribute " + f)
+    # return message for each missing field then raise error to stop script
+    if len(missing_fields) > 0:
+        i = 0
+        arcpy.AddMessage("------------------------------------------------------------------")
+        while i+1 <= len(missing_fields):
+            arcpy.AddMessage(missing_fields[i])
+            i += 1
+        raise Exception("ERROR: Add required attributes (listed above) to vegetation data before running RVD.")
 
 
 def build_output_folder(projPath, seg_network):
@@ -254,6 +272,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     arcpy.CopyFeatures_management(thiessen_select, thiessen_valley)
 
     return thiessen_valley, valley_buf
+
 
 def make_veg_lookup_rasters(veg, folder, type):
     if type=="ex_veg":
