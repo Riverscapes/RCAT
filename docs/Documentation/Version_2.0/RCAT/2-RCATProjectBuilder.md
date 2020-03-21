@@ -9,9 +9,9 @@ NOTE: See the [preprocessing steps]({{ site.baseurl }}/Documentation/Version_1.0
 
 ## Parameters
 
-![RCATProjectBuilder]({{ site.baseurl }}/assets/images/RCATProjectBuilder1_2.0.PNG)
+![RCATProjectBuilder]({{ site.baseurl }}/assets/images/RCATProjectBuilder1_2.0.png)
 
-![RCATProjectBuilder2({{ site.baseurl }}/assets/images/RCATProjectBuilder2_2.0.PNG)
+![RCATProjectBuilder2]({{ site.baseurl }}/assets/images/RCATProjectBuilder2_2.0.png)
 
 - **Select project folder**: Select newly created folder to store all RCA inputs, intermediates, and outputs in.
 - **Select drainage network datasets**: Select pre-processed segmented network shapefile(s) you want to use in this RCA run.

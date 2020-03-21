@@ -168,12 +168,13 @@ def main(network,
     arcpy.SelectLayerByAttribute_management(raw_confining_network_lyr, "SWITCH_SELECTION")
     arcpy.CalculateField_management(raw_confining_network_lyr, "IsConfined", "0", "PYTHON")
     arcpy.CalculateField_management(raw_confining_network_lyr, "Con_Type", "'NONE'", "PYTHON")
-
+    
+    intersect_line_network = network
+    
     """# Integrated Width
     # REMOVED FROM CODE BECAUSE:
     # 1. Integrated width has little meaning (valley and channel widths calculated as AREA/LENGTH, which is going to be largely biased by segment length
     # 2. Spatial join creates messy output and many missing values
-    intersect_line_network = network
     if integrate_width_attributes:
         arcpy.AddMessage("Calculating integrated width attributes...")
         integrated_channel = os.path.join(confinement_dir, "integrated_channel_width.shp")
