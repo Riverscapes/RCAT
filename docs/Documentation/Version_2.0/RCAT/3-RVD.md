@@ -1,5 +1,5 @@
 ---
-title: Step 2: Riparian Vegetation Departure (RVD)
+title: Step 2 - Riparian Vegetation Departure (RVD)
 category: RCAT
 ---
 

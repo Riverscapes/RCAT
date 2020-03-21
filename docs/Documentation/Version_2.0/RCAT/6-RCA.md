@@ -1,5 +1,5 @@
 ---
-title: Step 5: Riparian Condition Assessment (RCA)
+title: Step 5 - Riparian Condition Assessment (RCA)
 category: RCAT
 ---
 

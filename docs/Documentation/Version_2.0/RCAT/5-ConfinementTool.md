@@ -1,5 +1,5 @@
 ---
-title: Step 4: Confinement Tool
+title: Step 4 - Confinement Tool
 category: RCAT
 ---
 
