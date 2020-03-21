@@ -9,7 +9,7 @@ This tool was adapted from the [Confining Margins tool](http://confinement.river
 
 ## Parameters
 
-![ConfinementTool]({{ site.baseurl }}assets/images/ConfinementTool_interface_2.0.PNG)
+![ConfinementTool]({{ site.baseurl }}/assets/images/ConfinementTool_interface_2.0.PNG)
 
 - **Select RVD network**: Select output network from the RVD tool.
 - **Select valley bottom polygon**: Select input valley bottom polygon.
