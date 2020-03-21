@@ -172,7 +172,7 @@ def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tail
 def build_output_folder(projPath, seg_network):
     # make master output folder if not present
     master_outputs_folder = os.path.join(projPath, "Outputs")
-    make_folder(master_outputs_folder))
+    make_folder(master_outputs_folder)
 
     # make new output folder for current run
     j = 1
