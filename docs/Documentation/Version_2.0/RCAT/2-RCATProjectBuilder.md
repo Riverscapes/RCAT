@@ -10,6 +10,7 @@ NOTE: See the [preprocessing steps]({{ site.baseurl }}/Documentation/Version_1.0
 ## Parameters
 
 ![RCATProjectBuilder]({{ site.baseurl }}/assets/images/RCATProjectBuilder1_2.0.PNG)
+
 ![RCATProjectBuilder2({{ site.baseurl }}/assets/images/RCATProjectBuilder2_2.0.PNG)
 
 - **Select project folder**: Select newly created folder to store all RCA inputs, intermediates, and outputs in.
