@@ -196,13 +196,13 @@ def main(network,
                     row[0] = 1.0
                 else:
                     row[0] = row[2] / row[1]
-        intersect_line_network = integrated_valley
+        intersect_line_network = integrated_valley"""
 
     # Final Output
     arcpy.AddMessage("Preparing final output...")
     if arcpy.Exists(raw_confinement):
         arcpy.Delete_management(raw_confinement)
-    arcpy.Intersect_analysis([raw_confining_network_split, intersect_line_network], raw_confinement, "NO_FID")"""
+    arcpy.Intersect_analysis([raw_confining_network_split, intersect_line_network], raw_confinement, "NO_FID")
 
     return
 
