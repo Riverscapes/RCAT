@@ -63,6 +63,7 @@ Pixel counts for converesion types within the riparian zone corresponding to eac
 - `COUNT`: Total pixel count of the riparian zone.
 - `calc_count`: Equivalent to `COUNT`, except that `0` values are set to `1` to avoid errors in later calculations. 
 - `sum_noch`: Pixel count of conversion type 'no change' within the riparian zone (i.e., historic and existing landcover are both riparian). 
+- `sum_decid`: Pixel count of conversion type 'conversion to deciduous/hardwood forest' within the riparian zone (i.e., historic landcover is riparian and existing landcover is deciduous/hardwood forest).
 - `sum_grsh`: Pixel count of conversion type 'conversion to grass/shrubland' within the riparian zone (i.e., historic landcover is riparian and existing landcover is grass/shrub). 
 - `sum_deveg`: Pixel count of coversion type 'devegetated' within the riparian zone (i.e., historic landcover is riparian and existing landcover is rock/ice/sand/etc). 
 - `sum_con`: Pixel count of conversion type 'conifer encroachment' within the riparian zone (i.e., historic landcover is riparian and existing landcover is conifer/mixed conifer-hardwood).
@@ -74,6 +75,7 @@ Pixel counts for converesion types within the riparian zone corresponding to eac
 Proportion of the riparian zone corresponding to a reach occupied by each conversion type.
 
 - `prop_noch`: Proportion of riparian zone with conversion type 'no change' (`sum_noch`/`calc_count`). 
+- `prop_decid`: Proportion of riparian zone with conversion type 'conversion to deciduous/hardwood forest' (`sum_decid`/`calc_count`).
 - `prop_grsh`: Proportion of riparian zone with conversion type 'conversion to grass/shrubland' (`sum_grsh`/`calc_count`). 
 - `prop_deveg`: Proportion of riparian zone with conversion type 'devegetated' (`sum_deveg`/`calc_count`). 
 - `prop_con`: Proportion of riparian zone with conversion type 'conifer encroachment' (`sum_con`/`calc_count`). 

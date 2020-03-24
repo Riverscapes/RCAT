@@ -273,6 +273,9 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, output_folder,
     arcpy.AddMessage("Smoothing final bankfull polygon")
     analysis_folder = os.path.join(output_folder, "02_Analyses")
     make_folder(analysis_folder)
+    bankfull_folder = os.path.join(analysis_folder, find_available_num_prefix(analysis_folder)+"_BankfullChannel")
+    make_folder(bankfull_folder)
+    
     if not out_name.endswith(".shp"):
         output = os.path.join(output_folder, out_name+".shp")
     else:

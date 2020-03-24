@@ -40,7 +40,7 @@ def add_conversion_field(ex_veg, hist_veg):
     if len(ex_field) is not 1:
         arcpy.AddField_management(ex_veg, "CONVERSION", "DOUBLE")
 
-    with arcpy.da.UpdateCursor(ex_veg, ["EVT_PHYS", "EVT_GP", "CONVERSION"]) as cursor:
+    with arcpy.da.UpdateCursor(ex_veg, ["EVT_PHYS", "EVT_GP_N", "CONVERSION"]) as cursor:
         for row in cursor:
             if row[0] == "Open Water":
                 row[2] = 500
@@ -200,6 +200,8 @@ def add_vegetated_field(ex_veg, hist_veg):
             elif row[0] == "Barren":
                 row[1] = 0
             elif row[0] == "Quarries-Strip Mines-Gravel Pits":
+                row[1] = 0
+            elif row[0] == "Quarries-Strip Mines-Gravel Pits-Well and Wind Pads":
                 row[1] = 0
             elif row[0] == "Agricultural":
                 row[1] = 0

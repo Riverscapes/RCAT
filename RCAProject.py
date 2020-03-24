@@ -47,8 +47,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
     os.chdir(projPath + "/Inputs/01_Network/")
     i = 1
     for x in range(len(innetwork)):
-        if not os.path.exists("Network_" + str(i)):
-            os.mkdir("Network_" + str(i))
+        make_folder("Network_" + str(i))
         arcpy.CopyFeatures_management(innetwork[x], "Network_" + str(i) + "/" + os.path.basename(innetwork[x]))
         i += 1
         
@@ -58,10 +57,8 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
     i = 1
     for x in range(len(inex_cov)):
         if not os.path.exists("Ex_Veg_" + str(i)):
-            os.mkdir("Ex_Veg_" + str(i))
-        if not os.path.exists("Ex_Veg_" + str(i) + "/" + os.path.basename(inex_cov[x])):
             src = string.replace(inex_cov[x], "'", "")
-            shutil.copytree(src, "Ex_Veg_" + str(i) + "/" + os.path.basename(inex_cov[x]))
+            shutil.copytree(src, "Ex_Veg_" + str(i))
         i += 1
 
     # add the historic veg inputs to project
@@ -69,10 +66,9 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
     os.chdir(projPath + "/Inputs/03_Historic_Vegetation/")
     i = 1
     for x in range(len(inhist_cov)):
-        make_folder("Hist_Veg_" + str(i))
-        if not os.path.exists("Hist_Veg_" + str(i) + "/" + os.path.basename(inhist_cov[x])):
+        if not os.path.exists("Hist_Veg_" + str(i)):
             src = string.replace(inhist_cov[x], "'", "")
-            shutil.copytree(src, "Hist_Veg_" + str(i) + "/" + os.path.basename(inhist_cov[x]))
+            shutil.copytree(src, "Hist_Veg_" + str(i))
         i += 1
 
 
@@ -81,8 +77,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
     os.chdir(projPath + "/Inputs/04_Fragmented_Valley/")
     i = 1
     for x in range(len(infragvalley)):
-        if not os.path.exists("Frag_Valley_" + str(i)):
-            os.mkdir("Frag_Valley_" + str(i))
+        make_folder("Frag_Valley_" + str(i))
         arcpy.CopyFeatures_management(infragvalley[x], "Frag_Valley_" + str(i) + "/" + os.path.basename(infragvalley[x]))
         i += 1
 
@@ -93,8 +88,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
         os.chdir(folders[-1])
         i = 1
         for x in range(len(inlrp)):
-            if not os.path.exists("LRP_" + str(i)):
-                os.mkdir("LRP_" + str(i))
+            make_folder("LRP_" + str(i))
             arcpy.CopyFeatures_management(inlrp[x], "LRP_" + str(i) + "/" + os.path.basename(inlrp[x]))
             i += 1
     else:
@@ -107,8 +101,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
         os.chdir(folders[-1])
         i = 1
         for x in range(len(indredge_tailings)):
-            if not os.path.exists("DredgeTailings_" + str(i)):
-                os.mkdir("DredgeTailings_" + str(i))
+            make_folder("DredgeTailings_" + str(i))
             arcpy.CopyFeatures_management(indredge_tailings[x], "DredgeTailings_" + str(i) + "/" + os.path.basename(indredge_tailings[x]))
             i += 1
     else:
@@ -121,9 +114,8 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
         os.chdir(folders[-1])
         i = 1
         for x in range(len(indems)):
-            if not os.path.exists("DEM_" + str(i)):
-                os.mkdir("DEM_" + str(i))
-            arcpy.CopyFeatures_management(indems[x], "DEM_" + str(i) + "/" + os.path.basename(indems[x]))
+            make_folder("DEM_" + str(i))
+            arcpy.CopyRaster_management(indems[x], os.path.join(os.getcwd(), "DEM_"+str(i), os.path.basename(indems[x])))
             i += 1
     else:
         pass
@@ -135,9 +127,8 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
         os.chdir(folders[-1])
         i = 1
         for x in range(len(inprecips)):
-            if not os.path.exists("Precip_" + str(i)):
-                os.mkdir("Precip_" + str(i))
-            arcpy.CopyFeatures_management(inprecips[x], "Precip_" + str(i) + "/" + os.path.basename(inprecips[x]))
+            make_folder("Precip_" + str(i))
+            arcpy.CopyRaster_management(inprecips[x], os.path.join(os.getcwd(), "Precip_"+str(i), os.path.basename(inprecips[x])))
             i += 1
     else:
         pass
@@ -146,8 +137,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
 def set_structure(projPath, lrp, dredge_tailings, dem, precip):
     """Sets up the folder structure for an RVD project"""
 
-    if not os.path.exists(projPath):
-        os.mkdir(projPath)
+    make_folder(projPath)
 
     if os.getcwd() is not projPath:
         os.chdir(projPath)

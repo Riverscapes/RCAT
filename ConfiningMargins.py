@@ -216,9 +216,10 @@ def build_folder_structure(output_folder):
     make_folder(confinement_dir)
     analysis_folder = os.path.join(output_folder, "02_Analysis")
     make_folder(analysis_folder)
+    conf_analysis_folder = os.path.join(analysis_folder, find_available_num_prefix(analysis_folder)+"_Confinement")
     temp_dir = os.path.join(os.path.dirname(os.path.dirname(output_folder)), "Temp")
     make_folder(temp_dir)
-    return intermediates_folder, confinement_dir, analysis_folder, temp_dir
+    return intermediates_folder, confinement_dir, conf_analysis_folder, temp_dir
 
 
 def determine_banks(network, channel_bank_polygons, temp_dir):

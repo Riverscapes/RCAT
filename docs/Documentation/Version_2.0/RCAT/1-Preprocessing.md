@@ -35,6 +35,7 @@ For both the historic and existing vegetation rasters, add and populate the foll
 - `CONVERSION`: Landcover vegetation groupings, classified as follows:
 	- `500` = Open water
 	- `100` = Riparian
+	- `65` = Deciduous or hardwood upland forest
 	- `50` = Grassland or shrubland
 	- `40` = Non-vegetated, sparsely vegetated, snow/ice, sand, barren, etc.
 	- `20` = Conifer or conifer-hardwood forest
