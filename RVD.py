@@ -121,7 +121,10 @@ def main(
         
     # write XML file
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
-    write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder)
+    try:
+        write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder)
+    except Exception:
+        arcpy.AddMessage("Writing the XML file has failed, but RVD outputs are saved. This is a known bug in RCAT and you can proceed to the next step without problems.")
 
 
 def validate_inputs(ex_veg, hist_veg, seg_network, valley, lg_river, dredge_tailings):

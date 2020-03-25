@@ -276,16 +276,19 @@ def main(
     arcpy.SelectLayerByAttribute_management("outlyr", "CLEAR_SELECTION")
     arcpy.CopyFeatures_management("outlyr", output)
 
+    # temp output and environment clean up
     arcpy.Delete_management(tempOut)
     arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
+    arcpy.CheckInExtension('spatial')
 
     # write xml
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
-    write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, width_thresh, output)
+    try:
+        write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, width_thresh, output)
+    except Exception:
+        arcpy.AddMessage("Writing the XML file has failed, but RVD outputs are saved. This is a known bug in RCAT and you can proceed to the next step without problems.")
     
-    arcpy.CheckInExtension('spatial')
-
 
 def check_fields(frag_valley, seg_network, ex_veg, hist_veg):
     # make sure that the fragmented valley input has a field called "connected"
