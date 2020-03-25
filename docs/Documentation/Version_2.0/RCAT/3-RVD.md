@@ -3,10 +3,10 @@ title: Step 2 - Riparian Vegetation Departure (RVD)
 category: RCAT
 ---
 
-The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to determine the departure of riparian vegetation from pre-settlement conditions. Current riparian vegetation cover is modeled using the LANDFIRE Existing Vegetation Type (EVT) layer. Historic (pre-European settlement) vegetation is modeled using the LANDFIRE Bio-physical Setting (BpS) layer. For more information on these layers see LANDFIRE's [website](http://landfire.gov/vegetation.php). In both of these layers, all native, riparian vegetation is given a value of 1, and all other vegetation is given a value of 0. The valley bottom is broken into polygons that correspond to segments or reaches on the stream network, and within each polygon, the number of existing riparian cells is divided by the number of modeled historic riparian cells. The result is a ratio that represents the proportion of historic riparian vegetation that currently exists on the landscape. Two ratios following this framework are calculated: one for oerall riparian departure, and another for native riparian departure. These values are then copied to the corresponding segment on the network. In addition, an analysis is performed that quantifies riparian conversion types for each stream segment to determine possible causes of riparian degradation. The riparian departure field is required to run the Riparian Condition Assessment (RCA) tool.
+The Riparian Vegetation Departure (RVD) tool uses vegetation landcover inputs to determine the departure of riparian vegetation between two time periods. Generally, RVD is used to compare current riparian vegetation cover (modeled using the LANDFIRE Existing Vegetation Type (EVT) layer) to historic (pre-European settlement) vegetation (modeled using the LANDFIRE Bio-physical Setting (BpS) layer). For more information on EVT and BpS layers, see LANDFIRE's [website](http://landfire.gov/vegetation.php). Alternatively, RVD could be used to compare pre- and post-restoration vegetation conditions as long as vegetation landcover data is available for both before and after the restoration. LANDFIRE EVT layers are reclassified based on imagery every two years, so this could be an option for pre- and post-restoration landcover data, or drone imagery could be collected and classified into landcover classes. Before running RVD, both vegetation layers must have the following attributes populated: `RIPARIAN`, `NATIVE_RIP`, and `CONVERSION`. See the [preparing RCAT inputs page]({{ site.baseurl }}/Documentation/RCAT/Version_2.0/1-Preprocessing) for details. The riparian departure field is required to run the [Riparian Condition Assessment (RCA) tool]({ site.baseurl }/Documentation/Version_2.0/RCAT/6-RCA).
 
 
-# Parameters
+## Parameters
 
 ![RVD_interface]({{ site.baseurl }}/assets/images/RVD_interface_2.0.PNG)
 
@@ -23,9 +23,9 @@ The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to d
 - **Select dredge tailings polygon** (optional): Select the dredge tailings shapefile from the inputs folder. In areas with dredge tailings, existing riparian landcover is coded with a vegetation score of "0" - i.e., no riparian vegetation.
 - **Name RVD output**: Specify a name to store the final polyline output, which will be found in the outputs folder within the project folder.
 
-# RVD Outputs
+## RVD Outputs
 
-## Standard Outputs
+### Standard Outputs
 
 - **Native Riparian Vegetation Departure ratio** `NATIV_DEP`: This is calculated for each reach by finding the area of current existing native riparian landcover within the valley bottom of a reach, then dividing this value by the area of historic native riparian landcover within the reach's valley bottom. (equivalent to RCAT Version 1.0 `DEP_RATIO`)
 
@@ -39,7 +39,7 @@ The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to d
 
 ![RVD_Conv_Type]({{ site.baseurl }}/assets/images/RVD_Conversion.png)
 
-## Comparison of Outputs with and without Dredge Tailings Input
+### Comparison of Outputs with and without Dredge Tailings Input
 
 - Riparian Vegetation Departure ratio without adjustment for dredge tailings
 
@@ -49,7 +49,7 @@ The Riparian Vegetation Departure (RVD) tool uses LANDFIRE landcover inputs to d
 
 ![RVDTailings]({{ site.baseurl }}/assets/images/RVDWithTailings.png)
 
-## Additional RVD Output Fields
+### Additional RVD Output Fields
 
 Riparian vegetation proportions for the valley bottom corresponding to each reach.
 
@@ -84,6 +84,16 @@ Proportion of the riparian zone corresponding to a reach occupied by each conver
 - `prop_ag`: Proportion of riparian zone with conversion type 'conversion to agriculture' (`sum_ag`/`calc_count`).
 - `prop_exp`: Proportion of riparian zone with conversion type 'riparian expansion' (`sum_exp`/`calc_count`)
 - `conv_code`: Numerical code assigning major conversion type based on conversion type `prop_**` fields. Each `conv_code` value corresponds to a `Conv_Type` value.
+
+## RVD Workflow
+
+1. The valley bottom is broken into thiessen polygons that correspond to segments/reaches on the stream network.
+2. Within each polygon, the number of existing riparian cells, historic riparian cells, existing native riparian cells, and historic native riparian cells is calculated. 
+3. The calculated cell counts from step 2 are joined to the corresponding network segments.
+4. Overall riparian vegetation departure is calculated by dividing the existing riparian count by the historic riparian count for each segment or reach. The result is a ratio that represents the proportion of historic riparian vegetation that currently persists on the landscape, including invasive riparian landcover. 
+5. Native riparian vegetation departure is calculated by dividing the existing native riparian count by the historic native riparian count for each segment or reach. The result is a ratio that represents the proportion of historic native riparian vegetation that persists on the landscape.
+6. Riparian conversion types are identified on a cell-by-cell basis by comparing existing to historic landcover types within the riparian zone. The riparian zone is defined as any cell classified as existing *or* historic riparian landcover.
+7. Dominant riparian conversion types are assigned to each stream segment by finding the conversion type that accounts for the largest area within the surrounding riparian zone. If less than 10% of a segment's riparian zone has changed, the segment is classified as "no change". If multiple conversion types account for equally large proportions of the riparian zone, then the segment is classified as "multiple dominant conversion types".
 
 ![rvd_workflow]({{ site.baseurl }}/assets/images//rvd_workflow.png)
 
