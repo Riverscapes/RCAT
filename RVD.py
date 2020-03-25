@@ -104,7 +104,7 @@ def main(
     ex_native_field = calc_veg_mean_per_reach(thiessen_valley, ex_native, "ex", "ntv", tempOut)
     hist_native_field = calc_veg_mean_per_reach(thiessen_valley, hist_native, "hs", "ntv", tempOut)
     arcpy.AddField_management(tempOut, "NATIV_DEP", "DOUBLE")
-    with arcpy.da.UpdateCursor(tempOut, [ex_rip_field, hist_rip_field, "NATIV_DEP"]) as cursor:
+    with arcpy.da.UpdateCursor(tempOut, [ex_native_field, hist_native_field, "NATIV_DEP"]) as cursor:
         for row in cursor:
             row[2] = row[0] / row[1]
             cursor.updateRow(row)
