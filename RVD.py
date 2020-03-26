@@ -640,7 +640,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     with arcpy.da.UpdateCursor(tempOut, ["COUNT", "RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean",
                                          "HsRip_Mean", "ExNtv_Mean", "HsNtv_Mean"]) as cursor:
         for row in cursor:
-            if row[0] == 0:
+            if row[0] == 0 or row[0] == 1:
                 row[1] = -9999
                 row[2] = -9999
                 row[3] = 84

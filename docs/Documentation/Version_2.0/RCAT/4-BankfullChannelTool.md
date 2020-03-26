@@ -42,6 +42,7 @@ The Bankfull Channel Tool generates an approximate bankfull channel, with an opt
 Bankfull polygons for each continuous section of  stream network, created by buffering each reach of the input segmented network by `BUFWIDTH`, then dissolving and smoothing the result.
 
 ![BankfullOutput]({{ site.baseurl }}/assets/images/Bankfull_output_2.0.png)
+
 Bankfull output polygon (light blue)
 
 
