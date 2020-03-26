@@ -564,7 +564,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
 
     # specify conversion type field based on conversion code from table
     arcpy.AddField_management(tempOut, "Conv_Type", "text", "", "", 50)
-    with arcpy.da.UpdateCursor(tempOut, ["conv_code", "Conv_Type"]) as cursor:
+    with arcpy.da.UpdateCursor(tempOut, ["conv_code", "Conv_Type", "COUNT"]) as cursor:
         for row in cursor:
             if row[0] == 1:
                 row[1] = "No Change"
@@ -634,16 +634,22 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 row[1] = "Significant Conversion to Deciduous Forest"
             elif row[0] == 0:
                 row[1] = "Multiple Dominant Conversion Types"
+            elif row[2] == 1:
+                if row[0] = 1:
+                    row[1] = "No Change"
+                else:
+                    row[0] = 90 # minor change with small sample size
+                    row[1] = "Very Minor Change" # minor change with small sample size
             cursor.updateRow(row)
 
     # set everything with count 0 with nodata values, type as no riparian
     with arcpy.da.UpdateCursor(tempOut, ["COUNT", "RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean",
                                          "HsRip_Mean", "ExNtv_Mean", "HsNtv_Mean"]) as cursor:
         for row in cursor:
-            if row[0] == 0 or row[0] == 1:
+            if row[0] == 0:
                 row[1] = -9999
                 row[2] = -9999
-                row[3] = 84
+                row[3] = 100
                 row[4] = "No Riparian Vegetation Detected"
                 row[5] = -9999
                 row[6] = -9999
