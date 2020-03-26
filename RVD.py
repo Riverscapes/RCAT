@@ -635,7 +635,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
             elif row[0] == 0:
                 row[1] = "Multiple Dominant Conversion Types"
             elif row[2] == 1:
-                if row[0] = 1:
+                if row[0] == 1:
                     row[1] = "No Change"
                 else:
                     row[0] = 90 # minor change with small sample size
