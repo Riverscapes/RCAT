@@ -83,7 +83,6 @@ def main(
 
     arcpy.AddMessage("Assessing floodplain connectivity")
     calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_veg, intermediates_folder, scratch)
-
     arcpy.AddMessage("Assessing overall vegetation departure")
     calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut)
 
@@ -330,7 +329,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     # list all fields in midpoints file
     midpoint_fields = [f.name for f in arcpy.ListFields(midpoints)]
     # remove permanent fields from this list
-    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID", "RCH_ID"] # remove permanent fields from list
+    remove_list = ["FID", "Shape", "OID", "OBJECTID", "ORIG_FID"] # remove permanent fields from list
     for field in remove_list:
         if field in midpoint_fields:
             try:
@@ -364,6 +363,23 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley_Clip.shp"
     arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
 
+    # convert multipart features to single part
+    arcpy.AddField_management(thiessen_clip, "RCH_FID", "SHORT")
+    with arcpy.da.UpdateCursor(thiessen_clip, ["ORIG_FID", "RCH_FID"]) as cursor:
+        for row in cursor:
+            row[1] = row[0]
+            cursor.updateRow(row)
+    thiessen_singlepart = scratch + "/Thiessen_Valley_Singlepart.shp"
+    arcpy.MultipartToSinglepart_management(thiessen_clip, thiessen_singlepart)
+    valley_single_lyr = arcpy.MakeFeatureLayer_management(in_features=thiessen_singlepart)
+    # out_layer= scratch +"/valley_single.lyr")
+    arcpy.CopyFeatures_management(valley_single_lyr, scratch + "/valley_test.shp")
+
+    # Select only polygon features that intersect network midpoints
+    thiessen_select = arcpy.SelectLayerByLocation_management(valley_single_lyr, "INTERSECT", midpoints_lyr,
+                                                             selection_type="NEW_SELECTION")
+    thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley.shp"
+    arcpy.CopyFeatures_management(thiessen_select, thiessen_valley)
     return thiessen_valley, valley_buf
 
 
