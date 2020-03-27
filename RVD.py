@@ -40,7 +40,20 @@ def main(
     lg_river,
     dredge_tailings,
     outName):
-
+    """ Calculates riparian vegetation departure for a stream network
+    :param projName: Project name for XML metadata
+    :param hucID: Huc ID for XML metadata
+    :param hucName: Huc name for XML metadata
+    :param projPath: RCAT project folder
+    :param ex_veg: Existing vegetation raster
+    :param hist_veg: Historic vegetation raster
+    :param seg_network: Segmented network shapefile
+    :param valley: Valley bottom shapefile
+    :param lg_river: Large rivers polygon shapefile (optional)
+    :param dredge_tailings: Dredge tailings polygon shapefile (optional)
+    :param outName: Name for output network
+    return: Output network with RVD fields
+    """
     # make clean temporary directory
     scratch = projPath + '/Temp'
     if os.path.exists(scratch):
@@ -263,12 +276,10 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
             cursor.updateRow(row)
     thiessen_singlepart = scratch + "/Thiessen_Valley_Singlepart.shp"
     arcpy.MultipartToSinglepart_management(thiessen_clip, thiessen_singlepart)
-    valley_single_lyr = arcpy.MakeFeatureLayer_management(in_features=thiessen_singlepart)
-    # out_layer= scratch +"/valley_single.lyr")
-    arcpy.CopyFeatures_management(valley_single_lyr, scratch + "/valley_test.shp")
+    thiessen_singlepart_lyr = arcpy.MakeFeatureLayer_management(in_features=thiessen_singlepart)
 
     # Select only polygon features that intersect network midpoints
-    thiessen_select = arcpy.SelectLayerByLocation_management(valley_single_lyr, "INTERSECT", midpoints_lyr,
+    thiessen_select = arcpy.SelectLayerByLocation_management(thiessen_singlepart_lyr, "INTERSECT", midpoints_lyr,
                                                              selection_type="NEW_SELECTION")
     thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley.shp"
     arcpy.CopyFeatures_management(thiessen_select, thiessen_valley)

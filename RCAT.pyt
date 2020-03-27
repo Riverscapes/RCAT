@@ -4,7 +4,7 @@ import VBETProject
 import VBET
 import NHDNetworkBuilder
 import RVD
-import RCAProject
+import RCATProject
 import RCA
 import BankfullChannel
 import ConfiningMargins
@@ -723,8 +723,8 @@ class RCATBuilder(object):
 
     def execute(self, p, messages):
         """The source code of the tool."""
-        reload(RCAProject)
-        RCAProject.main(p[0].valueAsText,
+        reload(RCATProject)
+        RCATProject.main(p[0].valueAsText,
                         p[1].valueAsText,
                         p[2].valueAsText,
                         p[3].valueAsText,
@@ -747,7 +747,7 @@ class ConfinementTool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Select RVD network",
+            displayName="Select RVD output network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -781,12 +781,12 @@ class ConfinementTool(object):
             parameterType="Required",
             direction="Input")
 
-        param5 = arcpy.Parameter(
-            displayName="Name confining margins output",
-            name="output_confining_margins",
-            datatype="GPString",
-            parameterType="Required",
-            direction="Input")
+        #param5 = arcpy.Parameter(
+        #    displayName="Name confining margins output",
+        #    name="output_confining_margins",
+        #    datatype="GPString",
+        #    parameterType="Required",
+        #    direction="Input")
 
         #param6 = arcpy.Parameter(
         #    displayName="Calculate integrated width attributes?",
@@ -796,7 +796,7 @@ class ConfinementTool(object):
         #    direction="Input")
         #param6.value = "False"
 
-        return [param0, param1, param2, param3, param4, param5]
+        return [param0, param1, param2, param3, param4]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -820,8 +820,7 @@ class ConfinementTool(object):
                   p[1].valueAsText,
                   p[2].valueAsText,
                   p[3].valueAsText,
-                  p[4].valueAsText,
-                  p[5].valueAsText)
+                  p[4].valueAsText)
         return
 
 
@@ -878,7 +877,7 @@ class RCAtool(object):
             direction="Input")
 
         param6 = arcpy.Parameter(
-            displayName="Select confinement network",
+            displayName="Select output confinement network",
             name="seg_network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -910,12 +909,12 @@ class RCAtool(object):
         param9.filter.list = ["Polygon"]
 
         param10 = arcpy.Parameter(
-            displayName="Valley bottom width threshold",
-            name="width_thresh",
+            displayName="Confinement ratio threshold",
+            name="confin_thresh",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param10.value = 160
+        param10.value = 0.5
 
         param11 = arcpy.Parameter(
             displayName="Name RCA output",
@@ -979,7 +978,7 @@ class BankfullChannelTool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Segmented network",
+            displayName="RVD output network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -1037,13 +1036,22 @@ class BankfullChannelTool(object):
             direction="Input")
 		
         param8 = arcpy.Parameter(
-            displayName="Output name",
-            name="out_name",
+            displayName="Output bankfull channel polygon name",
+            name="out_polygon_name",
             datatype="GPString",
             parameterType="Required",
             direction="Input")
-
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8]
+        param8.value = "BankfullChannelPolygon"
+			
+        param9 = arcpy.Parameter(
+            displayName="Output network name",
+            name="out_network_name",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Input")
+        param9.value = "BankfullWidthsNetwork"
+		
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -1071,7 +1079,8 @@ class BankfullChannelTool(object):
                              p[5].valueAsText,
                              p[6].valueAsText,
                              p[7].valueAsText,
-							 p[8].valueAsText)
+                             p[8].valueAsText,
+                             p[9].valueAsText)
         return
 
 

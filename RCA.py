@@ -36,9 +36,23 @@ def main(
     frag_valley,
     lg_river,
     dredge_tailings,
-    width_thresh,
+    confin_thresh,
     outName):
-
+    """ Calculates riparian condition for a stream network based on RVD, confinement, vegetation, and valley connectivity
+    :param projName: Project name for XML metadata
+    :param hucID: Huc ID for XML metadata
+    :param hucName: watershed name for XML metadata
+    :param output_folder: Output folder for current RCAT run with format "Output_**"
+    :param ex_veg: Existing vegetation raster with VEGETATED field
+    :param hist_veg: Historic vegetation raster with VEGETATED field
+    :param seg_network: Segmented stream network from the confinement tool
+    :param frag_valley: Fragmented valley bottom shapefile
+    :param lg_river: Large river polygon shapefile
+    :param dredge_tailings: Dredge tailings polygon shapefile
+    :param confin_thresh: Confinement threshold for calculating riparian condition
+    :param outName: Name for output network
+    return: Output network with Riparian Condition fields
+    """
     projPath = os.path.dirname(os.path.dirname(output_folder))
     scratch = os.path.join(projPath, 'Temp')
     if not os.path.exists(scratch):
@@ -90,8 +104,8 @@ def main(
     arcpy.AddMessage("Calculating riparian condition for segments in unconfined valleys")
 
     arcpy.MakeFeatureLayer_management(fcOut, "rca_in_lyr")
-    #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" >= {0}'.format(width_thresh))
-    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type != "BOTH" """)
+    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"CONF_RATIO" < {0}'.format(confin_thresh))
+    #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type != "BOTH" """)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_u")
     rca_u = scratch + "/rca_u.shp"
 
@@ -211,8 +225,8 @@ def main(
 
     # # # calculate rca for segments in confined valleys # # #
     arcpy.AddMessage("Calculating riparian condition for segments in confined valleys")
-    #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"Width" < {0}'.format(width_thresh))
-    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type == "BOTH" """)
+    arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"CONF_RATIO" >= {0}'.format(confin_thresh))
+    #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type == "BOTH" """)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c.shp")
     rca_c = scratch + "/rca_c.shp"
 
@@ -284,7 +298,7 @@ def main(
     # write xml
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
     try:
-        write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, width_thresh, output)
+        write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, confin_thresh, output)
     except Exception:
         arcpy.AddMessage("Writing the XML file has failed, but RVD outputs are saved. This is a known bug in RCAT and you can proceed to the next step without problems.")
     
@@ -496,7 +510,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
     return
 
 
-def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, width_thresh, output):
+def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, confin_thresh, output):
     """ Writes project XML file to document all input paths and other metadata """
     xmlfile = projPath + "/RCAproject.rs.xml" # xml file name
     if not os.path.exists(projPath + "/project.rs.xml"):
@@ -515,7 +529,7 @@ def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network,
         newxml.addRCARealization("RCA Realization 1", rid="RZ1", dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                  productVersion="1.0.11", guid=getUUID())
 
-        newxml.addParameter("width_thresh", width_thresh, newxml.RCArealizations[0])
+        newxml.addParameter("confin_thresh", confin_thresh, newxml.RCArealizations[0])
 
         # add inputs and outputs to xml file
         newxml.addProjectInput("Raster", "Existing Cover", ex_veg[ex_veg.find("01_Inputs"):], iid="EXCOV1",
@@ -581,7 +595,7 @@ def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network,
                                 dateCreated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), productVersion="1.0.11",
                                 guid=getUUID())
 
-        exxml.addParameter("width_thresh", width_thresh, exxml.RCArealizations[0])
+        exxml.addParameter("confin_thresh", confin_thresh, exxml.RCArealizations[0])
 
         inputs = exxml.root.find("Inputs")
 

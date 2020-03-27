@@ -22,7 +22,18 @@ from SupportingFunctions import make_folder, find_available_num_prefix
 
 
 def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings, dem, precip):
-    """Create an RCA project and populate the inputs"""
+    """Creates an RCA project folder and populates the inputs
+    :param projPath: Project folder where RCAT inputs and outputs will be stored
+    :param network: Segmented stream network shapefile
+    :param ex_cov: Folder holding existing landcover raster
+    :param hist_cov: Folder holding historic landcover raster
+    :param frag_valley: Fragmented valley bottom shapefile
+    :param lrp: Large river polygons shapefile
+    :param dredge_tailings: Dredge tailing polygons shapefile
+    :param dem: Elevation raster (in m)
+    :param precip: Precipitation raster (in mm)
+    return: RCAT project structure
+    """
     # clean up inputs
     if lrp == "None":
         lrp = None
