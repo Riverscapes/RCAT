@@ -5,7 +5,7 @@
 # Author:      Maggie Hallerud                                                #
 #              maggie.hallerud@aggiemail.usu.edu                              #
 #                                                                             #
-# Created:     2020-Mar-26                                                    #                                                       #
+# Created:     2020-Mar-26                                                    #
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -15,7 +15,7 @@ import arcpy
 import glob
 from SupportingFunctions import make_folder, find_available_num_prefix
 
-         
+
 def main(network,
          valley_bottom,
          bankfull_channel,
@@ -97,7 +97,10 @@ def main(network,
     arcpy.AddField_management(out_lyr, "CONF_RATIO", "DOUBLE")
     with arcpy.da.UpdateCursor(out_lyr, ["VAL_Width", "BFC_Width", "CONF_RATIO"]) as cursor:
         for row in cursor:
-            row[2] = row[1] / row[0]
+            if row[0] == 0:
+                row[2] = -9999
+            else:
+                row[2] = row[1] / row[0]
             cursor.updateRow(row)
 
     # set confinement categories based on confinement ratio
