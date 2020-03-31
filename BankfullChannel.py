@@ -35,10 +35,6 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     # process inputs
     if drarea == "None":
         drarea = None
-    if create_bankfull_channel == 'false' or create_bankfull_channel is None:
-        create_bankfull_channel = False
-    else:
-        create_bankfull_channel = True
 
     # set up environment
     arcpy.env.overwriteOutput = True
