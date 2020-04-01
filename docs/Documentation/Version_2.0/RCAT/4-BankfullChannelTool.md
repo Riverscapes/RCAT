@@ -45,6 +45,15 @@ Bankfull polygons for each continuous section of  stream network, created by buf
 
 Bankfull output polygon (light blue)
 
+## Caveats to the Bankfull Channel Tool
+
+The bankfull channel tool is based on a simple regression. All bankfull channel outputs should be checked against aerial imagery or field measurements throughout the study area of interest to verify acceptable accuracy before applying the results. 
+
+- The bankfull channel width calculations are based on a simple regression (see below), so there *will* be reaches throughout every watershed where the bankfull channel width is either over- or under-estimated. For example, we have found that the bankfull channel is *under-estimated* for large rivers in flat valleys and *over-estimated* for confined headwaters. 
+- The bankfull channel width regression used in this tool was developed for the Columbia River Basin and may not reflect the drivers of bankfull channel width in your project's watershed. Consistent over- or under-estimation throughout the watershed can be adjusted via the `Percent Buffer` input parameter. 
+- The only parameters used for the bankfull channel calculation are drainage area and precipitation. The precision of the bankfull width will therefore depend on the input data resolution of these datasets. If precipitation and drainage area are suspected to not be the primary forces driving bankfull channel width in your watershed, for example if geology is also expected to play a large role in bankfull channel tool, then we do not recommend using this tool.
+
+
 
 ------
 
