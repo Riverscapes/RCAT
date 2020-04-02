@@ -75,3 +75,10 @@ The bankfull channel tool is based on a simple regression. All bankfull channel 
 ## Citation
 
 Beechie, T. and H. Imaki. 2013. Predicting natural channel patterns based on landscape and geomorphic controls in the Columbia River basin, USA. Water Resources Research 50(1): 39-57. https://doi.org/10.1002/2013WR013629.
+
+
+------------------------
+<div align="center">
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/3-RVD"><i class="fa fa-arrow-circle-left"></i> Back to Step 3 </a>
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool"><i class="fa fa-arrow-circle-right"></i> Continue to Step 5 </a>
+</div>	
