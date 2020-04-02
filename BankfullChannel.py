@@ -76,9 +76,8 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer)
 
     # create final bankfull polygon
-    if create_bankfull_channel == True:
-        arcpy.AddMessage("Creating final bankfull polygon...")
-        create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
+    arcpy.AddMessage("Creating final bankfull polygon...")
+    create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
 
 
 def build_folder_structure(output_folder):
