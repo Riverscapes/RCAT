@@ -79,3 +79,7 @@ One of the required inputs is a valley bottom polygon that has been fragmented u
 The figure below shows a final split valley bottom, ready for use in the tool.
 
 ![fp_connectivity]({{ site.baseurl }}/assets/images/fp_connectivity.png)
+
+<div align="center">
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/2-RCATProjectBuilder"><i class="fa fa-arrow-circle-right"></i> Continue to Step 2 </a>
+</div>	
