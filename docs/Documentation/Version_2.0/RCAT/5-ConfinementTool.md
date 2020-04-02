@@ -53,3 +53,9 @@ Segmented valley bottom polygon
 ![Segmented_bankfull_channel]( {{ site.baseurl }}/assets/images/SegmentedBankfull.png)
 
 Segmented bankfull channel polygon
+
+--------------------------------
+<div align="center">
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/4-BankfullChannelTool"><i class="fa fa-arrow-circle-left"></i> Back to Step 4 </a>
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/6-RCA"><i class="fa fa-arrow-circle-right"></i> Continue to Step 6 </a>
+</div>	
