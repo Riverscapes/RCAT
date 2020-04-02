@@ -98,3 +98,8 @@ Proportion of the riparian zone corresponding to a reach occupied by each conver
 ![rvd_workflow]({{ site.baseurl }}/assets/images//rvd_workflow.png)
 
 Conceptual diagram showing how vegetation departure from historic and riparian vegetation conversion type are calculated
+
+<div align="center">
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/2-RCATProjectBuilder"><i class="fa fa-arrow-circle-left"></i> Back to Step 2 </a>
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/4-BankfullChannelTool"><i class="fa fa-arrow-circle-right"></i> Continue to Step 4 </a>
+</div>	
