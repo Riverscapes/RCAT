@@ -25,3 +25,8 @@ NOTE: See the [preprocessing steps]({{ site.baseurl }}/Documentation/Version_1.0
 
 NOTE: See the [RVD page]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/RVD) for figures showing how including dredge tailings affects vegetation values.
 
+--------------------------------
+<div align="center">
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/1-Preprocessing"><i class="fa fa-arrow-circle-left"></i> Back to Step 1 </a>
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/3-RVD"><i class="fa fa-arrow-circle-right"></i> Continue to Step 3 </a>
+</div>	
