@@ -49,3 +49,8 @@ The RCA output symbolized using the `VEG` field to show the proportion of histor
 ![rca_workflow]({{ site.baseurl }}/assets/images/RCA_workflow.png)
 
 Conceptual diagram showing how riparian condition assessment is calculated
+
+--------------------------------
+<div align="center">
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool"><i class="fa fa-arrow-circle-left"></i> Back to Step 5 </a>
+</div>	
