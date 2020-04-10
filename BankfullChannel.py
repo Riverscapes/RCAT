@@ -18,7 +18,7 @@ from SupportingFunctions import make_folder, find_available_num_prefix
 arcpy.CheckOutExtension('Spatial')
 
 
-def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_polygon_name, out_network_name):
+def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_polygon_name, out_network_name, update_da, da_corrections):
     """ Calculates bankfull channel width and creates a bankfull channel polygon
     :param network: Segmented stream network from RVD output, to calculate bankfull channel on
     :param valleybottom: Valley bottom for stream network
@@ -30,11 +30,23 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     :param output_folder: Output folder for RCAT run with format "Output_**"
     :param out_polygon_name: Name for output bankfull channel polygon
     :param out_network_name: Name for output network with bankfull channel fields
+    :param update_da: True/False for Update upstream drainage area?
+    :param da_corrections: List of stream names and associated drainage area corrections in the format [['StreamName1', daVal_1], ['StreamName2', daVal_2],...]
     return: Bankfull channel polygon and output network with bankfull channel fields
     """
     # process inputs
     if drarea == "None":
         drarea = None
+    if create_bankfull_channel == 'false' or create_bankfull_channel is None:
+        create_bankfull_channel = False
+    else:
+        create_bankfull_channel = True
+    if update_da == 'false' or update_da is None:
+        update_da = False
+    elif len(da_corrections) < 1:
+        update_da = False
+    else:
+        update_da = True
 
     # set up environment
     arcpy.env.overwriteOutput = True
@@ -70,6 +82,13 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     else:
         intersect = os.path.join(analysis_dir, out_network_name)
     arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
+
+    # update for upstream drainage area
+    ## TODO: append original network to intersect so that 'StreamName' is included in the fields in `intersect`
+    ###### only necessary for when updating DA
+    if update_da == True:
+        arcpy.AddMessage("Updating for upstream drainage area...")
+        correct_upstream_da(intersect, da_corrections)
 
     # calculate buffer width
     arcpy.AddMessage("Calculating bankfull buffer width...")
@@ -270,9 +289,47 @@ def add_raster_values(thiessen_clip, raster, field_type, temp_dir):
             try:
                 arcpy.DeleteField_management(thiessen_clip, f)
             except Exception as err:
-                arcpy.AddMessage("Could not delete unnecessary field " + f + " from thiessen_clip.shp")
-                arcpy.AddMessage("Error thrown was")
-                arcpy.AddMessage(err)
+                print "Could not delete unnecessary field " + f + " from thiessen_clip.shp"
+                print "Error thrown was"
+                print err
+
+
+def correct_upstream_da(network, da_corrections):
+    """
+    Updates DRAREA field by adding the specified da value to existing DRAREA value for the specified streamnames
+    Note: First checks the existing DRAREA minimum value for the given river to make
+          sure it is less than the correction value given to prevent adding values several times
+    :param network: The stream network to update da values on
+    :param da_corrections: List of stream names and associated drainage area corrections in the format [['StreamName1', daVal_1], ['StreamName2', daVal_2],...]
+    :return: None
+    """
+    arcpy.MakeFeatureLayer_management(network, "network_lyr")
+    # create list of all the StreamNames and drainage area values
+    streamList = []
+    daList = []
+    for stream, value in da_corrections:
+        streamList.append(stream)
+        daList.append(value)
+    # for each StreamName get the associated US DA value
+    # if the exisitng minimum iGeo_DA value is < the DA value in the input lookup list
+    #then update DA values
+    for i in range(0, len(daList)):
+        stream = streamList[i]
+        daValue = daList[i]
+        query = """ "StreamName" = '%s'""" %stream
+        arcpy.SelectLayerByAttribute_management("network_lyr", "NEW_SELECTION", query)
+        # get current minimum da values and pad by 50 (to account for rounding errors)
+        daValues = [row[0] for row in arcpy.da.SearchCursor("network_lyr", ["iGeo_DA"])]
+        min_daValues = min(daValues) + 50.0
+        if min_daValues <= daValue:
+            print "....Updating major river DA values for " + stream
+            with arcpy.da.UpdateCursor("network_lyr", ["DRAREA"]) as cursor:
+                for row in cursor:
+                    #da = row[0]
+                    row[0] = row[0] + daValue
+                    cursor.updateRow(row)
+        else:
+            print "....DA values have already been updated for: " + stream + ". If this is not the case, update manually & re-calculate bankfull."
 
 
 def calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer):
