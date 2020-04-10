@@ -5,7 +5,7 @@
 # Author:      Maggie Hallerud                                                #
 #              maggie.hallerud@aggiemail.usu.edu                              #
 #                                                                             #
-# Created:     2020-Mar-26                                                    #                                                       #
+# Created:     2020-Mar-26                                                    #
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -15,7 +15,8 @@ import arcpy
 import glob
 from SupportingFunctions import make_folder, find_available_num_prefix
 arcpy.env.overwriteOutput=True
-         
+
+
 def main(network,
          valley_bottom,
          bankfull_channel,
@@ -116,87 +117,92 @@ def build_folder_structure(output_folder):
     make_folder(temp_dir)
     return intermediates_folder, confinement_dir, conf_analysis_folder, temp_dir
 
-
+# Author: Kelly Whitehead (kelly@southforkresearch.org) South Fork Research Inc., Seattle, WA\
+# Created: 2015-Jan-08
+# Modified: 2015-Apr-27
+# Copyright (c) Kelly Whitehead 2015"""
 def divide_polygon_by_segmented_network(segmented_network, polygons, out_polygons, temp_dir, intermediates_dir, polygon_type):
-    """Author: Kelly Whitehead (kelly@southforkresearch.org) South Fork Research Inc., Seattle, WA
-    Created: 2015-Jan-08
-    Modified: 2015-Apr-27
-    Copyright (c) Kelly Whitehead 2015"""
+    """
+    Divides input polygons to line up with segments on the network
+    :param segmented_network: Segmented network that the polygons will be divided by
+    :param polygons: Polygons to be divided
+    :param out_polygons: Filepath for output divided polygons
+    :param temp_dir: Folder where temp outputs will be stored
+    :param intermediates_dir: Folder where intermediates will be stored
+    :param polygon_type: String that will identify temp files - "BFC" or "VAL"
+    return: out_polygons
+    """
     # set up environment
     #arcpy.env.OutputMFlag = "Disabled"
     arcpy.env.OutputZFlag = "Disabled"
     arcpy.env.overwriteOutput = True
 
-    trib_thiessen_edges = os.path.join(temp_dir, "dps_trib_thiessen_edges_"+polygon_type+".shp")
+    print ".........Building thiessen polygons"
+    arcpy.AddMessage(".........Building thiessen polygons")
+    ## Build Thiessen Polygons
+    arcpy.env.extent = polygons ## Set full extent to build Thiessan polygons over entire line network.
     densified_network = os.path.join(temp_dir, "dps_dens_network_"+polygon_type+".shp")
-    if not os.path.exists(trib_thiessen_edges):
-        print ".........Building thiessen polygons"
-        arcpy.AddMessage(".........Building thiessen polygons")
-        ## Build Thiessen Polygons
-        arcpy.env.extent = polygons ## Set full extent to build Thiessan polygons over entire line network.
-        densified_network = os.path.join(temp_dir, "dps_dens_network_"+polygon_type+".shp")
-        arcpy.CopyFeatures_management(segmented_network, densified_network)
-        arcpy.Densify_edit(densified_network, "DISTANCE", "20.0 METERS")
-        
-        trib_junction_pts =  os.path.join(temp_dir, "dps_trib_junction_pts_"+polygon_type+".shp")
-        arcpy.Intersect_analysis(densified_network, trib_junction_pts, output_type="POINT")
-        thiessen_points = os.path.join(temp_dir, "dps_thiessen_points_"+polygon_type+".shp")
-        arcpy.FeatureVerticesToPoints_management(densified_network, thiessen_points, "ALL")
+    arcpy.CopyFeatures_management(segmented_network, densified_network)
+    arcpy.Densify_edit(densified_network, "DISTANCE", "20.0 METERS")
+    
+    trib_junction_pts =  os.path.join(temp_dir, "dps_trib_junction_pts_"+polygon_type+".shp")
+    arcpy.Intersect_analysis(densified_network, trib_junction_pts, output_type="POINT")
+    thiessen_points = os.path.join(temp_dir, "dps_thiessen_points_"+polygon_type+".shp")
+    arcpy.FeatureVerticesToPoints_management(densified_network, thiessen_points, "ALL")
 
-        thiessen_pts_lyr = arcpy.MakeFeatureLayer_management(thiessen_points, "thiessen_pts_lyr_"+polygon_type)
-        arcpy.SelectLayerByLocation_management(thiessen_pts_lyr, "INTERSECT", trib_junction_pts, "120.0 METERS", "NEW_SELECTION")
+    thiessen_pts_lyr = arcpy.MakeFeatureLayer_management(thiessen_points, "thiessen_pts_lyr_"+polygon_type)
+    arcpy.SelectLayerByLocation_management(thiessen_pts_lyr, "INTERSECT", trib_junction_pts, "120.0 METERS", "NEW_SELECTION")
 
-        thiessen_polygons = os.path.join(temp_dir, "dps_thiessen_polygons_"+polygon_type+".shp")
-        arcpy.CreateThiessenPolygons_analysis(thiessen_pts_lyr, thiessen_polygons, "ONLY_FID")
+    thiessen_polygons = os.path.join(temp_dir, "dps_thiessen_polygons_"+polygon_type+".shp")
+    arcpy.CreateThiessenPolygons_analysis(thiessen_pts_lyr, thiessen_polygons, "ONLY_FID")
 
-        thiessen_poly_clip = os.path.join(temp_dir, "dps_thiessen_poly_clip_"+polygon_type+".shp")
-        arcpy.Clip_analysis(thiessen_polygons, polygons, thiessen_poly_clip)
+    thiessen_poly_clip = os.path.join(temp_dir, "dps_thiessen_poly_clip_"+polygon_type+".shp")
+    arcpy.Clip_analysis(thiessen_polygons, polygons, thiessen_poly_clip)
 
-        print ".........Splitting thiessen polygons at trib junctions"
-        arcpy.AddMessage(".........Splitting thiessen polygons at trib junctions")
-        # Code to Split the Junction Thiessen Polys
-        trib_thiessen_poly_lyr = arcpy.MakeFeatureLayer_management(thiessen_poly_clip, "trib_thiessen_polygons_lyr")
-        arcpy.SelectLayerByLocation_management(trib_thiessen_poly_lyr, "INTERSECT", trib_junction_pts, selection_type="NEW_SELECTION")
+    print ".........Splitting thiessen polygons at trib junctions"
+    arcpy.AddMessage(".........Splitting thiessen polygons at trib junctions")
+    # Code to Split the Junction Thiessen Polys
+    trib_thiessen_poly_lyr = arcpy.MakeFeatureLayer_management(thiessen_poly_clip, "trib_thiessen_polygons_lyr")
+    arcpy.SelectLayerByLocation_management(trib_thiessen_poly_lyr, "INTERSECT", trib_junction_pts, selection_type="NEW_SELECTION")
 
-        split_points = os.path.join(temp_dir, "dps_split_points_"+polygon_type+".shp")
-        arcpy.Intersect_analysis([trib_thiessen_poly_lyr, densified_network], split_points, output_type="POINT")
+    split_points = os.path.join(temp_dir, "dps_split_points_"+polygon_type+".shp")
+    arcpy.Intersect_analysis([trib_thiessen_poly_lyr, densified_network], split_points, output_type="POINT")
 
-        print ".........Finding midlines of tributaries"
-        arcpy.AddMessage(".........Finding midlines of tributaries")
-        # Moving Starting Vertices of Junction Polygons
-        changeStartingVertex(trib_junction_pts, trib_thiessen_poly_lyr)
+    print ".........Finding midlines of tributaries"
+    arcpy.AddMessage(".........Finding midlines of tributaries")
+    # Moving Starting Vertices of Junction Polygons
+    changeStartingVertex(trib_junction_pts, trib_thiessen_poly_lyr)
 
-        trib_thiessen_poly_edges = os.path.join(temp_dir, "dps_trib_thiessen_edges_"+polygon_type+".shp")
-        arcpy.FeatureToLine_management(trib_thiessen_poly_lyr, trib_thiessen_poly_edges)
+    trib_thiessen_poly_edges = os.path.join(temp_dir, "dps_trib_thiessen_edges_"+polygon_type+".shp")
+    arcpy.FeatureToLine_management(trib_thiessen_poly_lyr, trib_thiessen_poly_edges)
 
-        split_lines = os.path.join(temp_dir, "dps_split_lines_"+polygon_type+".shp")
-        arcpy.SplitLineAtPoint_management(trib_thiessen_poly_edges, split_points, split_lines, "0.1 METERS")
+    split_lines = os.path.join(temp_dir, "dps_split_lines_"+polygon_type+".shp")
+    arcpy.SplitLineAtPoint_management(trib_thiessen_poly_edges, split_points, split_lines, "0.1 METERS")
 
-        midpoints = os.path.join(temp_dir, "dps_midpoints_"+polygon_type+".shp")
-        arcpy.FeatureVerticesToPoints_management(split_lines, midpoints, "MID")
-        arcpy.Near_analysis(midpoints, trib_junction_pts, location="LOCATION")
-        arcpy.AddXY_management(midpoints)
+    midpoints = os.path.join(temp_dir, "dps_midpoints_"+polygon_type+".shp")
+    arcpy.FeatureVerticesToPoints_management(split_lines, midpoints, "MID")
+    arcpy.Near_analysis(midpoints, trib_junction_pts, location="LOCATION")
+    arcpy.AddXY_management(midpoints)
 
-        trib_midlines = os.path.join(temp_dir, "dps_trib_to_midlines_"+polygon_type+".shp")
-        arcpy.XYToLine_management(midpoints, trib_midlines, "POINT_X", "POINT_Y", "NEAR_X", "NEAR_Y")
+    trib_midlines = os.path.join(temp_dir, "dps_trib_to_midlines_"+polygon_type+".shp")
+    arcpy.XYToLine_management(midpoints, trib_midlines, "POINT_X", "POINT_Y", "NEAR_X", "NEAR_Y")
 
-        ### Select Polygons by Centerline ###
-        print ".........Selecting thiessen polygons by network"
-        arcpy.AddMessage(".........Selecting thiessen polygons by network")
-        thiessen_poly_clip_lyr = arcpy.MakeFeatureLayer_management(thiessen_poly_clip, "trib_thiessen_poly_clip_lyr_"+polygon_type)
-        arcpy.SelectLayerByLocation_management(thiessen_poly_clip_lyr, "INTERSECT", segmented_network, selection_type='NEW_SELECTION')
+    ### Select Polygons by Centerline ###
+    print ".........Selecting thiessen polygons by network"
+    arcpy.AddMessage(".........Selecting thiessen polygons by network")
+    thiessen_poly_clip_lyr = arcpy.MakeFeatureLayer_management(thiessen_poly_clip, "trib_thiessen_poly_clip_lyr_"+polygon_type)
+    arcpy.SelectLayerByLocation_management(thiessen_poly_clip_lyr, "INTERSECT", segmented_network, selection_type='NEW_SELECTION')
 
-        thiessen_edges = os.path.join(temp_dir, "dps_thiessen_edges_"+polygon_type+".shp")
-        arcpy.FeatureToLine_management(thiessen_poly_clip_lyr, thiessen_edges)
+    thiessen_edges = os.path.join(temp_dir, "dps_thiessen_edges_"+polygon_type+".shp")
+    arcpy.FeatureToLine_management(thiessen_poly_clip_lyr, thiessen_edges)
 
     print ".........Merging thiessen and tributary edges with segmented network"
     arcpy.AddMessage(".........Merging thiessen and tributary edges with segmented network")
-    thiessen_edges = os.path.join(temp_dir, "dps_thiessen_edges_"+polygon_type+".shp")
-    trib_midlines = os.path.join(temp_dir, "dps_trib_to_midlines_"+polygon_type+".shp")
+
     trib_thiessen_edges = os.path.join(temp_dir, "dps_trib_thiessen_edges_"+polygon_type+".shp")
-    arcpy.Merge_management([trib_midlines, thiessen_edges], trib_thiessen_edges)
     all_edges = os.path.join(temp_dir, "dps_all_edges_"+polygon_type+".shp")
-    arcpy.Merge_management([trib_thiessen_edges, densified_network], all_edges)
+    arcpy.Merge_management([trib_midlines, thiessen_edges], trib_thiessen_edges)
+    arcpy.Merge_management([trib_thiessen_edges, segmented_network], all_edges)
 
     print ".........Creating polygons from merged edges"
     arcpy.AddMessage(".........Creating polygons from merged edges")
@@ -209,7 +215,7 @@ def divide_polygon_by_segmented_network(segmented_network, polygons, out_polygon
     print "..........Spatially joining all edges to input network"
     arcpy.AddMessage(".........Spatially joining all edges to input network")
     polygons_centerline_join = os.path.join(temp_dir, "dps_polygons_centerline_join_"+polygon_type+".shp")
-    arcpy.SpatialJoin_analysis(all_edges_poly_clip, densified_network, polygons_centerline_join, "JOIN_ONE_TO_MANY",
+    arcpy.SpatialJoin_analysis(all_edges_poly_clip, segmented_network, polygons_centerline_join, "JOIN_ONE_TO_MANY",
                                "KEEP_ALL", match_option="SHARE_A_LINE_SEGMENT_WITH")
 
     print ".........Dissolving polygons for each segment"
