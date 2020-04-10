@@ -17,7 +17,7 @@ class Toolbox(object):
     def __init__(self):
         """Define the toolbox (the name of the toolbox is the name of the
         .pyt file)."""
-        self.label = "Riparian Area Condition Assessments 1.0"
+        self.label = "Riparian Area Condition Assessments 2.0"
         self.alias = "Riparian Area Condition Assessments"
 
         # List of tool classes associated with this toolbox
@@ -1049,29 +1049,9 @@ class BankfullChannelTool(object):
             datatype="GPString",
             parameterType="Required",
             direction="Input")
-        param9.value = "BankfullWidthsNetwork"
-			
-        param10 = arcpy.Parameter(
-            displayName="Correct for upstream drainage area?",
-            name="upstream_da",
-            datatype="GPBoolean",
-            parameterType="Optional",
-            direction="Input")
-			
-        param11 = arcpy.Parameter(
-            displayName="Drainage area corrections",
-            name="da_corrections",
-            datatype="GPValueTable",
-            parameterType="Optional",
-            direction="Input")
-        param11.parameterDependencies = [param10.name]
-        param11.columns = [["GPString", "StreamName"], ["GPDouble", "Upstream drainage area (in square km)"]]
-        #param11.filters[1].type = 'ValueList'
-        #param11.values[["Snake River", 5000.0]]
-        #param11.filters1.list = []
+        param9.value = "BankfullWidthsNetwork"	
 		
-		
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11]
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -1101,9 +1081,7 @@ class BankfullChannelTool(object):
                              p[6].valueAsText,
                              p[7].valueAsText,
                              p[8].valueAsText,
-                             p[9].valueAsText,
-							 p[10].valueAsText,
-							 p[11].valueAsText)
+                             p[9].valueAsText)
         return
 
 

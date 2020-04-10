@@ -41,21 +41,40 @@ def main(network,
     # copy input network to output lyr before editing
     out_lyr = arcpy.MakeFeatureLayer_management(network)
 
-    # segment valley and bankfull polygons
-    arcpy.AddMessage("Segmenting bankfull channel polygons by network...")
-    bankfull_seg_polygons = os.path.join(confinement_dir, "Segmented_Bankfull_Channel.shp")
-    divide_polygon_by_segmented_network(network, bankfull_channel, bankfull_seg_polygons, temp_dir, intermediates_folder, "BFC")
-    arcpy.AddMessage("Segmenting valley bottom polygons by network...")
-    valley_seg_polygons = os.path.join(confinement_dir, "Segmented_Valley_Bottom.shp")
-    divide_polygon_by_segmented_network(network, valley_bottom, bankfull_seg_polygons, temp_dir, intermediates_folder, "VB")
-    
+    # find and make thiessen polygons
+    arcpy.AddMessage("Creating thiessen polygons...")
+    # pull thiessen polygon filenames from intermediates folder
+    thiessen_polygon_files = glob.glob(os.path.join(intermediates_folder, "*_MidpointsThiessen/midpoints_thiessen.shp"))
+    # if no thiessen polygon files found, create new thiessen polygons
+    if len(thiessen_polygon_files) == 0:
+        thiessen_polygons = create_thiessen_polygons(network, intermediates_folder, temp_dir)
+    # if thiessen polygon files found, use last file created
+    else:
+        thiessen_polygons = thiessen_polygon_files[-1] 
+
+    # add RCH_FID field to thiessen polygons
+    thiessen_fields = [f.name for f in arcpy.ListFields(thiessen_polygons)]
+    if "RCH_FID" not in thiessen_fields:
+        arcpy.AddField_management(thiessen_polygons, "RCH_FID")
+    with arcpy.da.UpdateCursor(thiessen_polygons, ["ORIG_FID", "RCH_FID"]) as cursor:
+        for row in cursor:
+            row[1] = row[0]
+            cursor.updateRow(row)
+
+    # clip thiessen polygons to bankfull channel
+    thiessen_bankfull = os.path.join(confinement_dir, "Conf_Thiessen_Bankfull.shp")
+    arcpy.Clip_analysis(thiessen_polygons, bankfull_channel, thiessen_bankfull)
+
+    # clip thiessen polygons to valley bottom  (different than RVD thiessen valley because that one's buffered)
+    thiessen_valley = os.path.join(confinement_dir, "Conf_Thiessen_Valley.shp")
+    arcpy.Clip_analysis(thiessen_polygons, valley_bottom, thiessen_valley)
 
     # calculate area for bankfull thiessen polygons and join to network
     arcpy.AddMessage("Calculating bankfull area per reach...")
-    calculate_polygon_area(bankfull_seg_polygons, out_lyr, "BFC")
+    calculate_thiessen_area(thiessen_bankfull, out_lyr, "BFC")
     # calculate area for valley thiessen polygons and join to network
     arcpy.AddMessage("Calculating valley area per reach...")
-    calculate_polygon_area(valley_seg_polygons, out_lyr, "VAL")
+    calculate_thiessen_area(thiessen_valley, out_lyr, "VAL")
 
     arcpy.AddMessage("Calculating bankfull and valley width per reach...")
     # calculate reach length
