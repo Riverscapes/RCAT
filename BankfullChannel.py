@@ -35,10 +35,6 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     # process inputs
     if drarea == "None":
         drarea = None
-    if create_bankfull_channel == 'false' or create_bankfull_channel is None:
-        create_bankfull_channel = False
-    else:
-        create_bankfull_channel = True
 
     # set up environment
     arcpy.env.overwriteOutput = True
@@ -80,9 +76,8 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer)
 
     # create final bankfull polygon
-    if create_bankfull_polygon == True:
-        arcpy.AddMessage("Creating final bankfull polygon...")
-        create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
+    arcpy.AddMessage("Creating final bankfull polygon...")
+    create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
 
 
 def build_folder_structure(output_folder):
@@ -275,9 +270,9 @@ def add_raster_values(thiessen_clip, raster, field_type, temp_dir):
             try:
                 arcpy.DeleteField_management(thiessen_clip, f)
             except Exception as err:
-                print "Could not delete unnecessary field " + f + " from thiessen_clip.shp"
-                print "Error thrown was"
-                print err
+                arcpy.AddMessage("Could not delete unnecessary field " + f + " from thiessen_clip.shp")
+                arcpy.AddMessage("Error thrown was")
+                arcpy.AddMessage(err)
 
 
 def calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer):

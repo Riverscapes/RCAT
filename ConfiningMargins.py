@@ -5,7 +5,7 @@
 # Author:      Maggie Hallerud                                                #
 #              maggie.hallerud@aggiemail.usu.edu                              #
 #                                                                             #
-# Created:     2020-Mar-26                                                    #                                                       #
+# Created:     2020-Mar-26                                                    #
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -15,7 +15,8 @@ import arcpy
 import glob
 from SupportingFunctions import make_folder, find_available_num_prefix
 arcpy.env.overwriteOutput=True
-         
+
+
 def main(network,
          valley_bottom,
          bankfull_channel,

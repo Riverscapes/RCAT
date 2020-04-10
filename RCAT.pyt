@@ -1050,8 +1050,28 @@ class BankfullChannelTool(object):
             parameterType="Required",
             direction="Input")
         param9.value = "BankfullWidthsNetwork"
+			
+        param10 = arcpy.Parameter(
+            displayName="Correct for upstream drainage area?",
+            name="upstream_da",
+            datatype="GPBoolean",
+            parameterType="Optional",
+            direction="Input")
+			
+        param11 = arcpy.Parameter(
+            displayName="Drainage area corrections",
+            name="da_corrections",
+            datatype="GPValueTable",
+            parameterType="Optional",
+            direction="Input")
+        param11.parameterDependencies = [param10.name]
+        param11.columns = [["GPString", "StreamName"], ["GPDouble", "Upstream drainage area (in square km)"]]
+        #param11.filters[1].type = 'ValueList'
+        #param11.values[["Snake River", 5000.0]]
+        #param11.filters1.list = []
 		
-        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9]
+		
+        return [param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11]
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
@@ -1071,6 +1091,7 @@ class BankfullChannelTool(object):
     def execute(self, p, messages):
         """The source code of the tool."""
         reload(BankfullChannel)
+
         BankfullChannel.main(p[0].valueAsText,
                              p[1].valueAsText,
                              p[2].valueAsText,
@@ -1080,7 +1101,9 @@ class BankfullChannelTool(object):
                              p[6].valueAsText,
                              p[7].valueAsText,
                              p[8].valueAsText,
-                             p[9].valueAsText)
+                             p[9].valueAsText,
+							 p[10].valueAsText,
+							 p[11].valueAsText)
         return
 
 
