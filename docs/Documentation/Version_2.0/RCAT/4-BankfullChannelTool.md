@@ -3,30 +3,30 @@ title: Step 3 - Bankfull Channel Polygon Tool
 category: RCAT
 ---
 
-The Bankfull Channel Tool generates an approximate bankfull channel, with an optional buffer. This tool is modified from the Bankfull Channel tool in the [Confinement Toolbox](http://confinement.riverscapes.xyz/) and is included as a basic tool for generating an active channel polygon used in the [Confinement Tool]({{ site.baseurl }}/Documentation/Version_2.0/5-ConfinementTool.md). 
+The Bankfull Channel Tool generates an approximate bankfull channel, with an optional buffer. This tool is modified from the Bankfull Channel tool in the [Confinement Toolbox](http://confinement.riverscapes.xyz/) and is included as a basic tool for generating an active channel polygon used in the [Confinement Tool]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool.md). 
 
 ## Parameters
 
 ![BankfullChannel_interface]({{ site.baseurl }}/assets/images/BankfullChannel_interface_2.0.PNG)
 
-- **Segmented network**: Select input segmented network for which bankfull channels will be created.
+- **Select input network**: Select input segmented network for which bankfull channels will be created.
 
 >  Note: The tool uses the segmentation of the network. Too fine of segmentation will result in difficulty in finding the max drainage area for a section of stream, where too large of segmentation may result in overestimation of bankfull in many area.
 
-- **Valley bottom polygon**: Select input fragmented valley bottom polygon.
+- **Select valley bottom polygon**: Select input fragmented valley bottom polygon.
 
 > Shortcut: It may be possible to use a simple buffer polygon of the stream network, however, make sure that the 'stream' in the flow accumulation raster is within this buffer. Manual editing may be necessary at lower elevations with very large and flat valley bottoms.
 
-- **DEM**: A DEM covering the entire watershed. It is highly recommended to use a projection system with equal cell size (i.e. UTM).
-- **Drainage area raster** (optional): Drainage area raster for watershed, in square kilometers.
-- **Precipitation raster**: Precipitation raster covering entire watershed, in millimeters. It is highly recommended to use a projection system with equal cell size (i.e. UTM).
+- **Select elevation raster (in meters)**: A DEM covering the entire watershed. It is highly recommended to use a projection system with equal cell size (i.e. UTM).
+- **Select drainage area raster** (optional): Drainage area raster for watershed, in square kilometers.
+- **Select precipitation raster**: Precipitation raster covering entire watershed, in millimeters. It is highly recommended to use a projection system with equal cell size (i.e. UTM).
 - **Minimum Bankfull Width**: Minimum width of the bankfull channel, in meters. Default value is 5.
 - **Percent Buffer** (optional): Percent by which to buffer the calculated bankfull width, for adjustment of the regression equation to other watersheds. Default value is 100 (i.e., buffered width is the same as calculated bankfull width).
 
 > Note: You will want to increase this buffer for the confinement tool, which identifies confinement as any instance where the bankfull channel intersects the valley bottom polygon.
 
-- **Output Folder**: Output folder for current RCAT run, to which outputs and intermediates will be saved to.
-- **Output Name**: Name of output bankfull channel polygon.
+- **Select output folder for run**: Output folder for current RCAT run, to which outputs and intermediates will be saved to, in "Outputs/Output_01" format.
+- **Name bankfull channel polygon output**: Name of output bankfull channel polygon.
 
 ## Output
 
@@ -63,6 +63,7 @@ The bankfull channel tool is based on a simple regression. All bankfull channel 
 2. Use Zonal Statistics to find the maximum values of precipitation and drainage area for each thiessen polygon.
 3. Assign `PRECIP` and `DRAREA` values to each segment based on the zonal statistics from the corresponding thiessen polygon.
 4. Calculate Bankfull Width for each segment based on the following regression:
+
    bf_width(m) = 0.177(DrainageArea^0.397)(Precip^0.453))
 5. Calculate buffer width:
    bf_buffer(m) = bf_width + bf_width/(percent buffer/100)

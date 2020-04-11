@@ -7,7 +7,7 @@ import RVD
 import RCATProject
 import RCA
 import BankfullChannel
-import ConfiningMargins
+import Confinement
 import Promoter
 import segmentNetwork
 import LANDFIRE_RCAT_fields
@@ -573,7 +573,7 @@ class RVDtool(object):
         param9.filter.list = ["Polygon"]
 
         param10 = arcpy.Parameter(
-            displayName="Name RVD Output",
+            displayName="Name RVD output",
             name="outName",
             datatype="GPString",
             parameterType="Required",
@@ -747,7 +747,7 @@ class ConfinementTool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="Select RVD output network",
+            displayName="Select RVD network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
@@ -781,21 +781,6 @@ class ConfinementTool(object):
             parameterType="Required",
             direction="Input")
 
-        #param5 = arcpy.Parameter(
-        #    displayName="Name confining margins output",
-        #    name="output_confining_margins",
-        #    datatype="GPString",
-        #    parameterType="Required",
-        #    direction="Input")
-
-        #param6 = arcpy.Parameter(
-        #    displayName="Calculate integrated width attributes?",
-        #    name="integrate_width_attributes",
-        #    datatype="GPBoolean",
-        #    parameterType="Required",
-        #    direction="Input")
-        #param6.value = "False"
-
         return [param0, param1, param2, param3, param4]
 
     def isLicensed(self):
@@ -815,8 +800,8 @@ class ConfinementTool(object):
 
     def execute(self, p, messages):
         """The source code of the tool."""
-        reload(ConfiningMargins)
-        ConfiningMargins.main(p[0].valueAsText,
+        reload(Confinement)
+        Confinement.main(p[0].valueAsText,
                   p[1].valueAsText,
                   p[2].valueAsText,
                   p[3].valueAsText,
@@ -978,35 +963,35 @@ class BankfullChannelTool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName="RVD output network",
+            displayName="Select input network",
             name="network",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
         param1 = arcpy.Parameter(
-            displayName="Valley bottom polygon",
+            displayName="Select valley bottom polygon",
             name="valleybottom",
             datatype="DEFeatureClass",
             parameterType="Required",
             direction="Input")
 
         param2 = arcpy.Parameter(
-            displayName="DEM",
+            displayName="Select elevation raster (in meters)",
             name="dem",
             datatype="DERasterDataset",
             parameterType="Required",
             direction="Input")
 
         param3 = arcpy.Parameter(
-            displayName="Drainage area (in square kilometers)",
+            displayName="Select drainage area raster (in square kilometers)",
             name="drarea",
             datatype="DERasterDataset",
             parameterType="Optional",
             direction="Input")
 
         param4 = arcpy.Parameter(
-            displayName="Precipitation raster (in mm)",
+            displayName="Select precipitation raster (in mm)",
             name="precip",
             datatype="DERasterDataset",
             parameterType="Required",
@@ -1029,14 +1014,14 @@ class BankfullChannelTool(object):
         param6.value = 100
 
         param7 = arcpy.Parameter(
-            displayName="Output Folder",
+            displayName="Select output folder for run",
             name="output_folder",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 		
         param8 = arcpy.Parameter(
-            displayName="Output bankfull channel polygon name",
+            displayName="Name bankfull channel polygon output",
             name="out_polygon_name",
             datatype="GPString",
             parameterType="Required",
@@ -1044,7 +1029,7 @@ class BankfullChannelTool(object):
         param8.value = "BankfullChannelPolygon"
 			
         param9 = arcpy.Parameter(
-            displayName="Output network name",
+            displayName="Name output network",
             name="out_network_name",
             datatype="GPString",
             parameterType="Required",

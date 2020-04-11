@@ -26,13 +26,13 @@ For efficiency, the vegetation rasters, DEM, precipitation raster, and dredge ta
 
 For both the historic and existing vegetation rasters, add and populate the following fields:
 
-- `RIPARIAN`: Binary field for riparian vegetation, including non-native riparian vegetation, classified as follows:
+- `RIPARIAN` (type = Short Integer): Binary field for riparian vegetation, including non-native riparian vegetation, classified as follows:
 	- `0` = Not riparian landcover
 	- `1` = Riparian landcover
-- `NATIVE_RIP`: Binary field for *native* riparian vegetation, classified as follows:
+- `NATIVE_RIP` (type = Short Integer): Binary field for *native* riparian vegetation, classified as follows:
 	- `0` = Not native riparian landcover
 	- `1` = Native riparian landcover
-- `CONVERSION`: Landcover vegetation groupings, classified as follows:
+- `CONVERSION` (type = Short Integer: Landcover vegetation groupings, classified as follows:
 	- `500` = Open water
 	- `100` = Riparian
 	- `65` = Deciduous or hardwood upland forest
@@ -43,10 +43,10 @@ For both the historic and existing vegetation rasters, add and populate the foll
 	- `2` = Developed, including urban areas, roads, quarries or gravel pits, etc.
 	- `1` = Agriculture
 	- `-9999` = No data value for landcover classes that don't fit into any of the above
-- `VEGETATED`: Binary field for any native vegetation, classified as follows:
+- `VEGETATED` (type = Short Integer): Binary field for any native vegetation, classified as follows:
 	- `0` = All non-vegetated areas or non-native vegetated landcover, including but not limited to open water, barren, snow/ice, developed, barren, exotic and introduced landcover, etc.
 	- `1` = All native vegetation landcover, including but not limited to native riparian, sagebrush steppe, conifer forest, conifer-hardwood forest, native grassland, native shrubland, etc.  
-- `LU_CODE` (only needed in existing vegetation raster): Land use intensity code, classified as follows:
+- `LU_CODE` (type = Double): Land use intensity code (only needed in existing vegetation raster), classified as follows:
 	- `0` = Very low land use or natural landcover, including nonnative vegetation
 	- `0.33` = Low land use, including low intensity agriculture such as fallow or idle cropland, pasture, and hayland
 	- `0.66` = Moderate land use, including high intensity agriculture such as aquaculture, bush fruit and berry agriculture, orchards, vineyards, close grown crops or row crops, wheatlands, and managed tree plantations
@@ -70,7 +70,7 @@ One of the required inputs is a valley bottom polygon that has been fragmented u
 
 ![manual]({{ site.baseurl }}/assets/images/fragvalley.png)
 
-- Add a field (type short int) to the split valley bottom feature and name it "Connected".
+- Add a field (type = Short Integer) to the split valley bottom feature and name it "Connected".
 - Make sure you are still editing the split valley bottom.
 - In "Select by Location" select the portions of the split valley bottom polygon that the stream network intersects. In the attribute table, change value of the "Connected" field to 1 for the highlighted features.
 - All other features should have a value of 0. (If necessary, reverse the selection and give the now highlighted features a value of 0.)

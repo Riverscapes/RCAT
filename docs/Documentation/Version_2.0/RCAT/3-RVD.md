@@ -3,13 +3,11 @@ title: Step 2 - Riparian Vegetation Departure (RVD)
 category: RCAT
 ---
 
-The Riparian Vegetation Departure (RVD) tool uses vegetation landcover inputs to determine the departure of riparian vegetation between two time periods. Generally, RVD is used to compare current riparian vegetation cover (modeled using the LANDFIRE Existing Vegetation Type (EVT) layer) to historic (pre-European settlement) vegetation (modeled using the LANDFIRE Bio-physical Setting (BpS) layer). For more information on EVT and BpS layers, see LANDFIRE's [website](http://landfire.gov/vegetation.php). Alternatively, RVD could be used to compare pre- and post-restoration vegetation conditions as long as vegetation landcover data is available for both before and after the restoration. LANDFIRE EVT layers are reclassified based on imagery every two years, so this could be an option for pre- and post-restoration landcover data, or drone imagery could be collected and classified into landcover classes. Before running RVD, both vegetation layers must have the following attributes populated: `RIPARIAN`, `NATIVE_RIP`, and `CONVERSION`. See the [preparing RCAT inputs page]({{ site.baseurl }}/Documentation/RCAT/Version_2.0/1-Preprocessing) for details. The riparian departure field is required to run the [Riparian Condition Assessment (RCA) tool]({ site.baseurl }/Documentation/Version_2.0/RCAT/6-RCA).
-
+The Riparian Vegetation Departure (RVD) tool uses vegetation landcover inputs to determine the departure of riparian vegetation between two time periods. Generally, RVD is used to compare current riparian vegetation cover (modeled using the LANDFIRE Existing Vegetation Type (EVT) layer) to historic (pre-European settlement) vegetation (modeled using the LANDFIRE Bio-physical Setting (BpS) layer). For more information on EVT and BpS layers, see LANDFIRE's [website](http://landfire.gov/vegetation.php). Alternatively, RVD could be used to compare pre- and post-restoration vegetation conditions as long as vegetation landcover data is available for both before and after the restoration. LANDFIRE EVT layers are reclassified based on imagery every two years, so this could be an option for pre- and post-restoration landcover data, or drone imagery could be collected and classified into landcover classes. Before running RVD, both vegetation layers must have the following attributes populated: `RIPARIAN`, `NATIVE_RIP`, and `CONVERSION`. See the [preparing RCAT inputs page]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/1-Preprocessing) for details. The riparian departure field is required to run the [Riparian Condition Assessment (RCA) tool]({ site.baseurl }/Documentation/Version_2.0/RCAT/6-RCA).
 
 ## Parameters
 
 ![RVD_interface]({{ site.baseurl }}/assets/images/RVD_interface_2.0.PNG)
-
 
 - **Project name** (optional): Project name to be used in the XML metadata file.
 - **Watershed HUC ID** (optional): Watershed HUC ID to be used in the XML metadata file.

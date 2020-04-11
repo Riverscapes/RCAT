@@ -2,15 +2,20 @@
 title: Version 2.0
 ---
 
-Substantial changes were made to RCAT in early 2020 to improve accuracy, flexibility, and usability of the RCAT toolbox. The fundamental riparian vegetation departure and riparian condition assessment outputs are comparable between RCAT version 1 and RCAT version 2, though the version 2 outputs host significant methodology changes and are more accurate than version 1 outputs. Major changes between version 1 and version 2 are listed below. Detailed workflows can be found in the individual tool documentation. 
+Substantial changes were made to RCAT in early 2020 to improve accuracy, flexibility, and usability of the RCAT toolbox. The fundamental riparian vegetation departure and riparian condition assessment outputs are comparable between RCAT versions, though version 2 outputs host significant methodology changes and are more accurate than version 1 outputs. Major changes in RCAT Version 2.0 are listed below. Detailed workflows can be found in the individual tool documentation. 
 
 To start the RCAT Version 2.0 tutorial, click the links below:
 
 Step 1. [Pre-processing RCAT inputs.]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/1-Preprocessing) 
+
 Step 2. [RCAT Project Builder]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/2-RCATProjectBuilder)
+
 Step 3. [Riparian Vegetation Departure]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/3-RVD)
+
 Step 4. [Bankfull Channel Tool]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/4-BankfullChannelTool)
+
 Step 5. [Confinement Tool]({{ site.baseurl }}/Documentation/Verson_2.0/RCAT/5-ConfinementTool)
+
 Step 6. [Riparian Condition Assessment]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/6-RCA)
 
 > NOTE: RCAT Version 2.0 was developed using ArcMap 10.6.1 and tested on ArcMap 10.6.1 and ArcMap 10.7.1.
@@ -58,7 +63,11 @@ In RCAT Version 2.0, the riparian conversion fields include the following change
 
 These changes increase the accuracy of riparian conversion outputs and acknowledge points of ambiguity, including when data is scarce for a reach.
 
-## Increased toolbox linearity
+## VBET Improvements
+
+Fixed bugs in VBET and improved accuracy to minimize the need for manual editing. Added batch scripts for VBET in the supporting tools folder.
+
+## Improved toolbox linearity and project structure
 
 In RCAT Version 1.0, separate project folder structures were created for RCA and RVD, and the calculations for riparian vegetation departure were run in both RCA and RVD. 
 
