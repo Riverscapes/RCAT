@@ -17,7 +17,7 @@ The Riparian Condition Assessment Toolbox is an ArcGIS python toolbox created to
 
 ### Version 2.0
 
-For documentation on the major changes implemented, see [RCAT Version 2.0](({{ site.baseurl }}/Documentation/Version_2.0/Version2).
+For documentation on the major changes implemented, see [RCAT Version 2.0]({{ site.baseurl }}/Documentation/Version_2.0).
 
 
 **RCAT** (Riparian Condition Assessment Toolbox)
