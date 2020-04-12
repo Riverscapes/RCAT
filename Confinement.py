@@ -71,10 +71,10 @@ def main(network,
 
     # calculate area for bankfull thiessen polygons and join to network
     arcpy.AddMessage("Calculating bankfull area per reach...")
-    calculate_thiessen_area(thiessen_bankfull, out_lyr, "BFC")
+    calculate_polygon_area(thiessen_bankfull, out_lyr, "BFC")
     # calculate area for valley thiessen polygons and join to network
     arcpy.AddMessage("Calculating valley area per reach...")
-    calculate_thiessen_area(thiessen_valley, out_lyr, "VAL")
+    calculate_polygon_area(thiessen_valley, out_lyr, "VAL")
 
     arcpy.AddMessage("Calculating bankfull and valley width per reach...")
     # calculate reach length
@@ -137,167 +137,13 @@ def build_folder_structure(output_folder):
     return intermediates_folder, confinement_dir, conf_analysis_folder, temp_dir
 
 
-def divide_polygon_by_segmented_network(segmented_network, polygons, out_polygons, temp_dir, intermediates_dir, polygon_type):
-    """Author: Kelly Whitehead (kelly@southforkresearch.org) South Fork Research Inc., Seattle, WA
-    Created: 2015-Jan-08
-    Modified: 2015-Apr-27
-    Copyright (c) Kelly Whitehead 2015"""
-    # set up environment
-    #arcpy.env.OutputMFlag = "Disabled"
-    arcpy.env.OutputZFlag = "Disabled"
-    arcpy.env.overwriteOutput = True
-
-    print ".........Building thiessen polygons"
-    arcpy.AddMessage(".........Building thiessen polygons")
-    ## Build Thiessen Polygons
-    arcpy.env.extent = polygons ## Set full extent to build Thiessan polygons over entire line network.
-    densified_network = os.path.join(temp_dir, "dps_dens_network_"+polygon_type+".shp")
-    arcpy.CopyFeatures_management(segmented_network, densified_network)
-    arcpy.Densify_edit(densified_network, "DISTANCE", "20.0 METERS")
-    
-    trib_junction_pts =  os.path.join(temp_dir, "dps_trib_junction_pts_"+polygon_type+".shp")
-    arcpy.Intersect_analysis(densified_network, trib_junction_pts, output_type="POINT")
-    thiessen_points = os.path.join(temp_dir, "dps_thiessen_points_"+polygon_type+".shp")
-    arcpy.FeatureVerticesToPoints_management(densified_network, thiessen_points, "ALL")
-
-    thiessen_pts_lyr = arcpy.MakeFeatureLayer_management(thiessen_points, "thiessen_pts_lyr_"+polygon_type)
-    arcpy.SelectLayerByLocation_management(thiessen_pts_lyr, "INTERSECT", trib_junction_pts, "120.0 METERS", "NEW_SELECTION")
-
-    thiessen_polygons = os.path.join(temp_dir, "dps_thiessen_polygons_"+polygon_type+".shp")
-    arcpy.CreateThiessenPolygons_analysis(thiessen_pts_lyr, thiessen_polygons, "ONLY_FID")
-
-    thiessen_poly_clip = os.path.join(temp_dir, "dps_thiessen_poly_clip_"+polygon_type+".shp")
-    arcpy.Clip_analysis(thiessen_polygons, polygons, thiessen_poly_clip)
-
-    print ".........Splitting thiessen polygons at trib junctions"
-    arcpy.AddMessage(".........Splitting thiessen polygons at trib junctions")
-    # Code to Split the Junction Thiessen Polys
-    trib_thiessen_poly_lyr = arcpy.MakeFeatureLayer_management(thiessen_poly_clip, "trib_thiessen_polygons_lyr")
-    arcpy.SelectLayerByLocation_management(trib_thiessen_poly_lyr, "INTERSECT", trib_junction_pts, selection_type="NEW_SELECTION")
-
-    split_points = os.path.join(temp_dir, "dps_split_points_"+polygon_type+".shp")
-    arcpy.Intersect_analysis([trib_thiessen_poly_lyr, densified_network], split_points, output_type="POINT")
-
-    print ".........Finding midlines of tributaries"
-    arcpy.AddMessage(".........Finding midlines of tributaries")
-    # Moving Starting Vertices of Junction Polygons
-    changeStartingVertex(trib_junction_pts, trib_thiessen_poly_lyr)
-
-    trib_thiessen_poly_edges = os.path.join(temp_dir, "dps_trib_thiessen_edges_"+polygon_type+".shp")
-    arcpy.FeatureToLine_management(trib_thiessen_poly_lyr, trib_thiessen_poly_edges)
-
-    split_lines = os.path.join(temp_dir, "dps_split_lines_"+polygon_type+".shp")
-    arcpy.SplitLineAtPoint_management(trib_thiessen_poly_edges, split_points, split_lines, "0.1 METERS")
-
-    midpoints = os.path.join(temp_dir, "dps_midpoints_"+polygon_type+".shp")
-    arcpy.FeatureVerticesToPoints_management(split_lines, midpoints, "MID")
-    arcpy.Near_analysis(midpoints, trib_junction_pts, location="LOCATION")
-    arcpy.AddXY_management(midpoints)
-
-    trib_midlines = os.path.join(temp_dir, "dps_trib_to_midlines_"+polygon_type+".shp")
-    arcpy.XYToLine_management(midpoints, trib_midlines, "POINT_X", "POINT_Y", "NEAR_X", "NEAR_Y")
-
-    ### Select Polygons by Centerline ###
-    print ".........Selecting thiessen polygons by network"
-    arcpy.AddMessage(".........Selecting thiessen polygons by network")
-    thiessen_poly_clip_lyr = arcpy.MakeFeatureLayer_management(thiessen_poly_clip, "trib_thiessen_poly_clip_lyr_"+polygon_type)
-    arcpy.SelectLayerByLocation_management(thiessen_poly_clip_lyr, "INTERSECT", segmented_network, selection_type='NEW_SELECTION')
-
-    thiessen_edges = os.path.join(temp_dir, "dps_thiessen_edges_"+polygon_type+".shp")
-    arcpy.FeatureToLine_management(thiessen_poly_clip_lyr, thiessen_edges)
-
-    print ".........Merging thiessen and tributary edges with segmented network"
-    arcpy.AddMessage(".........Merging thiessen and tributary edges with segmented network")
-    
-    arcpy.Merge_management([trib_midlines, thiessen_edges], trib_thiessen_edges)
-    trib_thiessen_edges = os.path.join(temp_dir, "dps_trib_thiessen_edges_"+polygon_type+".shp")
-    all_edges = os.path.join(temp_dir, "dps_all_edges_"+polygon_type+".shp")
-    arcpy.Merge_management([trib_thiessen_edges, segmented_network], all_edges)
-
-    print ".........Creating polygons from merged edges"
-    arcpy.AddMessage(".........Creating polygons from merged edges")
-    all_edges_polygons = os.path.join(temp_dir, "dps_all_edges_polygons_"+polygon_type+".shp")
-    arcpy.FeatureToPolygon_management(all_edges, all_edges_polygons)
-
-    all_edges_poly_clip = os.path.join(temp_dir, "dps_all_edges_poly_clip_"+polygon_type+".shp")
-    arcpy.Clip_analysis(all_edges_polygons, polygons, all_edges_poly_clip)
-
-    print "..........Spatially joining all edges to input network"
-    arcpy.AddMessage(".........Spatially joining all edges to input network")
-    polygons_centerline_join = os.path.join(temp_dir, "dps_polygons_centerline_join_"+polygon_type+".shp")
-    arcpy.SpatialJoin_analysis(all_edges_poly_clip, segmented_network, polygons_centerline_join, "JOIN_ONE_TO_MANY",
-                               "KEEP_ALL", match_option="SHARE_A_LINE_SEGMENT_WITH")
-
-    print ".........Dissolving polygons for each segment"
-    arcpy.AddMessage(".........Dissolving polygons for each segment")
-    poly_dissolve = os.path.join(temp_dir, "dps_polygon_join_dissolve_"+polygon_type+".shp")
-    arcpy.Dissolve_management(polygons_centerline_join, poly_dissolve, "JOIN_FID", multi_part="SINGLE_PART")
-
-    poly_dissolve_lyr = arcpy.MakeFeatureLayer_management(poly_dissolve, "polygon_join_dissolved_lyr_"+polygon_type)
-    arcpy.SelectLayerByAttribute_management(poly_dissolve_lyr, "NEW_SELECTION", """ "JOIN_FID" = -1 """)
-
-    print ".........Creating final divided polygons"
-    arcpy.AddMessage(".........Creating final divided polygons")
-    arcpy.Eliminate_management(poly_dissolve_lyr, out_polygons, "LENGTH")
-
-
-def changeStartingVertex(input_points, input_polygons):
-    # set up environment
-    #arcpy.env.OutputMFlag = "Disabled"
-    arcpy.env.outputZFlag = "Disabled"
-    ## Create Geometry Object for Processing input points.
-    g = arcpy.Geometry()
-    geomPoints = arcpy.CopyFeatures_management(input_points, g)
-
-    listPointCoords = []
-    for point in geomPoints:
-        listPointCoords.append([point.centroid.X,point.centroid.Y])
-        #arcpy.AddMessage(str(point.centroid.X) + ","+ str(point.centroid.Y))
-
-    with arcpy.da.UpdateCursor(input_polygons, ["OID@", "SHAPE@"]) as ucPolygons:
-        for featPolygon in ucPolygons:
-            vertexList = []
-            #arcpy.AddMessage("Feature: " + str(featPolygon[0]))
-            i = 0
-            iStart = 0
-            for polygonVertex in featPolygon[1].getPart(0): # shape,firstpart
-                if polygonVertex:
-                    #arcpy.AddMessage(' Vertex:' + str(i))
-                    vertexList.append([polygonVertex.X,polygonVertex.Y])
-                    if [polygonVertex.X,polygonVertex.Y] in listPointCoords:
-                        #arcpy.AddMessage("  Point-Vertex Match!")
-                        iStart = i
-                    else:
-                        pass
-                        #arcpy.AddMessage("  No Match")
-                i = i + 1
-            if iStart == 0:
-                newVertexList = vertexList
-                #arcpy.AddMessage("No Change for: " + str(featPolygon[0]))
-            else:
-                #arcpy.AddMessage("Changing Vertex List for: " + str(featPolygon[0]))
-                newVertexList = vertexList[iStart:i]+vertexList[0:iStart]
-                for v in newVertexList:
-                    arcpy.AddMessage(str(v[0]) + "," +str(v[1]))
-                #listVertexPointObjects = []
-                newShapeArray = arcpy.Array()
-                for newVertex in newVertexList:
-                    #arcpy.AddMessage("Changing Vertex: " + str(newVertex[0]) + ',' + str(newVertex[1]))
-                    newShapeArray.add(arcpy.Point(newVertex[0],newVertex[1]))
-                    #listVertexPointObjects.append(arcpy.Point(newVertex[0],newVertex[1]))
-                #newShapeArray = arcpy.Array(listVertexPointObjects)
-                newPolygonArray = arcpy.Polygon(newShapeArray)
-
-                ucPolygons.updateRow([featPolygon[0],newPolygonArray])
-
-
 def calculate_polygon_area(polygons, network, type):
     arcpy.AddField_management(polygons, "AREA", "DOUBLE")
     with arcpy.da.UpdateCursor(polygons, ["AREA", "SHAPE@AREA"]) as cursor:
         for row in cursor:
             row[0] = row[1]
             cursor.updateRow(row)
-    arcpy.JoinField_management(network, "FID", polygons, "JOIN_FID", "AREA")
+    arcpy.JoinField_management(network, "FID", polygons, "RCH_FID", "AREA")
     area_field = type+"_Area"
     arcpy.AddField_management(network, area_field, "DOUBLE")
     with arcpy.da.UpdateCursor(network, ["AREA", area_field]) as cursor:

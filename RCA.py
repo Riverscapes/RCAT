@@ -23,6 +23,7 @@ from math import pi
 import projectxml
 import uuid
 import datetime
+from SupportingFunctions import *
 
 
 def main(
@@ -69,39 +70,36 @@ def main(
     intermediates_folder = os.path.join(output_folder, "01_Intermediates")
     thiessen_valley = os.path.join(intermediates_folder, "02_ValleyThiessen/Thiessen_Valley_Clip.shp")
     if not os.path.exists(thiessen_valley):
-        arcpy.AddMessage("Creating thiessen polygons")
+        arcpy.AddMessage("Creating thiessen polygons...")
         create_thiessen_polygons_in_valley(seg_network, frag_valley, intermediates_folder, scratch)
-    
+    else:
+        thiessen_fields = [f.name for f in arcpy.ListFields(thiessen_valley)]
+        if "RCH_FID" not in thiessen_fields:
+            arcpy.AddField_management(thiessen_valley, "RCH_FID", "SHORT")
+            with arcpy.da.UpdateCursor(thiessen_valley, ["ORIG_FID", "RCH_FID"]) as cursor:
+                for row in cursor:
+                    row[1] = row[0]
+                    cursor.updateRow(row)
+
+    # rca output folder
+    analysis_dir = os.path.join(output_folder, "02_Analyses")
+    rca_out_dir = os.path.join(analysis_dir, find_available_num_prefix(analysis_dir)+"_RCA")
+    make_folder(rca_out_dir)
     # create rca input network and output directory
     fcOut = output_folder + "/rca_table.shp"
     arcpy.CopyFeatures_management(seg_network, fcOut)
 
-    # PREVIOUS METRIC OF CONFINEMENT BEFORE CONFINEMENT TOOL ADDED TO RCAT
-    # Add width field to thiessen polygons and then output network
-    #arcpy.AddMessage("Adding width field to output network")
-    #arcpy.AddField_management(thiessen_valley, "Perim", "DOUBLE")
-    #arcpy.AddField_management(thiessen_valley, "Area", "DOUBLE")
-    #arcpy.CalculateField_management(thiessen_valley, "Perim", "!SHAPE.LENGTH@METERS!", "PYTHON_9.3")
-    #arcpy.CalculateField_management(thiessen_valley, "Area", "!SHAPE.AREA@SQUAREMETERS!", "PYTHON_9.3")
-    #arcpy.AddField_management(thiessen_valley, "Width", "DOUBLE")
-    #with arcpy.da.UpdateCursor(thiessen_valley, ["Perim", "Area", "Width"]) as cur:
-    #    for row in cur:
-    #        perim, area, width = row
-    #        row[-1] = ((perim/pi) * area) / (perim**2 / (4 * pi))
-    #        cur.updateRow(row)
-    #arcpy.JoinField_management(fcOut, "FID", thiessen_valley, "RCH_FID", "Width")
-
     # add model input attributes to input network
-    arcpy.AddMessage("Assessing land use intensity")
+    arcpy.AddMessage("Assessing land use intensity...")
     calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut)
 
-    arcpy.AddMessage("Assessing floodplain connectivity")
+    arcpy.AddMessage("Assessing floodplain connectivity...")
     calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_veg, intermediates_folder, scratch)
-    arcpy.AddMessage("Assessing overall vegetation departure")
+    arcpy.AddMessage("Assessing overall vegetation departure...")
     calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut)
 
     # # # calculate rca for segments in unconfined valleys # # #
-    arcpy.AddMessage("Calculating riparian condition for segments in unconfined valleys")
+    arcpy.AddMessage("Calculating riparian condition for segments in unconfined valleys...")
 
     arcpy.MakeFeatureLayer_management(fcOut, "rca_in_lyr")
     arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"CONF_RATIO" < {0}'.format(confin_thresh))
@@ -224,7 +222,7 @@ def main(
         raise Exception("There are no 'unconfined' segments to assess using FIS. Lower width threshold parameter.")
 
     # # # calculate rca for segments in confined valleys # # #
-    arcpy.AddMessage("Calculating riparian condition for segments in confined valleys")
+    arcpy.AddMessage("Calculating riparian condition for segments in confined valleys...")
     arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", '"CONF_RATIO" >= {0}'.format(confin_thresh))
     #arcpy.SelectLayerByAttribute_management("rca_in_lyr", "NEW_SELECTION", """ Con_Type == "BOTH" """)
     arcpy.FeatureClassToFeatureClass_conversion("rca_in_lyr", scratch, "rca_c.shp")
@@ -244,8 +242,8 @@ def main(
     # merge the results of the rca for confined and unconfined valleys
     if not outName.endswith(".shp"):
         outName = outName+".shp"
-    tempOut = output_folder + "/tempout.shp"
-    output = os.path.join(output_folder, outName)
+    tempOut = os.path.join(rca_out_dir, "tempout.shp")
+    output = os.path.join(rca_out_dir, outName)
 
     arcpy.Merge_management([rca_u_final, rca_c], tempOut)
 
@@ -374,8 +372,8 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     thiessen_valley_folder = os.path.join(intermediates_folder, "02_ValleyThiessen")
     if not os.path.exists(thiessen_valley_folder):
         os.mkdir(thiessen_valley_folder)
-    thiessen_valley = thiessen_valley_folder + "/Thiessen_Valley_Clip.shp"
-    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley)
+    thiessen_clip = thiessen_valley_folder + "/Thiessen_Valley_Clip.shp"
+    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_clip)
 
     # convert multipart features to single part
     arcpy.AddField_management(thiessen_clip, "RCH_FID", "SHORT")
@@ -386,8 +384,6 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
     thiessen_singlepart = scratch + "/Thiessen_Valley_Singlepart.shp"
     arcpy.MultipartToSinglepart_management(thiessen_clip, thiessen_singlepart)
     valley_single_lyr = arcpy.MakeFeatureLayer_management(in_features=thiessen_singlepart)
-    # out_layer= scratch +"/valley_single.lyr")
-    arcpy.CopyFeatures_management(valley_single_lyr, scratch + "/valley_test.shp")
 
     # Select only polygon features that intersect network midpoints
     thiessen_select = arcpy.SelectLayerByLocation_management(valley_single_lyr, "INTERSECT", midpoints_lyr,
@@ -421,9 +417,8 @@ def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_v
     arcpy.env.snapRaster = ex_veg
     
     # set up folder structure
-    connect_folder = os.path.join(intermediates_folder, "04_Connectivity")
-    if not os.path.exists(connect_folder):
-        os.mkdir(connect_folder)
+    connect_folder = os.path.join(intermediates_folder, find_available_num_prefix(intermediates_folder)+ "_Connectivity")
+    make_folder(connect_folder)
     fp_conn = scratch + '/fp_conn'
     arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
     #fp_conn.save(connect_folder + '/fp_conn.tif')

@@ -431,7 +431,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
 
     # pull section of reclassified raster within buffered valley bottom and save
     out_conversion_raster = ExtractByMask(final_conversion_raster, valley_buf)
-    out_conversion_raster.save(os.path.join(intermediates_folder, "Conversion_Raster.tif"))
+    out_conversion_raster.save(os.path.join(intermediates_folder, "03_VegetationRasters/Conversion_Raster.tif"))
 
     # calculate total pixel count for each reach based on zonal stats within thiessen polygons 
     count_table = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", final_conversion_raster, "count_table", statistics_type="VARIETY")

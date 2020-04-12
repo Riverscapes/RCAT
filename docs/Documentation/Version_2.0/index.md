@@ -2,7 +2,9 @@
 title: Version 2.0
 ---
 
-Substantial changes were made to RCAT in early 2020 to improve accuracy, flexibility, and usability of the RCAT toolbox. The fundamental riparian vegetation departure and riparian condition assessment outputs are comparable between RCAT versions, though version 2 outputs host significant methodology changes and are more accurate than version 1 outputs. Major changes in RCAT Version 2.0 are listed below. Detailed workflows can be found in the individual tool documentation. 
+Substantial changes were made to RCAT in early 2020 to improve accuracy, flexibility, stability, and usability of the RCAT toolbox. The fundamental riparian vegetation departure and riparian condition assessment outputs are comparable between RCAT versions, though version 2 outputs host significant methodology changes and are more accurate than version 1 outputs. Major changes in RCAT Version 2.0 are listed below. Detailed workflows can be found in the individual tool documentation. 
+
+[![Riverscapes_DownloadGITHUB](assets/images/Riverscapes_DownloadGITHUB.png)](https://github.com/Riverscapes/RCAT/releases/latest)
 
 To start the RCAT Version 2.0 tutorial, click the links below:
 
@@ -75,8 +77,15 @@ In RCAT Version 2.0, all RCAT inputs and outputs are stored in the same project 
 
 These changes will greatly increase the efficiency and project tracking of RCAT projects. 
 
-[RCAT_toolbox_2.0]({{ site.baseurl }}/assets/images/RCAT_tbx_2.0.png)
+[RCAT_toolbox_2.0]({{ site.baseurl }}/assets/images/RCAT_tbx_2.0.PNG)
 
 RCAT Version 2.0 toolbox interface
 
-[RCAT_project_folder_example]({{ site.baseurl }}/assets/images/RCAT_project_example.png)
+[RCAT_project_folder_example]({{ site.baseurl }}/assets/images/RCAT_project_example.PNG)
+
+RCAT Version 2.0 project structure
+
+## Increased stability
+
+Many bugs were fixed in this version, which has greatly increased the stability and reliability of the RCAT toolbox.
+

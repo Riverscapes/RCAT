@@ -578,7 +578,7 @@ class RVDtool(object):
             datatype="GPString",
             parameterType="Required",
             direction="Input")
-        # param10.symbology = os.path.join(os.path.dirname(__file__), "RVD_ratio.lyr")
+        param10.value = "RVDnetwork"
 
 #        param11 = arcpy.Parameter(
 #            displayName="Scratch Workspace",
@@ -780,6 +780,7 @@ class ConfinementTool(object):
             datatype="GPString",
             parameterType="Required",
             direction="Input")
+        param4.value = "ConfinementNetwork"
 
         return [param0, param1, param2, param3, param4]
 
@@ -899,7 +900,7 @@ class RCAtool(object):
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        param10.value = 0.5
+        param10.value = 0.4
 
         param11 = arcpy.Parameter(
             displayName="Name RCA output",
@@ -907,6 +908,7 @@ class RCAtool(object):
             datatype="GPString",
             parameterType="Required",
             direction="Input")
+        param11.value = "RCAnetwork"
 
 #        param11 = arcpy.Parameter(
 #            displayName="Scratch Workspace",

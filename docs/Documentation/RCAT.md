@@ -55,31 +55,31 @@ For documentation on the major changes implemented, see [RCAT Version 2.0](({{ s
 
 ### Update History
 
-04/11/2020 - RCAT Version 2.0.0 - Added bankfull channel and confinement tools for more accurate confinement metrics, added flexibility in vegetation input, added flexibility for vegetation classifications, added dredge tailings handling, added separate native riparian vegetation departure and overall riparian departure fields, improved riparian conversion metrics, added riparian conversion fields for riparian expansion and conversion to deciduous forest, increased linearity between RCAT tools, improved RCAT project folder structure, improved valley bottom delineation, added batch scripts for VBET, improved toolbox structure, and added supporting tools for classifying LANDFIRE vegetation and segmenting the network. Details on these changes can be found on the [RCAT Version 2.0 page]({{ site.baseurl }}/Documentation/Version_2.0/). 
+**04/11/2020 - RCAT Version 2.0.0** - Added bankfull channel and confinement tools for more accurate confinement metrics, added flexibility in vegetation input, added flexibility for vegetation classifications, added dredge tailings handling, added separate native riparian vegetation departure and overall riparian departure fields, improved riparian conversion metrics, added riparian conversion fields for riparian expansion and conversion to deciduous forest, increased linearity between RCAT tools, improved RCAT project folder structure, improved valley bottom delineation, added batch scripts for VBET, improved toolbox structure, added supporting tools for classifying LANDFIRE vegetation and segmenting the network, and increased stability of tools by fixing many minor bugs. Details on these changes can be found on the [RCAT Version 2.0 page]({{ site.baseurl }}/Documentation/Version_2.0/). 
 
-09/12/2017 - RCAT Versions 1.0.11 and 0.2.3 - fixed same bug that RVD tool had (fixed 1.0.9) in RCA tool.
+**09/12/2017 - RCAT Versions 1.0.11 and 0.2.3** - fixed same bug that RVD tool had (fixed 1.0.9) in RCA tool.
 
-08/03/2017 - RCAT Version 1.0.10 - When using the Realization Promoter Tool, you can now add in the edited VBET output to the VBET realization being promoted.
+**08/03/2017 - RCAT Version 1.0.10** - When using the Realization Promoter Tool, you can now add in the edited VBET output to the VBET realization being promoted.
 
-07/25/2017 - RCAT Version 1.0.9 - fixed bug with RVD tool.
+**07/25/2017 - RCAT Version 1.0.9** - fixed bug with RVD tool.
 
-06/20/2017 - RCAT and VBET Versions 1.0.8 - fixed problem with realization numbers and IDs, added Realization Promoter tool.
+**06/20/2017 - RCAT and VBET Versions 1.0.8** - fixed problem with realization numbers and IDs, added Realization Promoter tool.
 
-05/10/2017 - RCAT and VBET Versions 1.0.7 - retains networks segments in open water but attributes them with NoData values. RCAT 0.2.2 - same update.
+**05/10/2017 - RCAT and VBET Versions 1.0.7** - retains networks segments in open water but attributes them with NoData values. RCAT 0.2.2 - same update.
 
-05/02/2017 - RCAT and VBET Versions 0.2.1 and 1.0.6 - added Bankfull Channel tool to RCAT 1.0.6. Outputs no longer include any segments not in valley bottom.
+**05/02/2017 - RCAT and VBET Versions 0.2.1 and 1.0.6** - added Bankfull Channel tool to RCAT 1.0.6. Outputs no longer include any segments not in valley bottom.
 
-03/20/2017 - RCAT and VBET Version 1.0.5 - updated xml format and matched current VBET version to current RCAT version
+**03/20/2017 - RCAT and VBET Version 1.0.5** - updated xml format and matched current VBET version to current RCAT version
 
-03/08/2017 - RCAT Version 1.0.4 - fixed bug in RVD with large river polygon
+**03/08/2017 - RCAT Version 1.0.4** - fixed bug in RVD with large river polygon
 
-03/07/2017 - RCAT Version 0.2 and VBET Versions 0.2 and 1.0.2 - Minor improvements
+**03/07/2017 - RCAT Version 0.2 and VBET Versions 0.2 and 1.0.2** - Minor improvements
 
-03/06/2017 - RCAT Version 1.0.3 - Minor improvements
+**03/06/2017 - RCAT Version 1.0.3** - Minor improvements
 
-02/14/2017 - RCAT Version 1.0.2 - Updates to RCA tool
+**02/14/2017 - RCAT Version 1.0.2** - Updates to RCA tool
 
- Update prior to GitHUB: 01/25/2017 - Version 1.0 released. The primary difference between 1.0 and previous versions is that the tools are now "project" structured. Before running the tools, the projects are prepared using the "Build Project" tools that allow you to gather all inputs and structures them before running the tools. An xml file is also produced containing some metadata.
+ **Updates prior to GitHub: 01/25/2017** - Version 1.0 released. The primary difference between 1.0 and previous versions is that the tools are now "project" structured. Before running the tools, the projects are prepared using the "Build Project" tools that allow you to gather all inputs and structures them before running the tools. An xml file is also produced containing some metadata.
 
 
 ![CC_Watermarks_Riverscapes]({{ site.baseurl }}/assets/images/CC_Watermarks_Riverscapes.png) This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
