@@ -77,11 +77,11 @@ In RCAT Version 2.0, all RCAT inputs and outputs are stored in the same project 
 
 These changes will greatly increase the efficiency and project tracking of RCAT projects. 
 
-![RCAT_toolbox_2.0]({{ site.baseurl }}/assets/images/RCAT_tbx_2.0.PNG)
+![RCAT_toolbox_2.0]({{ site.baseurl }}/assets/images/RCAT_tbx_2.0.png)
 
 RCAT Version 2.0 toolbox interface
 
-![RCAT_project_folder_example]({{ site.baseurl }}/assets/images/RCAT_project_example.PNG)
+![RCAT_project_folder_example]({{ site.baseurl }}/assets/images/RCAT_project_example.png)
 
 RCAT Version 2.0 project structure
 
