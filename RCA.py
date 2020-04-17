@@ -273,7 +273,7 @@ def main(
     getcount = arcpy.GetCount_management("outlyr")
     count = int(getcount.getOutput(0))
     if count != 0:
-        cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "Width", "EX_VEG", "HIST_VEG", "VEG"])
+        cursor = arcpy.da.UpdateCursor("outlyr", ["COND_VAL", "CONDITION", "LUI", "EX_VEG", "HIST_VEG", "VEG"])
         for row in cursor:
             row[0] = -9999
             row[1] = "None"
@@ -354,6 +354,9 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
             arcpy.DeleteField_management(midpoints, f)
         except Exception as err:
             pass
+    # create layer from midpoints
+    midpoints_lyr = "midpoints_lyr"
+    arcpy.MakeFeatureLayer_management(midpoints, midpoints_lyr)
 
     # create thiessen polygons surrounding reach midpoints
     thiessen_folder = os.path.join(intermediates_folder, "01_MidpointsThiessen")
@@ -413,17 +416,16 @@ def calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut):
 
 def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_veg, intermediates_folder, scratch):
     # set raster environment
-    arcpy.env.extent = dredge_tailings
+    arcpy.env.extent = ex_veg
     arcpy.env.snapRaster = ex_veg
     
     # set up folder structure
     connect_folder = os.path.join(intermediates_folder, find_available_num_prefix(intermediates_folder)+ "_Connectivity")
     make_folder(connect_folder)
-    fp_conn = scratch + '/fp_conn'
-    arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
-    #fp_conn.save(connect_folder + '/fp_conn.tif')
-
     if dredge_tailings is not None:
+        fp_conn = scratch + '/fp_conn'
+        arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn, "", "", 10)
+
         dredge_tailings_dissolved = arcpy.Dissolve_management(dredge_tailings)
         arcpy.env.extent = thiessen_valley
         dredge_tailings_raster = ExtractByMask(fp_conn, dredge_tailings_dissolved)
@@ -431,11 +433,12 @@ def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_v
         dredge_tailings_reclass = Reclassify(dredge_tailings_raster, "VALUE", "0 8; 1 8; NODATA 0")
         connect_mine_calc = dredge_tailings_reclass + fp_conn
         fp_conn_out = Reclassify(connect_mine_calc, "VALUE", "0 0; 1 1; 8 0; 9 0")
+        fp_conn_out.save(connect_folder + '/Floodplain_Connectivity.tif')
     else:
-        fp_conn_out = fp_conn
+        fp_conn_out = connect_folder + '/Floodplain_Connectivity.tif'
+        arcpy.PolygonToRaster_conversion(frag_valley, "Connected", fp_conn_out, "", "", 10)
 
     fp_conn_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", fp_conn_out, "fp_conn_zs", statistics_type="MEAN")
-    fp_conn_out.save(connect_folder + '/Floodplain_Connectivity.tif')
 
     arcpy.JoinField_management(fcOut, "FID", fp_conn_zs, "RCH_FID", "MEAN")
     arcpy.AddField_management(fcOut, "CONNECT", "DOUBLE")
