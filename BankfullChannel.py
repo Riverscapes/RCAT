@@ -195,7 +195,7 @@ def calc_drain_area(DEM):
     drain_area_path = os.path.dirname(DEM) + "/Flow/DrainArea_sqkm.tif"
     if os.path.exists(drain_area_path):
         arcpy.Delete_management(drain_area_path)
-        drain_area. save(drain_area_path)
+        drain_area.save(drain_area_path)
     else:
         os.mkdir(os.path.dirname(DEM) + "/Flow")
         drain_area.save(drain_area_path)

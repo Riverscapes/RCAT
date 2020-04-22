@@ -11,6 +11,7 @@ import Confinement
 import Promoter
 import segmentNetwork
 import LANDFIRE_RCAT_fields
+import Layer_Package_Generator
 
 
 class Toolbox(object):
@@ -22,7 +23,8 @@ class Toolbox(object):
 
         # List of tool classes associated with this toolbox
         self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDtool, RCATBuilder, RCAtool,
-                      BankfullChannelTool, ConfinementTool, Promotertool, SegmentNetworkTool, LANDFIREfields]
+                      BankfullChannelTool, ConfinementTool, Promotertool, SegmentNetworkTool, 
+					  LANDFIREfields, Layer_Package_Tool]
 
 
 class VBETBuilder(object):
@@ -1259,4 +1261,62 @@ class LANDFIREfields(object):
         reload(segmentNetwork)
         LANDFIRE_RCAT_fields.main(p[0].valueAsText,
                       p[1].valueAsText)
+        return
+
+
+class Layer_Package_Tool(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Layer Package Generator"
+        self.category = "01-RCAT"
+        self.description = "Generates a layer package of RCAT inputs, intermediates, and outputs"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Select output folder (format Output_01)",
+            name="output_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Name layer package output",
+            name="layer_package_name",
+            datatype="GPString",
+            parameterType="Optional",
+            direction="Output")
+
+        param2 = arcpy.Parameter(
+            displayName="Select clipping network",
+            name="clipping_network",
+            datatype="DEFeatureClass",
+            parameterType="Optional",
+            direction="Input")
+        param2.filter.list = ["Polyline"]
+
+        return [param0, param1, param2]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        reload(Layer_Package_Generator)
+        Layer_Package_Generator.main(p[0].valueAsText,
+                      p[1].valueAsText,
+                      p[2].valueAsText)
         return

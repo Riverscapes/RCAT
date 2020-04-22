@@ -95,3 +95,63 @@ def resetField(inTable,FieldName,FieldType,TextLength=0):
         else:
             arcpy.AddField_management(inTable,FieldName,FieldType)
     return str(FieldName) 
+
+
+def find_folder(folder_location, folder_name):
+    """
+    If the folder exists, returns it. Otherwise, raises an error
+    :param folder_location: Where to look
+    :param folder_name: The folder to look for
+    :return: Path to folder
+    """
+    folders = os.listdir(folder_location)
+    for folder in folders:
+        if folder.endswith(folder_name):
+            return os.path.join(folder_location, folder)
+    return None
+
+
+def make_layer(output_folder, layer_base, new_layer_name, symbology_layer=None, is_raster=False, description="Made Up Description", file_name=None, symbology_field=None):
+    """
+    Creates a layer and applies a symbology to it
+    :param output_folder: Where we want to put the layer
+    :param layer_base: What we should base the layer off of
+    :param new_layer_name: What the layer should be called
+    :param symbology_layer: The symbology that we will import
+    :param is_raster: Tells us if it's a raster or not
+    :param description: The discription to give to the layer file
+    :return: The path to the new layer
+    """
+    new_layer = new_layer_name
+    if file_name is None:
+        file_name = new_layer_name.replace(' ', '')
+    new_layer_save = os.path.join(output_folder, file_name.replace(' ', ''))
+    
+    if not new_layer_save.endswith(".lyr"):
+        new_layer_save += ".lyr"
+
+    if is_raster:
+        try:
+            arcpy.MakeRasterLayer_management(layer_base, new_layer)
+        except arcpy.ExecuteError as err:
+            if get_execute_error_code(err) == "000873":
+                arcpy.AddError(err)
+                arcpy.AddMessage("The error above can often be fixed by removing layers or layer packages from the Table of Contents in ArcGIS.")
+                raise Exception
+            else:
+                raise arcpy.ExecuteError(err)
+
+    else:
+        if arcpy.Exists(new_layer):
+            arcpy.Delete_management(new_layer)
+        arcpy.MakeFeatureLayer_management(layer_base, new_layer)
+
+    if symbology_layer:
+        arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
+
+    if not os.path.exists(new_layer_save):
+        arcpy.SaveToLayerFile_management(new_layer, new_layer_save, "RELATIVE")
+        new_layer_instance = arcpy.mapping.Layer(new_layer_save)
+        new_layer_instance.description = description
+        new_layer_instance.save()
+    return new_layer_save
