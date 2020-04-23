@@ -128,7 +128,7 @@ def clip_file(shapefile, clipping_network):
                 arcpy.Clip_analysis(shapefile, clipping_network, out_name)
                 return out_name
             except Exception as err:
-                print err
+                print(err)
     else:
         arcpy.AddMessage("WARNING: Could not find " + shapefile + " to make clipped layers")
 
@@ -250,18 +250,18 @@ def check_analyses(analyses_folder, symbology_folder):
     confinement_folder = find_folder(analyses_folder, "Confinement")
     rca_folder = find_folder(analyses_folder, "RCA")
 
-    check_analyses_layer(rvd_folder, "Riparian Vegetation Departure",
+    check_analysis_layer(rvd_folder, "Riparian Vegetation Departure",
                          symbology_folder, "RiparianVegetationDeparture.lyr", "RIPAR_DEP")
-    check_analyses_layer(rvd_folder, "Native Riparian Vegetation Departure",
+    check_analysis_layer(rvd_folder, "Native Riparian Vegetation Departure",
                          symbology_folder, "NativeRiparianVegetationDeparture.lyr", "NATIV_DEP")
-    check_analyses_layer(rvd_folder, "Riparian Conversion Type",
+    check_analysis_layer(rvd_folder, "Riparian Conversion Type",
                          symbology_folder, "RiparianConversionType.lyr", "Conv_Type")
 
-    check_analyses_layer(bankfull_folder, "Bankfull Channel Network",
+    check_analysis_layer(bankfull_folder, "Bankfull Channel Network",
                          symbology_folder, "BankfullChannelNetwork.lyr", "BUFWIDTH")
-    check_analyses_layer(bankfull_folder, "Upstream Drainage Area",
+    check_analysis_layer(bankfull_folder, "Upstream Drainage Area",
                          symbology_folder, "UpstreamDrainageArea.lyr", "DRAREA")
-    check_analyses_layer(bankfull_folder, "Precipitation By Reach",
+    check_analysis_layer(bankfull_folder, "Precipitation By Reach",
                          symbology_folder, "PrecipitationByReach.lyr", "PRECIP")
     bankfull_polygon = find_shapefile_with_field(bankfull_folder, "SmoPgnFlag")
     if bankfull_polygon is not None:
