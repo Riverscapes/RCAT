@@ -47,12 +47,11 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
 
     # set environment parameters
     arcpy.env.overwriteOutput = True
-
+    arcpy.env.workspace = projPath
+    
     # set up main project folder
     arcpy.AddMessage("Setting up folder structure....")
     make_folder(projPath)
-    if os.getcwd() is not projPath:
-        os.chdir(projPath)
     lrp_folder, dredge_folder, dem_folder, precip_folder = set_structure(projPath, lrp, dredge_tailings, dem, precip)
 
     arcpy.AddMessage("Copying inputs to project folder....")
@@ -142,26 +141,33 @@ def set_structure(projPath, lrp, dredge_tailings, dem, precip):
     return lrp_folder, dredge_folder, dem_folder, precip_folder
 
 
-def copy_multi_inputs_to_project(inputs, folder, name, is_raster=False):
+def copy_multi_inputs_to_project(inputs, folder, sub_folder_name, is_raster=False):
     """Copies multiple inputs to proper folder structure
     :param inputs: Input files to be copied into project structure
-    :param folder: Folder in inputs folder to copy files into
+    :param sub_folder_name: Folder in inputs folder to copy files into
     :name: Name of sub-directories in folder
     :is_raster: True if raster
     :return: List of copied file destinations"""
     make_folder(folder)
-    in_paths = inputs.split(";")
+    split_inputs = inputs.split(";")
     i = 1
     destinations = []
-    for x in range(len(in_paths)):
-        make_folder(os.path.join(folder, name + str(i)))
-        out_path = os.path.join(folder, name + str(i) + "/" + os.path.basename(in_paths[x]))
+    for input_path in split_inputs:
+        str_i = str(i)
+        if i <10:
+            str_i = '0'+str_i
+        new_sub_folder = os.path.join(folder, sub_folder_name + str_i)
+        make_folder(new_sub_folder)
+        name = os.path.basename(input_path)
+        if len(name.split('.')[0]) > 13:
+            name = name.split('.')[0][0:12] + '.tif'
+        destination_path = os.path.join(new_sub_folder, name)
         if is_raster:
-            arcpy.CopyRaster_management(in_paths[x], out_path)
+            arcpy.CopyRaster_management(input_path, destination_path)
         else:
-            arcpy.CopyFeatures_management(in_paths[x], out_path)
+            arcpy.CopyFeatures_management(input_path, destination_path)
         i += 1
-        destinations.append(out_path)
+        destinations.append(destination_path)
     return destinations
 
 
