@@ -128,12 +128,8 @@ def clip_file(shapefile, clipping_network):
                 arcpy.Clip_analysis(shapefile, clipping_network, out_name)
                 return out_name
             except Exception as err:
-<<<<<<< HEAD
                 arcpy.AddMessage("WARNING: Clipping failed for "+ network + ". Exception thrown was:")
                 arcpy.AddMessage(err)
-=======
-                print(err)
->>>>>>> c4ce86adecda6b4c352d2ff362dfc11890edd600
     else:
         arcpy.AddMessage("WARNING: Could not find " + shapefile + " to make clipped layers")
 
@@ -255,11 +251,7 @@ def check_analyses(analyses_folder, symbology_folder):
     confinement_folder = find_folder(analyses_folder, "Confinement")
     rca_folder = find_folder(analyses_folder, "RCA")
 
-<<<<<<< HEAD
-    check_analyis_layer(rvd_folder, "Riparian Vegetation Departure",
-=======
     check_analysis_layer(rvd_folder, "Riparian Vegetation Departure",
->>>>>>> c4ce86adecda6b4c352d2ff362dfc11890edd600
                          symbology_folder, "RiparianVegetationDeparture.lyr", "RIPAR_DEP")
     check_analysis_layer(rvd_folder, "Native Riparian Vegetation Departure",
                          symbology_folder, "NativeRiparianVegetationDeparture.lyr", "NATIV_DEP")

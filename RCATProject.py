@@ -116,34 +116,30 @@ def set_structure(projPath, lrp, dredge_tailings, dem, precip):
 
     make_folder(projPath)
 
-    if os.getcwd() is not projPath:
-        os.chdir(projPath)
-
     inputs = os.path.join(projPath, "Inputs")
     make_folder(inputs)
-    os.chdir(inputs)
     
-    make_folder("01_Network")
-    make_folder("02_Existing_Vegetation")
-    make_folder("03_Historic_Vegetation")
-    make_folder("04_Fragmented_Valley")
+    make_folder(os.path.join(inputs, "01_Network"))
+    make_folder(os.path.join(inputs, "02_Existing_Vegetation"))
+    make_folder(os.path.join(inputs, "03_Historic_Vegetation"))
+    make_folder(os.path.join(inputs, "04_Fragmented_Valley"))
     if lrp is not None:
-        lrp_folder = find_available_num_prefix(inputs) + "_Large_River_Polygon"
+        lrp_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Large_River_Polygon")
         make_folder(lrp_folder)
     else:
         lrp_folder = None
     if dredge_tailings is not None:
-        dredge_folder = find_available_num_prefix(inputs) + "_Dredge_Tailings"
+        dredge_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Dredge_Tailings")
         make_folder(dredge_folder)
     else:
         dredge_folder = None
     if dem is not None:
-        dem_folder = find_available_num_prefix(inputs) + "_Topography"
+        dem_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Topography")
         make_folder(dem_folder)
     else:
         dem_folder = None
     if precip is not None:
-        precip_folder = find_available_num_prefix(inputs) + "_Precipitation"
+        precip_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Precipitation")
         make_folder(precip_folder)
     else:
         precip_folder=None
