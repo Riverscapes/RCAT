@@ -14,7 +14,7 @@ import arcpy
 from arcpy.sa import *
 import sys
 import os
-from SupportingFunctions import make_folder, find_available_num_prefix
+from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
 arcpy.CheckOutExtension('Spatial')
 
 
@@ -77,8 +77,11 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
 
     # create final bankfull polygon
     arcpy.AddMessage("Creating final bankfull polygon...")
-    create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
+    bankfull = create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
 
+    # making layers
+    arcpy.AddMessage("Making layers...")
+    make_layers(intersect, bankfull)
 
 def build_folder_structure(output_folder):
     scratch = os.path.join(os.path.dirname(os.path.dirname(output_folder)), "Temp")
@@ -326,10 +329,25 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
     arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
     
     # Todo: add params as fields to shp.
+    return output
 
 
+def make_layers(network, bankfull_polygon):
+    source_code_folder = os.path.dirname(os.path.abspath(__file__))
+    symbology_folder = os.path.join(source_code_folder, "RCATSymbology")
+    # pull symbology
+    bankfull_network_symbology = os.path.join(symbology_folder, "BankfullChannelNetwork.lyr")
+    bankfull_polygon_symbology = os.path.join(symbology_folder, "BankfullChannelPolygon.lyr")
+    drain_area_symbology = os.path.join(symbology_folder, "UpstreamDrainageArea.lyr")
+    precip_symbology = os.path.join(symbology_folder, "PrecipitationByReach.lyr")
+    # make layers
+    make_layer(os.path.dirname(network), network, "Bankfull Channel Network", bankfull_network_symbology, symbology_field="BUFWIDTH")
+    make_layer(os.path.dirname(network), network, "Upstream Drainage Area", drain_area_symbology, symbology_field="DRAREA")
+    make_layer(os.path.dirname(network), network, "Precipitation By Reach", precip_symbology, symbology_field="PRECIP")
+    make_layer(os.path.dirname(bankfull_polygon), bankfull_polygon, "Bankfull Channel Polygon", bankfull_polygon_symbology)
+
+    
 if __name__ == '__main__':
-
     main(sys.argv[1],
          sys.argv[2],
          sys.argv[3],

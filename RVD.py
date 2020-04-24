@@ -9,7 +9,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     10/15/2015
-# Updated: 07/25/2017
+# Updated:      07/25/2017
 # Copyright:   (c) Jordan Gilbert 2017
 # Latest Update: 02/27/2020  -   Maggie Hallerud   -  maggie.hallerud@aggiemail.usu.edu
 # License:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
@@ -24,8 +24,7 @@ import numpy as np
 import projectxml
 import uuid
 import datetime
-import shutil
-from SupportingFunctions import make_folder, find_available_num_prefix
+from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
 
 
 def main(
@@ -131,7 +130,11 @@ def main(
     fcOut = os.path.join(analysis_folder, outName) # specify output path
     arcpy.AddMessage("Calculating riparian vegetation conversion types...")
     calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, intermediates_folder, scratch)
-        
+
+    # make layers
+    arcpy.AddMessage("Making layers...")
+    make_layers(fcOut, thiessen_valley, veg_rasters_folder)
+    
     # write XML file
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
     try:
@@ -748,6 +751,31 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
             cursor.updateRow(row)
 
 
+def make_layers(fcOut, thiessen_valley, veg_rasters_folder):
+    source_code_folder = os.path.dirname(os.path.abspath(__file__))
+    symbology_folder = os.path.join(source_code_folder, "RCATSymbology")
+    # pull symbology layers
+    rvd_native_symbology = os.path.join(symbology_folder, "NativeRiparianVegetationDeparture.lyr")
+    rvd_overall_symbology = os.path.join(symbology_folder, "RiparianVegetationDeparture.lyr")
+    conversion_type_symbology = os.path.join(symbology_folder, "RiparianConversionType.lyr")
+    riparian_corridor_symbology = os.path.join(symbology_folder, "RiparianCorridor.lyr")
+    riparian_conversion_symbology = os.path.join(symbology_folder, "ConversionRaster.lyr")
+    thiessen_valley_symbology = os.path.join(symbology_folder, "ClippedThiessenPolygons.lyr")
+    # find filepaths
+    conversion_raster = os.path.join(veg_rasters_folder, "Conversion_Raster.tif")
+    riparian_corridor = os.path.join(veg_rasters_folder, "All_Riparian_recl.tif")
+    # make layers
+    make_layer(os.path.dirname(fcOut), fcOut, "Native Riparian Vegetation Departure", rvd_native_symbology,
+               symbology_field="NATIV_DEP")
+    make_layer(os.path.dirname(fcOut), fcOut, "Riparian Vegetation Departure", rvd_overall_symbology,
+               symbology_field="RIPAR_DEP")
+    make_layer(os.path.dirname(fcOut), fcOut, "Riparian Conversion Type", conversion_type_symbology,
+               symbology_field="Conv_Type")
+    make_layer(os.path.dirname(thiessen_valley), thiessen_valley, "Clipped Thiessen Polygons", thiessen_valley_symbology)
+    make_layer(os.path.dirname(veg_rasters_folder), conversion_raster, "Riparian Conversion Raster", riparian_conversion_symbology, is_raster=True)
+    make_layer(os.path.dirname(veg_rasters_folder), riparian_corridor, "Riparian Corridor", riparian_corridor_symbology, is_raster=True)
+    
+    
 def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder):
     xmlfile = projPath + "/RVDproject.rs.xml"
     if not os.path.exists(xml_file):
@@ -1035,6 +1063,7 @@ def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network,
                               
 def getUUID():
     return str(uuid.uuid4()).upper()
+
 
 if __name__ == '__main__':
     main(

@@ -651,17 +651,17 @@ class RCATBuilder(object):
             multiValue=True)
 
         param2 = arcpy.Parameter(
-            displayName="Select existing cover folder",
+            displayName="Select existing vegetation raster",
             name="ex_cov",
-            datatype="DEFolder",
+            datatype="DERasterDataset",
             parameterType="Required",
             direction="Input",
             multiValue=True)
 
         param3 = arcpy.Parameter(
-            displayName="Select historic cover folder",
+            displayName="Select historic vegetation raster",
             name="hist_cov",
-            datatype="DEFolder",
+            datatype="DERasterDataset",
             parameterType="Required",
             direction="Input",
             multiValue=True)

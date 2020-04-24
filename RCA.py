@@ -6,7 +6,7 @@
 # Author:      Jordan Gilbert
 #
 # Created:     11/2015
-# Latest Update: 08/31/2017
+# Latest Update: 4/2020
 # Copyright:   (c) Jordan Gilbert 2017
 # Licence:     This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 #              License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/.
@@ -16,6 +16,7 @@ import arcpy
 from arcpy.sa import *
 import sys
 import os
+import glob
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
@@ -267,6 +268,7 @@ def main(
     del cursor
 
     # If any segments are found outside of the valley bottom, set the fields to a NoData value
+    arcpy.AddMessage("Cleaning up and saving final output...")
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", frag_valley)
     arcpy.SelectLayerByLocation_management("outlyr", selection_type="SWITCH_SELECTION")
@@ -293,6 +295,10 @@ def main(
     arcpy.Delete_management(out_table)
     arcpy.CheckInExtension('spatial')
 
+    # make layers
+    arcpy.AddMessage("Making layers...")
+    make_layers(fcOut, intermediates_folder)
+    
     # write xml
     arcpy.AddMessage("Writing XML file. NOTE: This is the final step and non-critical to the outputs")
     try:
@@ -506,6 +512,29 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
     del cursor
 
     return
+
+
+def make_layers(out_network, intermediates_folder):
+    source_code_folder = os.path.dirname(os.path.abspath(__file__))
+    symbology_folder = os.path.join(source_code_folder, "RCATSymbology")
+    # pull symbology layers
+    condition_symbology = os.path.join(symbology_folder, "RiparianCondition.lyr")
+    lui_symbology = os.path.join(symbology_folder, "LandUseIntensity.lyr")
+    connectivity_symbology = os.path.join(symbology_folder, "FloodplainConnectivity.lyr")
+    vegetated_symbology = os.path.join(symbology_folder, "VegetationRemaining.lyr")
+    ex_veg_symbology = os.path.join(symbology_folder, "ProportionCurrentlyVegetated.lyr")
+    hist_veg_symbology = os.path.join(symbology_folder, "ProportionHistoricallyVegetated.lyr")
+    connectivity_raster_symbology = os.path.join(symbology_folder, "FloodplainConnectivityRaster.lyr")
+    # find connectivity raster path
+    connectivity_raster = glob.glob(os.path.join(intermediates_folder, "*[0-9]*_Connectivity", "Floodplain_Connectivity.tif"))[-1]
+    # make layers
+    make_layer(os.path.dirname(out_network), out_network, "Riparian Condition", condition_symbology, symbology_field="CONDITION")
+    make_layer(os.path.dirname(out_network), out_network, "Land Use Intensity", lui_symbology, symbology_field="LUI")
+    make_layer(os.path.dirname(out_network), out_network, "Floodplain Connectivity", condition_symbology, symbology_field="CONNECT")
+    make_layer(os.path.dirname(out_network), out_network, "Proportion Currently Vegetated", ex_veg_symbology, symbology_field="EX_VEG")
+    make_layer(os.path.dirname(out_network), out_network, "Proportion Historically Vegetated", hist_veg_symbology, symbology_field="HIST_VEG")
+    make_layer(os.path.dirname(out_network), out_network, "Vegetation Remaining", vegetated_symbology, symbology_field="VEG")
+    make_layer(os.path.dirname(connectivity_raster), connectivity_raster, "Floodplain Connectivity Raster", connectivity_raster_symbology, is_raster=True)
 
 
 def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network, frag_valley, lg_river, dredge_tailings, confin_thresh, output):

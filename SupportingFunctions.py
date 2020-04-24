@@ -16,6 +16,7 @@
 # load dependencies
 import math
 import os
+import arcpy
 
 
 def make_folder(folder):
@@ -155,3 +156,12 @@ def make_layer(output_folder, layer_base, new_layer_name, symbology_layer=None, 
         new_layer_instance.description = description
         new_layer_instance.save()
     return new_layer_save
+
+
+def get_execute_error_code(err):
+    """
+    Returns the error code of the given arcpy.ExecuteError error, by looking at the string of the error
+    :param err:
+    :return:
+    """
+    return err[0][6:12]

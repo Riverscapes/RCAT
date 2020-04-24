@@ -13,7 +13,7 @@
 import os
 import arcpy
 import glob
-from SupportingFunctions import make_folder, find_available_num_prefix
+from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
 arcpy.env.overwriteOutput=True
 
 
@@ -120,6 +120,10 @@ def main(network,
     else:
         output_network = os.path.join(analysis_folder, output_name)
     arcpy.CopyFeatures_management(out_lyr, output_network)
+
+    # make layers
+    arcpy.AddMessage("Making layers...")
+    make_layers(output_network, thiessen_bankfull, thiessen_valley)
 
 
 def build_folder_structure(output_folder):
@@ -258,6 +262,19 @@ def select_polygons_on_network(thiessen_multipart, midpoints, thiessen_singlepar
     # save new thiessen polygons in intermediates
     arcpy.CopyFeatures_management(thiessen_select, thiessen_output)
     
+
+def make_layers(output_network, thiessen_bankfull, thiessen_valley):
+    source_code_folder = os.path.dirname(os.path.abspath(__file__))
+    symbology_folder = os.path.join(source_code_folder, "RCATSymbology")
+    # pull symbology
+    confinement_ratio_symbology = os.path.join(symbology_folder, "ConfinementRatio.lyr")
+    valley_symbology = os.path.join(symbology_folder, "BankfullChannelWidthPolygons.lyr")
+    bankfull_symbology = os.path.join(symbology_folder, "ValleyBottomWidthPolygons.lyr")
+    # make layers
+    make_layer(os.path.dirname(output_network), output_network, "Confinement_Ratio", confinement_ratio_symbology, symbology_field="CONF_RATIO")
+    make_layer(os.path.dirname(thiessen_bankfull), thiessen_bankfull, "Bankfull Channel Width Polygons", bankfull_symbology)
+    make_layer(os.path.dirname(thiessen_valley), thiessen_valley, "Valley Bottom Width Polygons", valley_symbology)
+
 
 if __name__ == "__main__":
     main(sys.argv[1],
