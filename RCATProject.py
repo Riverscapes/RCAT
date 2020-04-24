@@ -85,13 +85,23 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
 
     # add the dem raster to the project
     if dem is not None:
-        dem_destinations = copy_multi_inputs_to_project(dem, dem_folder, "DEM_", is_raster=True)
+        try:
+            dem_destinations = copy_multi_inputs_to_project(dem, dem_folder, "DEM_", is_raster=True)
+        except Exception as err:
+            arcpy.AddMessage("Failed to copy DEM raster(s) into project folder. Manually copy into folder: " + dem_folder +
+                             ". Error thrown was:")
+            arcpy.AddMessage(err)
     else:
         dem_destinations = None
 
     # add the precip raster to the project
     if precip is not None:
-        precip_destinations = copy_multi_inputs_to_project(precip, precip_folder, "Precip_", is_raster=True)
+        try:
+            precip_destinations = copy_multi_inputs_to_project(precip, precip_folder, "Precip_", is_raster=True)
+        except Exception as err:
+            arcpy.AddMessage("Failed to copy Precipitation raster(s) into project folder. Manually copy into folder: " + dem_folder +
+                             ". Error thrown was:")
+            arcpy.AddMessage(err)
     else:
         precip_destinations = None
 
