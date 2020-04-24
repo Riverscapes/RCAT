@@ -128,7 +128,12 @@ def clip_file(shapefile, clipping_network):
                 arcpy.Clip_analysis(shapefile, clipping_network, out_name)
                 return out_name
             except Exception as err:
+<<<<<<< HEAD
+                arcpy.AddMessage("WARNING: Clipping failed for "+ network + ". Exception thrown was:")
+                arcpy.AddMessage(err)
+=======
                 print(err)
+>>>>>>> c4ce86adecda6b4c352d2ff362dfc11890edd600
     else:
         arcpy.AddMessage("WARNING: Could not find " + shapefile + " to make clipped layers")
 
@@ -250,7 +255,11 @@ def check_analyses(analyses_folder, symbology_folder):
     confinement_folder = find_folder(analyses_folder, "Confinement")
     rca_folder = find_folder(analyses_folder, "RCA")
 
+<<<<<<< HEAD
+    check_analyis_layer(rvd_folder, "Riparian Vegetation Departure",
+=======
     check_analysis_layer(rvd_folder, "Riparian Vegetation Departure",
+>>>>>>> c4ce86adecda6b4c352d2ff362dfc11890edd600
                          symbology_folder, "RiparianVegetationDeparture.lyr", "RIPAR_DEP")
     check_analysis_layer(rvd_folder, "Native Riparian Vegetation Departure",
                          symbology_folder, "NativeRiparianVegetationDeparture.lyr", "NATIV_DEP")
@@ -426,8 +435,9 @@ def make_topo_layers(topo_folder, symbology_folder):
     :return:
     """
     dem_symbology = os.path.join(symbology_folder, "DEM.lyr")
-    slope_symbology = os.path.join(symbology_folder, "Slope.lyr")
-    flow_symbology = os.path.join(symbology_folder, "DrainageAreaRaster.lyr")
+    #slope_symbology = os.path.join(symbology_folder, "Slope.lyr")
+    hillshade_symbology =  os.path.join(symbology_folder, "Hillshade.lyr")
+    flow_symbology = os.path.join(symbology_folder, "FlowAccumulationRaster.lyr")
 
     for folder in os.listdir(topo_folder):
         dem_folder_path = os.path.join(topo_folder, folder)
@@ -444,22 +454,22 @@ def make_topo_layers(topo_folder, symbology_folder):
         hillshade_folder = find_folder(dem_folder_path, "Hillshade")
         if hillshade_folder is not None:
             try:
-                hillshade_file = os.path.join(hillshade_folder, "*.tif")
+                hillshade_file = find_file(hillshade_folder, "*.tif")
                 if not os.path.exists(os.path.join(hillshade_folder, "Hillshade.lyr")) and os.path.exists(hillshade_file):
-                    make_layer(hillshade_folder, hillshade_file, "Hillshade", is_raster=True)
+                    make_layer(hillshade_folder, hillshade_file, "Hillshade", hillshade_symbology, is_raster=True)
             except Exception as err:
                 arcpy.AddMessage("WARNING: Fixing layer failed for hillshade raster. Error thrown was:")
                 arcpy.AddMessage(err)
 
-        slope_folder = find_folder(dem_folder_path, "Slope")
-        if slope_folder is not None:
-            try:
-                slope_file = os.path.join(slope_folder, "*.tif")
-                if not os.path.exists(os.path.join(slope_folder, "Slope.lyr")) and os.path.exists(slope_file):
-                    make_layer(slope_folder, slope_file, "Slope", slope_symbology, is_raster=True)
-            except Exception as err:
-                arcpy.AddMessage("WARNING: Fixing layer failed for slope raster. Error thrown was:")
-                arcpy.AddMessage(err)
+        #slope_folder = find_folder(dem_folder_path, "Slope")
+        #if slope_folder is not None:
+        #    try:
+        #        slope_file = find_file(slope_folder, "*.tif")
+        #        if not os.path.exists(os.path.join(slope_folder, "Slope.lyr")) and os.path.exists(slope_file):
+        #            make_layer(slope_folder, slope_file, "Slope", slope_symbology, is_raster=True)
+        #    except Exception as err:
+        #        arcpy.AddMessage("WARNING: Fixing layer failed for slope raster. Error thrown was:")
+        #        arcpy.AddMessage(err)
 
         flow_folder = find_folder(dem_folder_path, "Flow")
         if flow_folder is not None:
@@ -651,10 +661,10 @@ def get_inputs_layer(empty_group_layer, inputs_folder, df, mxd, clipping_network
     
     dem_layers = find_instance_layers(topo_folder, None)
     hillshade_layers = find_dem_derivative(topo_folder, "Hillshade")
-    slope_layers = find_dem_derivative(topo_folder, "Slope")
+    #slope_layers = find_dem_derivative(topo_folder, "Slope")
     flow_layers = find_dem_derivative(topo_folder, "Flow")
     topo_layer = group_layers(empty_group_layer, "Topography",
-                              hillshade_layers + dem_layers + slope_layers + flow_layers, df, mxd)
+                              hillshade_layers + dem_layers + flow_layers, df, mxd)
 
     precip_layers = find_instance_layers(precip_folder, None)
     precip_layer = group_layers(empty_group_layer, "Precipitation", precip_layers, df, mxd)
@@ -675,6 +685,11 @@ def get_intermediates_layers(empty_group_layer, intermediates_folder, analyses_f
     """
     intermediate_layers = []
 
+    thiessen_valley_folder = find_folder(intermediates_folder, "ValleyThiessen")
+    find_and_group_layers(intermediate_layers, intermediates_folder,
+                          "ValleyThiessen", "Thiessen Polygons",
+                          empty_group_layer, df, mxd, None)
+    
     rca_folder = find_folder(analyses_folder, "RCA")
     if rca_folder is not None:
         if clipping_network is None:
@@ -696,9 +711,6 @@ def get_intermediates_layers(empty_group_layer, intermediates_folder, analyses_f
         hist_veg_lyr = None
         vegetated_lyr = None
 
-    find_and_group_layers(intermediate_layers, intermediates_folder,
-                          "ValleyThiessen", "Thiessen Polygons",
-                          empty_group_layer, df, mxd, None)
     find_and_group_layers(intermediate_layers, intermediates_folder,
                           "VegetationRasters", "RVD Intermediates",
                           empty_group_layer, df, mxd, None)
@@ -925,7 +937,7 @@ def make_layer(output_folder, layer_base, new_layer_name, symbology_layer=None, 
         try:
             arcpy.MakeRasterLayer_management(layer_base, new_layer)
         except arcpy.ExecuteError as err:
-            if get_execute_error_code(err) == "000873":
+            if err[0][6:12] == "000873":
                 arcpy.AddError(err)
                 arcpy.AddMessage("The error above can often be fixed by removing layers or layer packages from the Table of Contents in ArcGIS.")
                 raise Exception
