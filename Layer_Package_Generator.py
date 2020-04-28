@@ -209,6 +209,8 @@ def check_intermediates(intermediates_folder, symbology_folder):
 
     thiessen_valley_layer = os.path.join(thiessen_valley_folder, "ClippedThiessenPolygons.lyr")
     thiessen_valley_clip = os.path.join(thiessen_valley_folder, "Thiessen_Valley_Clip.shp")
+    #temp edit for old naming below:
+    #thiessen_valley_clip = os.path.join(thiessen_valley_folder, "Thiessen_Valley.shp")
     check_layer(thiessen_valley_layer, thiessen_valley_clip, thiessen_valley_symbology, is_raster=False,
                 layer_name="Clipped Thiessen Polygons") 
 
@@ -386,13 +388,13 @@ def check_inputs(inputs_folder, symbology_folder):
                       symbology_layer=landuse_symbology, is_raster=True)
 
     hist_veg_destinations = find_destinations(hist_vegetation_folder)
-    make_input_layers(ex_veg_destinations, "Existing Native Riparian Vegetation",
+    make_input_layers(hist_veg_destinations, "Historic Native Riparian Vegetation",
                       symbology_layer=hist_veg_native_symbology, is_raster=True)
-    make_input_layers(ex_veg_destinations, "Existing Riparian Vegetation",
+    make_input_layers(hist_veg_destinations, "Historic Riparian Vegetation",
                       symbology_layer=hist_veg_riparian_symbology, is_raster=True)
-    make_input_layers(ex_veg_destinations, "Existing Vegetation Type",
+    make_input_layers(hist_veg_destinations, "Historic Vegetation Type",
                       symbology_layer=hist_veg_group_symbology, is_raster=True)
-    make_input_layers(ex_veg_destinations, "Existing Vegetated",
+    make_input_layers(hist_veg_destinations, "Historic Vegetated",
                       symbology_layer=hist_veg_riparian_symbology, is_raster=True)
 
     valley_destinations = find_destinations(valley_folder)
