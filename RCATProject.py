@@ -99,7 +99,7 @@ def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings,
         try:
             precip_destinations = copy_multi_inputs_to_project(precip, precip_folder, "Precip_", is_raster=True)
         except Exception as err:
-            arcpy.AddMessage("Failed to copy Precipitation raster(s) into project folder. Manually copy into folder: " + dem_folder +
+            arcpy.AddMessage("Failed to copy Precipitation raster(s) into project folder. Manually copy into folder: " + precip_folder +
                              ". Error thrown was:")
             arcpy.AddMessage(err)
     else:
