@@ -196,7 +196,7 @@ def check_intermediates(intermediates_folder, symbology_folder):
     :return:
     """
     thiessen_valley_symbology = os.path.join(symbology_folder, "ClippedThiessenPolygons.lyr")
-    conversion_raster_symbology = os.path.join(symbology_folder, "RiparianConversionRaster.lyr")
+    conversion_raster_symbology = os.path.join(symbology_folder, "ConversionRaster.lyr")
     riparian_symbology = os.path.join(symbology_folder, "RiparianCorridor.lyr")
     bankfull_width_symbology = os.path.join(symbology_folder, "BankfullChannelWidthPolygons.lyr")
     valley_width_symbology = os.path.join(symbology_folder, "ValleyBottomWidthPolygons.lyr")
@@ -209,8 +209,6 @@ def check_intermediates(intermediates_folder, symbology_folder):
 
     thiessen_valley_layer = os.path.join(thiessen_valley_folder, "ClippedThiessenPolygons.lyr")
     thiessen_valley_clip = os.path.join(thiessen_valley_folder, "Thiessen_Valley_Clip.shp")
-    #temp edit for old naming below:
-    #thiessen_valley_clip = os.path.join(thiessen_valley_folder, "Thiessen_Valley.shp")
     check_layer(thiessen_valley_layer, thiessen_valley_clip, thiessen_valley_symbology, is_raster=False,
                 layer_name="Clipped Thiessen Polygons") 
 
@@ -359,7 +357,7 @@ def check_inputs(inputs_folder, symbology_folder):
     landuse_symbology = os.path.join(symbology_folder, "LandUseRaster.lyr")
     
     hist_veg_native_symbology = os.path.join(symbology_folder, "HistoricVegNativeRiparian.lyr")
-    hist_veg_riparian_symbology = os.path.join(symbology_folder, "HistoricVegOverallRiparian.lyr")
+    hist_veg_riparian_symbology = os.path.join(symbology_folder, "HistoricVegRiparian.lyr")
     hist_veg_group_symbology = os.path.join(symbology_folder, "HistoricVegType.lyr")
     hist_veg_vegetated_symbology = os.path.join(symbology_folder, "HistoricVegetated.lyr")
 
@@ -623,7 +621,7 @@ def get_inputs_layer(empty_group_layer, inputs_folder, df, mxd, clipping_network
 
     ex_veg_native_lyrs = find_veg_layers(ex_veg_folder, "ExistingNativeRiparianVegetation.lyr")
     ex_veg_riparian_lyrs = find_veg_layers(ex_veg_folder, "ExistingRiparianVegetation.lyr")
-    ex_veg_type_lyrs = find_veg_layers(ex_veg_folder, "ExistingVegetationType.lyr")
+    ex_veg_type_lyrs = find_veg_layers(ex_veg_folder, "ExistingLandcoverGroup.lyr")
     ex_veg_vegetated_lyrs = find_veg_layers(ex_veg_folder, "ExistingVegetated.lyr")
     ex_veg_layers = ex_veg_vegetated_lyrs + ex_veg_riparian_lyrs + ex_veg_native_lyrs + ex_veg_type_lyrs
     ex_veg_layer = group_layers(empty_group_layer, "Existing Vegetation", ex_veg_layers, df, mxd)
