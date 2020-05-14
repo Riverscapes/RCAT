@@ -1,5 +1,5 @@
 ---
-title: Step 1 - RCAT Project Builder
+title: Step 2 - RCAT Project Builder
 category: RCAT
 ---
 

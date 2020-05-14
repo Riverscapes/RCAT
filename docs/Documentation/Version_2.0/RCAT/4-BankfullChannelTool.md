@@ -1,5 +1,5 @@
 ---
-title: Step 3 - Bankfull Channel Polygon Tool
+title: Step 4 - Bankfull Channel Polygon Tool
 category: RCAT
 ---
 

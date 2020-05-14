@@ -1,5 +1,5 @@
 ---
-title: Step 2 - Riparian Vegetation Departure (RVD)
+title: Step 3 - Riparian Vegetation Departure (RVD)
 category: RCAT
 ---
 
@@ -32,7 +32,7 @@ The Riparian Vegetation Departure (RVD) tool uses vegetation landcover inputs to
 - **Riparian Vegetation Departure ratio** `RIPAR_DEP`: This is calculated for each reach by finding the area of current existing riparian landcover (including nonnative species) within valley bottom of a reach, then dividing this value by the historic riparian landcover within the reach's valley bottom.
 
 ![RVD_Riparian_Departure]({{ site.baseurl }}/assets/images/RVD_RiparDep.png)
- 
+
 - **Riparian Vegetation Conversion Type** `CONV_TYPE`: This is identified by comparing landcover within the riparian zone, with the riparian zone defined as the area within the valley bottom that is classified as riparian in either the existing *or* historic vegetation rasters. 
 
 ![RVD_Conv_Type]({{ site.baseurl }}/assets/images/RVD_Conversion.png)

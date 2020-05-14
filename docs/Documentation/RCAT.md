@@ -26,6 +26,7 @@ For documentation on the major changes implemented, see [RCAT Version 2.0]({{ si
 - [Bankfull Channel]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/4-BankfullChannelTool)
 - [Confinement Tool]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool)
 - [Riparian Condition Assessment]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/6-RCA)
+- [Layer Package Generator]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/7-LayerPackageGenerator)
 
 **VBET** (Valley Bottom Extraction Toolbox)
 - [VBET Project Builder]({{ site.baseurl }}/Documentation/Version_2.0/VBET/1-VBETProjectBuilder)
@@ -54,6 +55,10 @@ For documentation on the major changes implemented, see [RCAT Version 2.0]({{ si
 [**Download**](https://github.com/Riverscapes/RCAT/releases/latest) the Riparian Condition Assessment Tools (RCAT) Latest Release (including VBET)
 
 ### Update History
+
+**05/14/2020 - RCAT Version 2.0.2** - Added Layer Package Generator Tool and fixed bugs.
+
+**04/17/2020 - RCAT Version 2.0.1** - Fixed bug in RCA tool.
 
 **04/11/2020 - RCAT Version 2.0.0** - Added bankfull channel and confinement tools for more accurate confinement metrics, added flexibility in vegetation input, added flexibility for vegetation classifications, added dredge tailings handling, added separate native riparian vegetation departure and overall riparian departure fields, improved riparian conversion metrics, added riparian conversion fields for riparian expansion and conversion to deciduous forest, increased linearity between RCAT tools, improved RCAT project folder structure, improved valley bottom delineation, added batch scripts for VBET, improved toolbox structure, added supporting tools for classifying LANDFIRE vegetation and segmenting the network, and increased stability of tools by fixing many minor bugs. Details on these changes can be found on the [RCAT Version 2.0 page]({{ site.baseurl }}/Documentation/Version_2.0/). 
 

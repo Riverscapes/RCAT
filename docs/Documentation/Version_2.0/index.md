@@ -20,6 +20,8 @@ Step 5. [Confinement Tool]({{ site.baseurl }}/Documentation/Verson_2.0/RCAT/5-Co
 
 Step 6. [Riparian Condition Assessment]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/6-RCA)
 
+Step 7. [Layer Package Generator]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/7-LayerPackageGenerator)
+
 > NOTE: RCAT Version 2.0 was developed using ArcMap 10.6.1 and tested on ArcMap 10.6.1 and ArcMap 10.7.1.
 
 ## Added flexibility in vegetation input classifications
@@ -68,6 +70,12 @@ These changes increase the accuracy of riparian conversion outputs and acknowled
 ## VBET Improvements
 
 Fixed bugs in VBET and improved accuracy to minimize the need for manual editing. Added batch scripts for VBET in the supporting tools folder.
+
+## Added Layer Package Generator tool
+
+RCAT Version 2.0 generates layer files for all inputs, intermediates and outputs and incorporates a Layer Package Generator tool to gather layers into a layer package with consistent symbology and organization. 
+
+This addition allows users to easily review and share RCAT results.
 
 ## Improved toolbox linearity and project structure
 

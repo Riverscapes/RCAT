@@ -1,5 +1,5 @@
 ---
-title: Step 5 - Riparian Condition Assessment (RCA)
+title: Step 6 - Riparian Condition Assessment (RCA)
 category: RCAT
 ---
 
@@ -53,4 +53,5 @@ Conceptual diagram showing how riparian condition assessment is calculated
 --------------------------------
 <div align="center">
 	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool"><i class="fa fa-arrow-circle-left"></i> Back to Step 5 </a>
+	<a class="hollow button" href="{{ site.baseurl }}/Documentation/Version_2.0/RCAT/7-LayerPackageGenerator"><i class="fa fa-arrow-circle-right"></i> Continue to Step 7 </a>
 </div>	

@@ -1,5 +1,5 @@
 ---
-title: Step 4 - Confinement Tool
+title: Step 5 - Confinement Tool
 category: RCAT
 ---
 
@@ -34,7 +34,6 @@ Output stream network including the above attribute fields, symbolized by the co
 
 ![Confinement_output]({{ site.baseurl }}/assets/images/ConfinementOutput_2.0.PNG)
 
-
 ------------------------------------------------------------------------------------------------------------------------------
 ## Confinement Tool Workflow
 
@@ -46,7 +45,6 @@ Output stream network including the above attribute fields, symbolized by the co
 6. The average width of the bankfull channel polygon `BFC_Width` corresponding to each stream segment is calculated by dividing the polygon area `BFC_Area` by the segment length `Rch_Len`. This value essentially is the width of the bankfull channel polygon converted to a rectangle of equal area.
 7. The average width of the valley bottom polygon `VAL_Width` corresponding to each stream segment is calculated by dividing the polygon area `VAL_Area` by the segment length `Rch_Len`. This value essentially is the width of the valley bottom polygon converted to a rectangle of equal area.
 8. The confinement index `CONFIN_RATIO` is calculated by dividing the bankfull channel width `BFC_Width` by the valley bottom width `VAL_Width`.
-
 
 --------------------------------
 <div align="center">
