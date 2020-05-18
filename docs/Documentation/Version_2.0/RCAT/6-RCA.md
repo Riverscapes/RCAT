@@ -12,7 +12,7 @@ The Riparian Condition Assessment (RCA) tool models the condition of riparian ar
 - **Project Name** (optional): Project name to be used in the XML metadata file.
 - **Watershed HUC ID** (optional): Watershed HUC ID to be used in the XML metadata file.
 - **Watershed Name** (optional): Watershed name to be used in the XML metadata file.
-- **Select output folder for run**: Select project folder created in the RCA Project Builder.
+- **Select output folder for run**: Select output folder for run (format Output_01).
 - **Select existing cover raster**: Select the existing vegetation layer from the inputs folder within the project folder.
 - **Select historic cover raster**: Select the historic vegetation layer from the inputs folder within the project folder. 
 - **Select confinement network**: Select the stream network shapefile from the inputs folder within the project folder.
@@ -22,9 +22,9 @@ NOTE: In the current version of the tool, if the stream network contains too man
 - **Select fragmented valley bottom**: Select the valley bottom shapefile from the inputs folder within the project folder.
 - **Select large river polygon** (optional): Select the large river shapefile from the inputs folder. In areas with large rivers (ie Green, Colorado, Snake, Columbia), all landcover cells within these large river polygons are coded as no data. In smaller rivers, the open water landcover class is coded as riparian. In development, we found that coding open water in large rivers as riparian skewed them to appear to be in better condition than they are. In small rivers, if open water was *not* coded as riparian, they appeared to be in worse condition than they were. The "Area" shapefile that was downloaded with NHD data can generally be used as this large river polygon.
 - **Select dredge tailings polygon** (optional): Select dredge tailings shapefile from the inputs folder. In areas with dredge tailings, existing riparian landcover is coded with a vegetation score of "0" - i.e., no riparian vegetation.
-- **Valley bottom width threshold**: Enter a width value above which streams will be considered "unconfined" and below which the streams will be considered "confined." 
+- **Confinement ratio threshold**: Enter a confinement ratio value above which streams will be considered "confined" and below which the streams will be considered "unconfined." The default value is 0.4.
 
-NOTE: the process used to calculate valley width gives a rough, over-estimated estimate, so this value should also be over-estimated (for example the default value of 190 meters for the tool is roughly 100 meters on the ground). The value can be decreased from the default value (190) in order to include more of the network as unconfined, or increased in order to include less of the network as unconfined.
+NOTE: The default threshold is 0.4. Decreasing this value will result in more confined reaches, and increasing the value will result in fewer confined reaches. Prior to running the RCA tool, the confinement tool output can be investigated and visually compared to imagery to determine an appropriate threshold. 
 
 - **Name RCA Output**: Specify name for the final polyline output which will be saved in the outputs folder within the project folder.
 
