@@ -20,3 +20,5 @@ Drainage area raster: optionally, a flow accumulation raster can be derived, and
 - **Select DEM raster(s)**: Input DEM raster.
 - **Select drainage network shapefile(s)**: Input stream network shapefile.
 - **Select drainage area raster(s)** (optional): Input drainage area raster. If not provided, a drainage area raster will be calculated later. 
+
+After running this step, run the VBET tool. Instructions can be found [here]({{ site.baseurl }}/Documentation/Version_2.0/VBET/2-VBET.html).
