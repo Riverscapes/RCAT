@@ -1,6 +1,7 @@
 ---
 title: Valley Bottom Extraction Tool (VBET) Project Builder
 category: VBET
+weight: 1
 ---
 
 A valley bottom is a low lying area of a valley comprised of both the stream channel and contemporary floodplain. This area also represents the maximum possible extent of riparian areas of the streams associated with the valley bottom. VBET uses a minimum of two input datasets, a Digital Elevation Model (DEM) and a stream network to create a polygon representing the valley bottom. This valley bottom polygon is then used as an extent for the riparian condition analyses in this toolbox.
