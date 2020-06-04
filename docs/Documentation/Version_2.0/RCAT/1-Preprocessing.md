@@ -58,7 +58,7 @@ For both the historic and existing vegetation rasters, add and populate the foll
 
 One of the required inputs is a valley bottom polygon that has been fragmented using a transportation infrastructure network (roads, railroads, etc.). The following process describes how to derive this input:
 
-- Produce a valley bottom using [VBET]({{ site.baseurl }}/Documentation/Version_2.0/VBET), and manually edit to desired accuracy.
+- Produce a valley bottom using [VBET]({{ site.baseurl }}/Documentation/Version_2.0/VBET/1-VBETProjectBuilder.html), and manually edit to desired accuracy.
 - Overlay a finalized road/railroad network on a copy of a final, edited valley bottom polygon.
 
 > NOTE: National road and railroad datasets can be found on the [TIGER website](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-geodatabase-file.html).
