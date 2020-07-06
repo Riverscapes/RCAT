@@ -25,7 +25,7 @@ def make_folder(folder):
     """
     if not os.path.exists(folder):
         os.mkdir(folder)
-    return 
+    return
 
 
 def find_available_num_prefix(folder_root):
