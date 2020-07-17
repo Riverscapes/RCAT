@@ -13,7 +13,7 @@
 import os
 import arcpy
 import glob
-from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
+from SupportingFunctions import find_available_num_prefix, make_layer
 arcpy.env.overwriteOutput=True
 
 
@@ -274,6 +274,14 @@ def make_layers(output_network, thiessen_bankfull, thiessen_valley):
     make_layer(os.path.dirname(output_network), output_network, "Confinement_Ratio", confinement_ratio_symbology, symbology_field="CONF_RATIO")
     make_layer(os.path.dirname(thiessen_bankfull), thiessen_bankfull, "Bankfull Channel Width Polygons", bankfull_symbology)
     make_layer(os.path.dirname(thiessen_valley), thiessen_valley, "Valley Bottom Width Polygons", valley_symbology)
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == "__main__":

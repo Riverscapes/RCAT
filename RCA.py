@@ -24,7 +24,7 @@ from math import pi
 import projectxml
 import uuid
 import datetime
-from SupportingFunctions import *
+from SupportingFunctions import find_available_num_prefix, make_layer
 
 
 def main(
@@ -59,6 +59,7 @@ def main(
     scratch = os.path.join(projPath, 'Temp')
     if not os.path.exists(scratch):
         os.mkdir(scratch)
+    arcpy.env.scratchWorkspace = scratch
     arcpy.env.workspace = 'in_memory'
     
     arcpy.env.overwriteOutput = True
@@ -823,6 +824,15 @@ def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network,
 
 def getUUID():
     return str(uuid.uuid4()).upper()
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == '__main__':

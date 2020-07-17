@@ -24,7 +24,8 @@ import numpy as np
 import projectxml
 import uuid
 import datetime
-from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
+import shutil
+from SupportingFunctions import  find_available_num_prefix, make_layer
 
 
 def main(
@@ -778,7 +779,7 @@ def make_layers(fcOut, thiessen_valley, veg_rasters_folder):
     
 def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder):
     xmlfile = projPath + "/RVDproject.rs.xml"
-    if not os.path.exists(xml_file):
+    if not os.path.exists(xmlfile):
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "RVD", projName)
 
@@ -1063,6 +1064,15 @@ def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network,
                               
 def getUUID():
     return str(uuid.uuid4()).upper()
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == '__main__':

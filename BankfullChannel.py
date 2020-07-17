@@ -14,7 +14,7 @@ import arcpy
 from arcpy.sa import *
 import sys
 import os
-from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
+from SupportingFunctions import find_available_num_prefix, make_layer
 arcpy.CheckOutExtension('Spatial')
 
 
@@ -136,7 +136,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
 
     # clip thiessen polygons to buffered valley bottom
     thiessen_valley_multipart = scratch + "/Thiessen_Valley_Clip.shp"
-    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_multipart)
+    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley_multipart)
 
     # convert multipart features to single part
     arcpy.AddField_management(thiessen_valley_multipart, "RCH_FID", "SHORT")
@@ -219,7 +219,6 @@ def add_raster_values(thiessen_clip, raster, field_type, temp_dir):
     # Zonal statistics of drainage area and precip using thiessen polygons
     tbl_out = os.path.join(temp_dir, "zonal_tbl_" + field_type + ".dbf")
     tbl_zs = ZonalStatisticsAsTable(thiessen_clip, "RCH_FID", raster, tbl_out, "DATA", "MAXIMUM")
-
     # delete required fields if already in thiessen fields
     thiessen_fields = [f.name for f in arcpy.ListFields(thiessen_clip)]
     if "MAX" in thiessen_fields:
@@ -326,6 +325,8 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
         output = os.path.join(bankfull_folder, out_name+".shp")
     else:
         output = os.path.join(bankfull_folder, out_name)
+    arcpy.AddMessage(bankfull_dissolve)
+    arcpy.AddMessage(output)
     arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
     
     # Todo: add params as fields to shp.
@@ -345,6 +346,16 @@ def make_layers(network, bankfull_polygon):
     make_layer(os.path.dirname(network), network, "Upstream Drainage Area", drain_area_symbology, symbology_field="DRAREA")
     make_layer(os.path.dirname(network), network, "Precipitation By Reach", precip_symbology, symbology_field="PRECIP")
     make_layer(os.path.dirname(bankfull_polygon), bankfull_polygon, "Bankfull Channel Polygon", bankfull_polygon_symbology)
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
+
 
     
 if __name__ == '__main__':
