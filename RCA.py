@@ -292,7 +292,7 @@ def main(
 
     # temp output and environment clean up
     arcpy.Delete_management(tempOut)
-    arcpy.Delete_management(fcOut)
+    #arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
     arcpy.CheckInExtension('spatial')
 
