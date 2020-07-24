@@ -360,7 +360,7 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
 
 def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, intermediates_folder, scratch):
     # set extent for all rasters
-    arcpy.env.extent = thiessen_valley
+    arcpy.env.extent = 'MAXOF'
     arcpy.env.snapRaster = ex_veg
     # setting folder paths
     ex_veg_lookup_folder = os.path.join(intermediates_folder, "03_VegetationRasters/01_Ex_Veg")
