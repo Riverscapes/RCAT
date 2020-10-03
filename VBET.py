@@ -45,7 +45,7 @@ def calc_drain_area(smDEM, flowDir):
 
     # derive drainage area raster (in square km) from input DEM
     # note: draiange area calculation assumes input dem is in meters
-    filled_DEM = Fill(smDEM) # fill sinks in dem
+    filled_DEM = Fill(smDEM)  # fill sinks in dem
     flow_direction = FlowDirection(filled_DEM) # calculate flow direction
     flow_accumulation = FlowAccumulation(flow_direction) # calculate flow accumulattion
     DrainArea = flow_accumulation * cellArea / 1000000 # calculate drainage area in square kilometers
