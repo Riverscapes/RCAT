@@ -90,6 +90,8 @@ def add_conversion_field(ex_veg, hist_veg):
                 row[2] = 3
             elif row[1] == "703": # introduced perennial grassland and forbland 
                 row[2] = 3
+            elif row[0] == "Quarries-Strip Mines-Gravel Pits-Well and Wind Pads":
+                row[2] = 2
             else:
                 row[2] = -9999 #NoData value
             cursor.updateRow(row)
