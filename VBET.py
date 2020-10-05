@@ -149,6 +149,8 @@ def main(
     min_hole,
     check_drain_area):
 
+    arcpy.env.parallelProcessingFactor = "0"
+    
     check_drain_area = parseInputBool(check_drain_area)
 
     # create temporary directory
