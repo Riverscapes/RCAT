@@ -149,6 +149,8 @@ def main(
     min_hole,
     check_drain_area):
 
+    arcpy.AddMessage("Running VBET...")
+
     arcpy.env.parallelProcessingFactor = "0"
     
     check_drain_area = parseInputBool(check_drain_area)
@@ -223,12 +225,12 @@ def main(
     if not os.path.exists(flowDir):
         os.mkdir(flowDir)
     if FlowAcc is None:
-        print "Calculating drainage area..."
+        arcpy.AddMessage("Calculating drainage area...")
         calc_drain_area(smDEM, flowDir)
         DrAr = os.path.join(flowDir, 'DrainArea_sqkm.tif')
         inFlow = Raster(DrAr)
     else:
-        print "Getting path to existing drainage area raster..."
+        arcpy.AddMessage("Getting path to existing drainage area raster...")
         DrAr = FlowAcc
         inFlow = Raster(DrAr)
 
