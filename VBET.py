@@ -86,28 +86,28 @@ def zonalStatsWithinBuffer(buffer, ras, statType, statField, outFC, outFCField, 
     # run zonal stats until we have output for each overlapping buffer segment
     stat = None
     tmp_buff_lyr = None
-    while len(needStatList) > 0:
-        # create tuple of segment ids where still need raster values
-        needStat = ()
-        for reach in needStatList:
-            if reach not in needStat:
-                needStat += (reach,)
-        # use the segment id tuple to create selection query and run zonal stats tool
-        if len(needStat) == 1:
-            quer = '"ReachID" = ' + str(needStat[0])
-        else:
-            quer = '"ReachID" IN ' + str(needStat)
-        tmp_buff_lyr = arcpy.MakeFeatureLayer_management(buffer, 'tmp_buff_lyr')
-        arcpy.SelectLayerByAttribute_management(tmp_buff_lyr, 'NEW_SELECTION', quer)
-        stat = arcpy.sa.ZonalStatisticsAsTable(tmp_buff_lyr, 'ReachID', ras, os.path.join(scratch, 'stat'), 'DATA', statType)
-        # add segment stat values from zonal stats table to main dictionary
-        with arcpy.da.SearchCursor(stat, ['ReachID', statField]) as cursor:
-            for row in cursor:
-                statDict[row[0]] = row[1]
-        # create list of reaches that were run and remove from 'need to run' list
-        haveStatList2 = [row[0] for row in arcpy.da.SearchCursor(stat, 'ReachID')]
-        for reach in haveStatList2:
-            needStatList.remove(reach)
+
+    # create tuple of segment ids where still need raster values
+    needStat = ()
+    for reach in needStatList:
+        if reach not in needStat:
+            needStat += (reach,)
+    # use the segment id tuple to create selection query and run zonal stats tool
+    if len(needStat) == 1:
+        quer = '"ReachID" = ' + str(needStat[0])
+    else:
+        quer = '"ReachID" IN ' + str(needStat)
+    tmp_buff_lyr = arcpy.MakeFeatureLayer_management(buffer, 'tmp_buff_lyr')
+    arcpy.SelectLayerByAttribute_management(tmp_buff_lyr, 'NEW_SELECTION', quer)
+    stat = arcpy.sa.ZonalStatisticsAsTable(tmp_buff_lyr, 'ReachID', ras, os.path.join(scratch, 'stat'), 'DATA', statType)
+    # add segment stat values from zonal stats table to main dictionary
+    with arcpy.da.SearchCursor(stat, ['ReachID', statField]) as cursor:
+        for row in cursor:
+            statDict[row[0]] = row[1]
+    # create list of reaches that were run and remove from 'need to run' list
+    haveStatList2 = [row[0] for row in arcpy.da.SearchCursor(stat, 'ReachID')]
+    for reach in haveStatList2:
+        needStatList.remove(reach)
 
     # populate dictionary value to output field by ReachID
     with arcpy.da.UpdateCursor(outFC, ['ReachID', outFCField]) as cursor:
@@ -245,7 +245,7 @@ def main(
     else:
         raise Exception("Low drainage area threshold is less than the lowest network drainage area value")
 
-    print "Calculating stream network drainage area values..."
+    arcpy.AddMessage("Calculating stream network drainage area values...")
 
     # create network segment midpoints
     network_midpoints = os.path.join(tempDir, "network_midpoints.shp")
@@ -267,6 +267,7 @@ def main(
     # get max drainage area within 100 m midpoint buffer
     zonalStatsWithinBuffer(midpoint_buffer, inFlow, "MAXIMUM", 'MAX', fcNetwork, "DA_sqkm", tempDir)
     arcpy.Delete_management(midpoint_buffer)
+
 
     # replace '0' drainage area values with tiny value
     with arcpy.da.UpdateCursor(fcNetwork, ["DA_sqkm"]) as cursor:
