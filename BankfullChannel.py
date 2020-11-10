@@ -325,9 +325,8 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
         output = os.path.join(bankfull_folder, out_name+".shp")
     else:
         output = os.path.join(bankfull_folder, out_name)
-    arcpy.AddMessage(bankfull_dissolve)
-    arcpy.AddMessage(output)
-    arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
+
+    #arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
     
     # Todo: add params as fields to shp.
     return output
