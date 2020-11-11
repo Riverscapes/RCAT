@@ -18,7 +18,7 @@ from SupportingFunctions import find_available_num_prefix, make_layer
 arcpy.CheckOutExtension('Spatial')
 
 
-def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_polygon_name, out_network_name):
+def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_polygon_name, out_network_name, add_constant=False, river_name=False):
     """ Calculates bankfull channel width and creates a bankfull channel polygon
     :param network: Segmented stream network from RVD output, to calculate bankfull channel on
     :param valleybottom: Valley bottom for stream network
@@ -70,6 +70,18 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     else:
         intersect = os.path.join(analysis_dir, out_network_name)
     arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
+
+    if add_constant:
+        did_change = False
+        with arcpy.da.UpdateCursor(intersect, ["StreamName", "DRAREA"]) as cursor:
+            for row in cursor:
+                if row[0] == river_name:
+                    arcpy.AddMessage("\tAdjusting value for {}".format(river_name))
+                    row[1] += add_constant
+                    did_change = True
+                cursor.updateRow(row)
+        if not did_change:
+            arcpy.AddMessage("Could not find stream name")
 
     # calculate buffer width
     arcpy.AddMessage("Calculating bankfull buffer width...")
@@ -367,4 +379,6 @@ if __name__ == '__main__':
          sys.argv[7],
          sys.argv[8],
          sys.argv[9],
-         sys.argv[10])
+         sys.argv[10],
+         sys.argv[11],
+         sys.argv[12])
