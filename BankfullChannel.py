@@ -70,14 +70,21 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
 
     # intersect dissolved network with thiessen polygons
     if not out_network_name.endswith(".shp"):
-        intersect = os.path.join(analysis_dir, out_network_name+".shp")
+        intersect = os.path.join(analysis_dir, out_network_name+"_Intersected.shp")
     else:
-        intersect = os.path.join(analysis_dir, out_network_name)
+        intersect = os.path.join(analysis_dir, "Intersected_" + out_network_name)
     arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
+
+    if not out_network_name.endswith(".shp"):
+        spatial_join_out = os.path.join(analysis_dir, out_network_name+".shp")
+    else:
+        spatial_join_out = os.path.join(analysis_dir, out_network_name)
+
+    arcpy.SpatialJoin_analysis(intersect, network, spatial_join_out)
 
     if add_constant:
         did_change = False
-        with arcpy.da.UpdateCursor(intersect, ["StreamName", "DRAREA"]) as cursor:
+        with arcpy.da.UpdateCursor(spatial_join_out, ["StreamName", "DRAREA"]) as cursor:
             for row in cursor:
                 if row[0] == river_name:
                     arcpy.AddMessage("\tAdjusting value for {}".format(river_name))
@@ -89,15 +96,15 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
 
     # calculate buffer width
     arcpy.AddMessage("Calculating bankfull buffer width...")
-    calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer)
+    calculate_buffer_width(spatial_join_out, MinBankfullWidth, dblPercentBuffer)
 
     # create final bankfull polygon
     arcpy.AddMessage("Creating final bankfull polygon...")
-    bankfull = create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
+    bankfull = create_bankfull_polygon(network, spatial_join_out, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
 
     # making layers
     arcpy.AddMessage("Making layers...")
-    make_layers(intersect, bankfull)
+    make_layers(spatial_join_out, bankfull)
 
 def build_folder_structure(output_folder):
     scratch = os.path.join(os.path.dirname(os.path.dirname(output_folder)), "Temp")
