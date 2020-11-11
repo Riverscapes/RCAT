@@ -18,7 +18,7 @@ from SupportingFunctions import find_available_num_prefix, make_layer
 arcpy.CheckOutExtension('Spatial')
 
 
-def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_polygon_name, out_network_name, add_constant=False, river_name=False):
+def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercentBuffer, output_folder, out_polygon_name, out_network_name):
     """ Calculates bankfull channel width and creates a bankfull channel polygon
     :param network: Segmented stream network from RVD output, to calculate bankfull channel on
     :param valleybottom: Valley bottom for stream network
@@ -32,8 +32,12 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     :param out_network_name: Name for output network with bankfull channel fields
     return: Bankfull channel polygon and output network with bankfull channel fields
     """
+
+    add_constant = False
+    river_name = False
+
     # process inputs
-    if drarea == "None":
+    if drarea == "None" or add_constant:
         drarea = None
 
     # set up environment
@@ -379,6 +383,4 @@ if __name__ == '__main__':
          sys.argv[7],
          sys.argv[8],
          sys.argv[9],
-         sys.argv[10],
-         sys.argv[11],
-         sys.argv[12])
+         sys.argv[10])
