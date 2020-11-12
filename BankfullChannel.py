@@ -70,17 +70,11 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
 
     # intersect dissolved network with thiessen polygons
     if not out_network_name.endswith(".shp"):
-        intersect = os.path.join(analysis_dir, "Intersected_" + out_network_name + ".shp")
-    else:
-        intersect = os.path.join(analysis_dir, "Intersected_" + out_network_name)
-    arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "2 Meters", "LINE")
-
-    if not out_network_name.endswith(".shp"):
         spatial_join_out = os.path.join(analysis_dir, out_network_name+".shp")
     else:
         spatial_join_out = os.path.join(analysis_dir, out_network_name)
 
-    arcpy.SpatialJoin_analysis(intersect, network, spatial_join_out)
+    arcpy.SpatialJoin_analysis(dissolved_network, thiessen_clip, spatial_join_out, search_radius="5 Meters")
 
     if add_constant:
         did_change = False
