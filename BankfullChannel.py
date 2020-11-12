@@ -73,7 +73,7 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
         intersect = os.path.join(analysis_dir, out_network_name+"_Intersected.shp")
     else:
         intersect = os.path.join(analysis_dir, "Intersected_" + out_network_name)
-    arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
+    arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "2 Meters", "LINE")
 
     if not out_network_name.endswith(".shp"):
         spatial_join_out = os.path.join(analysis_dir, out_network_name+".shp")
@@ -334,20 +334,25 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
     # merge buffer with min buffer
     bankfull_min_buffer = os.path.join(temp_dir, "min_buffer.shp")
     bankfull_merge = os.path.join(temp_dir, "bankfull_merge.shp")
-    bankfull_dissolve = os.path.join(temp_dir, "bankfull_dissolve.shp")
+    #bankfull_dissolve = os.path.join(temp_dir, "bankfull_dissolve.shp")
     arcpy.Buffer_analysis(network, bankfull_min_buffer, str(MinBankfullWidth), "FULL", "ROUND", "ALL")
     arcpy.Merge_management([bankfull, bankfull_min_buffer], bankfull_merge)
 
     # dissolve polygon buffers
-    arcpy.Dissolve_management(bankfull_merge, bankfull_dissolve)
-
-    #smooth for final bankfull polygon
-    arcpy.AddMessage("Smoothing final bankfull polygon...")
-    
     if not out_name.endswith(".shp"):
-        output = os.path.join(bankfull_folder, out_name+".shp")
+        output = os.path.join(bankfull_folder, out_name + ".shp")
     else:
         output = os.path.join(bankfull_folder, out_name)
+
+    arcpy.Dissolve_management(bankfull_merge, out_name)
+
+    #smooth for final bankfull polygon
+    #arcpy.AddMessage("Smoothing final bankfull polygon...")
+    
+    #if not out_name.endswith(".shp"):
+    #    output = os.path.join(bankfull_folder, out_name+".shp")
+    #else:
+    #    output = os.path.join(bankfull_folder, out_name)
 
     #arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
     
