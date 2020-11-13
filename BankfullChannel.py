@@ -346,7 +346,7 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
     else:
         output = os.path.join(bankfull_folder, out_name)
 
-    arcpy.Dissolve_management(bankfull_merge, out_name)
+    arcpy.Dissolve_management(bankfull_merge, output)
 
     #smooth for final bankfull polygon
     #arcpy.AddMessage("Smoothing final bankfull polygon...")
