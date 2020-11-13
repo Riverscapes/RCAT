@@ -65,8 +65,8 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     
     # dissolve network 
     arcpy.AddMessage("Applying precip and drainage area data to line network...")
-    dissolved_network = os.path.join(temp_dir, "dissolved_network.shp")
-    arcpy.Dissolve_management(network, dissolved_network)
+    #dissolved_network = os.path.join(temp_dir, "dissolved_network.shp")
+    #arcpy.Dissolve_management(network, dissolved_network)
 
     # intersect dissolved network with thiessen polygons
     if not out_network_name.endswith(".shp"):
@@ -74,7 +74,11 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     else:
         valley_join = os.path.join(analysis_dir, "Intersect" + out_network_name)
 
-    arcpy.SpatialJoin_analysis(dissolved_network, thiessen_clip, valley_join, search_radius="5 Meters")
+    arcpy.AddMessage("Starting Spatial Join...")
+    
+    arcpy.SpatialJoin_analysis(network, thiessen_clip, valley_join, search_radius="5 Meters")
+
+    arcpy.AddMessage("Finished Spatial Join")
 
     # intersect dissolved network with thiessen polygons
     if not out_network_name.endswith(".shp"):
