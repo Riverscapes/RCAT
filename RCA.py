@@ -238,8 +238,7 @@ def main(
         else:
             row[3] = "Confined - Impacted"
         cursor.updateRow(row)
-    del row
-    del cursor
+
 
     # merge the results of the rca for confined and unconfined valleys
     if not outName.endswith(".shp"):
@@ -265,8 +264,7 @@ def main(
         elif row[0] > 0.85:
             row[1] = "Intact"
         cursor.updateRow(row)
-    del row
-    del cursor
+
 
     # If any segments are found outside of the valley bottom, set the fields to a NoData value
     arcpy.AddMessage("Cleaning up and saving final output...")
@@ -414,8 +412,7 @@ def calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut):
     for row in cursor:
         row[1] = row[0]
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     return
@@ -453,8 +450,7 @@ def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_v
     for row in cursor:
         row[1] = row[0]
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     return
@@ -487,8 +483,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
         if row[1] == 0:
             row[1] = 0.0001
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     arcpy.JoinField_management(fcOut, "FID", histveg_zs, "RCH_FID", "MEAN")
@@ -500,8 +495,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
         if row[1] == 0:
             row[1] = 0.0001
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     arcpy.AddField_management(fcOut, "VEG", "DOUBLE")
@@ -509,8 +503,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
     for row in cursor:
         row[2] = row[0] / row[1]
         cursor.updateRow(row)
-    del row
-    del cursor
+
 
     return
 
