@@ -14,7 +14,7 @@ import arcpy
 from arcpy.sa import *
 import sys
 import os
-from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
+from SupportingFunctions import find_available_num_prefix, make_layer
 arcpy.CheckOutExtension('Spatial')
 
 
@@ -32,8 +32,12 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     :param out_network_name: Name for output network with bankfull channel fields
     return: Bankfull channel polygon and output network with bankfull channel fields
     """
+
+    add_constant = False
+    river_name = False
+
     # process inputs
-    if drarea == "None":
+    if drarea == "None" or add_constant:
         drarea = None
 
     # set up environment
@@ -61,27 +65,52 @@ def main(network, valleybottom, dem, drarea, precip, MinBankfullWidth, dblPercen
     
     # dissolve network 
     arcpy.AddMessage("Applying precip and drainage area data to line network...")
-    dissolved_network = os.path.join(temp_dir, "dissolved_network.shp")
-    arcpy.Dissolve_management(network, dissolved_network)
+    #dissolved_network = os.path.join(temp_dir, "dissolved_network.shp")
+    #arcpy.Dissolve_management(network, dissolved_network)
 
     # intersect dissolved network with thiessen polygons
     if not out_network_name.endswith(".shp"):
-        intersect = os.path.join(analysis_dir, out_network_name+".shp")
+        valley_join = os.path.join(analysis_dir, "Intersect" + out_network_name + ".shp")
     else:
-        intersect = os.path.join(analysis_dir, out_network_name)
-    arcpy.Intersect_analysis([dissolved_network, thiessen_clip], intersect, "", "", "LINE")
+        valley_join = os.path.join(analysis_dir, "Intersect" + out_network_name)
+
+    arcpy.AddMessage("Starting Spatial Join...")
+    
+    arcpy.SpatialJoin_analysis(network, thiessen_clip, valley_join, search_radius="5 Meters")
+
+    arcpy.AddMessage("Finished Spatial Join")
+
+    # intersect dissolved network with thiessen polygons
+    if not out_network_name.endswith(".shp"):
+        spatial_join_out = os.path.join(analysis_dir, out_network_name+".shp")
+    else:
+        spatial_join_out = os.path.join(analysis_dir, out_network_name)
+
+    arcpy.SpatialJoin_analysis(valley_join, network, spatial_join_out, search_radius="5 Meters")
+
+    if add_constant:
+        did_change = False
+        with arcpy.da.UpdateCursor(spatial_join_out, ["StreamName", "DRAREA"]) as cursor:
+            for row in cursor:
+                if row[0] == river_name:
+                    arcpy.AddMessage("\tAdjusting value for {}".format(river_name))
+                    row[1] += add_constant
+                    did_change = True
+                cursor.updateRow(row)
+        if not did_change:
+            arcpy.AddMessage("Could not find stream name")
 
     # calculate buffer width
     arcpy.AddMessage("Calculating bankfull buffer width...")
-    calculate_buffer_width(intersect, MinBankfullWidth, dblPercentBuffer)
+    calculate_buffer_width(spatial_join_out, MinBankfullWidth, dblPercentBuffer)
 
     # create final bankfull polygon
     arcpy.AddMessage("Creating final bankfull polygon...")
-    bankfull = create_bankfull_polygon(network, intersect, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
+    bankfull = create_bankfull_polygon(network, spatial_join_out, MinBankfullWidth, analysis_dir, temp_dir, out_polygon_name)
 
     # making layers
     arcpy.AddMessage("Making layers...")
-    make_layers(intersect, bankfull)
+    make_layers(spatial_join_out, bankfull)
 
 def build_folder_structure(output_folder):
     scratch = os.path.join(os.path.dirname(os.path.dirname(output_folder)), "Temp")
@@ -136,7 +165,7 @@ def create_thiessen_polygons_in_valley(seg_network, valley, intermediates_folder
 
     # clip thiessen polygons to buffered valley bottom
     thiessen_valley_multipart = scratch + "/Thiessen_Valley_Clip.shp"
-    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_multipart)
+    arcpy.Clip_analysis(thiessen, valley_buf, thiessen_valley_multipart)
 
     # convert multipart features to single part
     arcpy.AddField_management(thiessen_valley_multipart, "RCH_FID", "SHORT")
@@ -219,7 +248,6 @@ def add_raster_values(thiessen_clip, raster, field_type, temp_dir):
     # Zonal statistics of drainage area and precip using thiessen polygons
     tbl_out = os.path.join(temp_dir, "zonal_tbl_" + field_type + ".dbf")
     tbl_zs = ZonalStatisticsAsTable(thiessen_clip, "RCH_FID", raster, tbl_out, "DATA", "MAXIMUM")
-
     # delete required fields if already in thiessen fields
     thiessen_fields = [f.name for f in arcpy.ListFields(thiessen_clip)]
     if "MAX" in thiessen_fields:
@@ -307,26 +335,32 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
     # buffer network by bufwidth field to create bankfull polygon
     arcpy.AddMessage("Buffering network...")
     bankfull = os.path.join(temp_dir, "bankfull.shp")
-    arcpy.Buffer_analysis(intersect, bankfull, "BUFWIDTH", "FULL", "ROUND", "ALL")
+    arcpy.Buffer_analysis(intersect, bankfull, "BUFWIDTH", "FULL", "ROUND", "NONE")
 
     # merge buffer with min buffer
     bankfull_min_buffer = os.path.join(temp_dir, "min_buffer.shp")
     bankfull_merge = os.path.join(temp_dir, "bankfull_merge.shp")
-    bankfull_dissolve = os.path.join(temp_dir, "bankfull_dissolve.shp")
-    arcpy.Buffer_analysis(network, bankfull_min_buffer, str(MinBankfullWidth), "FULL", "ROUND", "ALL")
+    #bankfull_dissolve = os.path.join(temp_dir, "bankfull_dissolve.shp")
+    arcpy.Buffer_analysis(network, bankfull_min_buffer, str(MinBankfullWidth), "FULL", "ROUND", "NONE")
     arcpy.Merge_management([bankfull, bankfull_min_buffer], bankfull_merge)
 
     # dissolve polygon buffers
-    arcpy.Dissolve_management(bankfull_merge, bankfull_dissolve)
-
-    #smooth for final bankfull polygon
-    arcpy.AddMessage("Smoothing final bankfull polygon...")
-    
     if not out_name.endswith(".shp"):
-        output = os.path.join(bankfull_folder, out_name+".shp")
+        output = os.path.join(bankfull_folder, out_name + ".shp")
     else:
         output = os.path.join(bankfull_folder, out_name)
-    arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
+
+    arcpy.Dissolve_management(bankfull_merge, output)
+
+    #smooth for final bankfull polygon
+    #arcpy.AddMessage("Smoothing final bankfull polygon...")
+    
+    #if not out_name.endswith(".shp"):
+    #    output = os.path.join(bankfull_folder, out_name+".shp")
+    #else:
+    #    output = os.path.join(bankfull_folder, out_name)
+
+    #arcpy.SmoothPolygon_cartography(bankfull_dissolve, output, "PAEK", "10 METERS") # TODO: Expose parameter?
     
     # Todo: add params as fields to shp.
     return output
@@ -345,6 +379,16 @@ def make_layers(network, bankfull_polygon):
     make_layer(os.path.dirname(network), network, "Upstream Drainage Area", drain_area_symbology, symbology_field="DRAREA")
     make_layer(os.path.dirname(network), network, "Precipitation By Reach", precip_symbology, symbology_field="PRECIP")
     make_layer(os.path.dirname(bankfull_polygon), bankfull_polygon, "Bankfull Channel Polygon", bankfull_polygon_symbology)
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
+
 
     
 if __name__ == '__main__':

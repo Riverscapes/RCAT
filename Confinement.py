@@ -13,7 +13,7 @@
 import os
 import arcpy
 import glob
-from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
+from SupportingFunctions import find_available_num_prefix, make_layer
 arcpy.env.overwriteOutput=True
 
 
@@ -142,20 +142,25 @@ def build_folder_structure(output_folder):
 
 
 def calculate_polygon_area(polygons, network, type):
-    arcpy.AddField_management(polygons, "AREA", "DOUBLE")
+    add_field_clean(polygons, "AREA", "DOUBLE")
     with arcpy.da.UpdateCursor(polygons, ["AREA", "SHAPE@AREA"]) as cursor:
         for row in cursor:
             row[0] = row[1]
             cursor.updateRow(row)
     arcpy.JoinField_management(network, "FID", polygons, "RCH_FID", "AREA")
     area_field = type+"_Area"
-    arcpy.AddField_management(network, area_field, "DOUBLE")
+    add_field_clean(network, area_field, "DOUBLE")
     with arcpy.da.UpdateCursor(network, ["AREA", area_field]) as cursor:
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
     arcpy.DeleteField_management(network, "AREA")
 
+
+def add_field_clean(table, field, field_type='FLOAT'):
+    if field in arcpy.ListFields(table):
+        arcpy.DeleteField_management(table, field)
+    arcpy.AddField_management(table, field, field_type)
 
 def create_clipped_thiessen_polygons(intermediates_folder, bankfull_channel, valley, temp_dir):
     # find midpoints of all reaches in segmented network
@@ -274,6 +279,14 @@ def make_layers(output_network, thiessen_bankfull, thiessen_valley):
     make_layer(os.path.dirname(output_network), output_network, "Confinement_Ratio", confinement_ratio_symbology, symbology_field="CONF_RATIO")
     make_layer(os.path.dirname(thiessen_bankfull), thiessen_bankfull, "Bankfull Channel Width Polygons", bankfull_symbology)
     make_layer(os.path.dirname(thiessen_valley), thiessen_valley, "Valley Bottom Width Polygons", valley_symbology)
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == "__main__":

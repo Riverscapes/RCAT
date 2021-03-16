@@ -40,7 +40,7 @@ def add_conversion_field(ex_veg, hist_veg):
     if len(ex_field) is not 1:
         arcpy.AddField_management(ex_veg, "CONVERSION", "DOUBLE")
 
-    with arcpy.da.UpdateCursor(ex_veg, ["EVT_PHYS", "EVT_GP_N", "CONVERSION"]) as cursor:
+    with arcpy.da.UpdateCursor(ex_veg, ["EVT_PHYS", "EVT_GP", "CONVERSION"]) as cursor:
         for row in cursor:
             if row[0] == "Open Water":
                 row[2] = 500
@@ -90,6 +90,12 @@ def add_conversion_field(ex_veg, hist_veg):
                 row[2] = 3
             elif row[1] == "703": # introduced perennial grassland and forbland 
                 row[2] = 3
+            elif row[1] == "701": # introduced Riparian Vegetation 
+                row[2] = 3
+            elif row[0] == "Quarries-Strip Mines-Gravel Pits-Well and Wind Pads":
+                row[2] = 2
+            elif row[1] == "32": #Quarries-Strip Mines-Gravel Pits-Well and Wind Pads
+                row[2] = 2
             else:
                 row[2] = -9999 #NoData value
             cursor.updateRow(row)

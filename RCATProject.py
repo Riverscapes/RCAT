@@ -13,14 +13,11 @@
 
 # import modules
 import os
-import glob
 import arcpy
-import shutil
 import sys
-import string
-from SupportingFunctions import make_folder, find_available_num_prefix
-#arcpy.CheckOutExtension("3D")
+import SupportingFunctions
 arcpy.env.overwriteOutput=True
+
 
 def main(projPath, network, ex_cov, hist_cov, frag_valley, lrp, dredge_tailings, dem, precip):
     """Creates an RCA project folder and populates the inputs
@@ -124,22 +121,22 @@ def set_structure(projPath, lrp, dredge_tailings, dem, precip):
     make_folder(os.path.join(inputs, "03_Historic_Vegetation"))
     make_folder(os.path.join(inputs, "04_Fragmented_Valley"))
     if lrp is not None:
-        lrp_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Large_River_Polygon")
+        lrp_folder = os.path.join(inputs, SupportingFunctions.find_available_num_prefix(inputs) + "_Large_River_Polygon")
         make_folder(lrp_folder)
     else:
         lrp_folder = None
     if dredge_tailings is not None:
-        dredge_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Dredge_Tailings")
+        dredge_folder = os.path.join(inputs, SupportingFunctions.find_available_num_prefix(inputs) + "_Dredge_Tailings")
         make_folder(dredge_folder)
     else:
         dredge_folder = None
     if dem is not None:
-        dem_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Topography")
+        dem_folder = os.path.join(inputs, SupportingFunctions.find_available_num_prefix(inputs) + "_Topography")
         make_folder(dem_folder)
     else:
         dem_folder = None
     if precip is not None:
-        precip_folder = os.path.join(inputs, find_available_num_prefix(inputs) + "_Precipitation")
+        precip_folder = os.path.join(inputs, SupportingFunctions.find_available_num_prefix(inputs) + "_Precipitation")
         make_folder(precip_folder)
     else:
         precip_folder=None
@@ -166,7 +163,10 @@ def copy_multi_inputs_to_project(inputs, folder, sub_folder_name, is_raster=Fals
         make_folder(new_sub_folder)
         name = os.path.basename(input_path)
         if len(name.split('.')[0]) > 13:
-            name = name.split('.')[0][0:12] + '.tif'
+            if is_raster:
+                name = name.split('.')[0][0:12] + '.tif'
+            else:
+                name = name.split('.')[0][0:12] + '.shp'
         destination_path = os.path.join(new_sub_folder, name)
         if is_raster:
             arcpy.CopyRaster_management(input_path, destination_path)
@@ -205,37 +205,37 @@ def make_layers(network_destinations, ex_veg_destinations, hist_veg_destinations
 
     # make layers for all input destinations
     for network in network_destinations:
-        make_layer(os.path.dirname(network), network, "Network", network_symbology)
-        make_layer(os.path.dirname(network), network, "Flow Direction", flow_direction_symbology)
+        SupportingFunctions.make_layer(os.path.dirname(network), network, "Network", network_symbology)
+        SupportingFunctions.make_layer(os.path.dirname(network), network, "Flow Direction", flow_direction_symbology)
     for ex_veg in ex_veg_destinations:
-        make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Native Riparian Vegetation", ex_veg_native_symbology, is_raster=True, symbology_field="NATIVE_RIP")
-        make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Riparian Vegetation", ex_veg_riparian_symbology, is_raster=True, symbology_field="RIPARIAN")
-        make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Vegetation Type", ex_veg_type_symbology, is_raster=True, symbology_field="CONVERSION")
-        make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Vegetated", ex_vegetated_symbology, is_raster=True, symbology_field="VEGETATED")
-        make_layer(os.path.dirname(ex_veg), ex_veg, "Land Use Raster", landuse_symbology, is_raster=True, symbology_field="LU_CODE")
+        SupportingFunctions.make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Native Riparian Vegetation", ex_veg_native_symbology, is_raster=True, symbology_field="NATIVE_RIP")
+        SupportingFunctions.make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Riparian Vegetation", ex_veg_riparian_symbology, is_raster=True, symbology_field="RIPARIAN")
+        SupportingFunctions.make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Vegetation Type", ex_veg_type_symbology, is_raster=True, symbology_field="CONVERSION")
+        SupportingFunctions.make_layer(os.path.dirname(ex_veg), ex_veg, "Existing Vegetated", ex_vegetated_symbology, is_raster=True, symbology_field="VEGETATED")
+        SupportingFunctions.make_layer(os.path.dirname(ex_veg), ex_veg, "Land Use Raster", landuse_symbology, is_raster=True, symbology_field="LU_CODE")
     for hist_veg in hist_veg_destinations:
-        make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Native Riparian Vegetation", hist_veg_native_symbology, is_raster=True, symbology_field="NATIVE_RIP")
-        make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Riparian Vegetation", hist_veg_riparian_symbology, is_raster=True, symbology_field="RIPARIAN")
-        make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Vegetation Type", hist_veg_type_symbology, is_raster=True, symbology_field="CONVERSION")
-        make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Vegetated", hist_vegetated_symbology, is_raster=True, symbology_field="VEGETATED")
+        SupportingFunctions.make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Native Riparian Vegetation", hist_veg_native_symbology, is_raster=True, symbology_field="NATIVE_RIP")
+        SupportingFunctions.make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Riparian Vegetation", hist_veg_riparian_symbology, is_raster=True, symbology_field="RIPARIAN")
+        SupportingFunctions.make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Vegetation Type", hist_veg_type_symbology, is_raster=True, symbology_field="CONVERSION")
+        SupportingFunctions.make_layer(os.path.dirname(hist_veg), hist_veg, "Historic Vegetated", hist_vegetated_symbology, is_raster=True, symbology_field="VEGETATED")
     for valley in valley_destinations:
-        make_layer(os.path.dirname(valley), valley, "Fragmented Valley Bottom", frag_valley_symbology)
-        make_layer(os.path.dirname(valley), valley, "Valley Bottom Outline", valley_outline_symbology)
+        SupportingFunctions.make_layer(os.path.dirname(valley), valley, "Fragmented Valley Bottom", frag_valley_symbology)
+        SupportingFunctions.make_layer(os.path.dirname(valley), valley, "Valley Bottom Outline", valley_outline_symbology)
     if lrp_destinations is not None:
         for lrp in lrp_destinations:
-            make_layer(os.path.dirname(lrp), lrp, "Large River Polygon", lrp_symbology)
+            SupportingFunctions.make_layer(os.path.dirname(lrp), lrp, "Large River Polygon", lrp_symbology)
     if dredge_destinations is not None:
         for dredge in dredge_destinations:
-            make_layer(os.path.dirname(dredge), dredge, "Dredge Tailings", dredge_tailings_symbology)
+            SupportingFunctions.make_layer(os.path.dirname(dredge), dredge, "Dredge Tailings", dredge_tailings_symbology)
     if dem_destinations is not None:
         for dem in dem_destinations:
-            make_layer(os.path.dirname(dem), dem, "DEM", dem_symbology, is_raster=True)
+            SupportingFunctions.make_layer(os.path.dirname(dem), dem, "DEM", dem_symbology, is_raster=True)
             #hillshade_folder = os.path.join(os.path.dirname(dem), "Hillshade")
             #make_folder(hillshade_folder)
             #hillshade_file = os.path.join(hillshade_folder, "Hillshade.tif")
             #try:
             #    arcpy.HillShade_3d(dem, hillshade_file)
-            #    make_layer(hillshade_folder, hillshade_file, "Hillshade", hillshade_symbology, is_raster=True)
+            #    SupportingFunctions.make_layer(hillshade_folder, hillshade_file, "Hillshade", hillshade_symbology, is_raster=True)
             #except arcpy.ExecuteError as err:
             #    if get_execute_error_code(err) == "000859":
             #        arcpy.AddWarning("Warning: Unable to create hillshade layer. Consider modifying your DEM input if you need a hillshade.")
@@ -243,53 +243,7 @@ def make_layers(network_destinations, ex_veg_destinations, hist_veg_destinations
             #        raise arcpy.ExecuteError(err)
     if precip_destinations is not None:
         for precip in precip_destinations:
-            make_layer(os.path.dirname(precip), precip, "Precipitation Raster", precip_symbology, is_raster=True)
-
-        
-def make_layer(output_folder, layer_base, new_layer_name, symbology_layer=None, is_raster=False, description="Made Up Description", file_name=None, symbology_field=None):
-    """
-    Creates a layer and applies a symbology to it
-    :param output_folder: Where we want to put the layer
-    :param layer_base: What we should base the layer off of
-    :param new_layer_name: What the layer should be called
-    :param symbology_layer: The symbology that we will import
-    :param is_raster: Tells us if it's a raster or not
-    :param description: The discription to give to the layer file
-    :return: The path to the new layer
-    """
-    new_layer = new_layer_name
-    if file_name is None:
-        file_name = new_layer_name.replace(' ', '')
-    new_layer_save = os.path.join(output_folder, file_name.replace(' ', ''))
-    
-    if not new_layer_save.endswith(".lyr"):
-        new_layer_save += ".lyr"
-
-    if is_raster:
-        try:
-            arcpy.MakeRasterLayer_management(layer_base, new_layer)
-        except arcpy.ExecuteError as err:
-            if get_execute_error_code(err) == "000873":
-                arcpy.AddError(err)
-                arcpy.AddMessage("The error above can often be fixed by removing layers or layer packages from the Table of Contents in ArcGIS.")
-                raise Exception
-            else:
-                raise arcpy.ExecuteError(err)
-
-    else:
-        if arcpy.Exists(new_layer):
-            arcpy.Delete_management(new_layer)
-        arcpy.MakeFeatureLayer_management(layer_base, new_layer)
-
-    if symbology_layer:
-        arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
-
-    if not os.path.exists(new_layer_save):
-        arcpy.SaveToLayerFile_management(new_layer, new_layer_save, "RELATIVE")
-        new_layer_instance = arcpy.mapping.Layer(new_layer_save)
-        new_layer_instance.description = description
-        new_layer_instance.save()
-    return new_layer_save
+            SupportingFunctions.make_layer(os.path.dirname(precip), precip, "Precipitation Raster", precip_symbology, is_raster=True)
 
 
 def get_execute_error_code(err):
@@ -299,6 +253,15 @@ def get_execute_error_code(err):
     :return:
     """
     return err[0][6:12]
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == '__main__':

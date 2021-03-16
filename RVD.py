@@ -24,7 +24,8 @@ import numpy as np
 import projectxml
 import uuid
 import datetime
-from SupportingFunctions import make_folder, find_available_num_prefix, make_layer
+import shutil
+from SupportingFunctions import  find_available_num_prefix, make_layer
 
 
 def main(
@@ -104,8 +105,11 @@ def main(
     ex_rip_field = calc_veg_mean_per_reach(thiessen_valley, ex_riparian, "ex", "rip", tempOut)
     hist_rip_field = calc_veg_mean_per_reach(thiessen_valley, hist_riparian, "hs", "rip", tempOut)
     arcpy.AddField_management(tempOut, "RIPAR_DEP", "DOUBLE")
+    arcpy.AddMessage("Updating Riparian veg field...")
     with arcpy.da.UpdateCursor(tempOut, [ex_rip_field, hist_rip_field, "RIPAR_DEP"]) as cursor:
-        for row in cursor:
+        for counter, row in enumerate(cursor):
+            if counter % 100 == 0:
+                arcpy.AddMessage("\tDone {}".format(counter))
             row[2] = row[0] / row[1]
             cursor.updateRow(row)
             if row[2] > 1 and row[1] == 0.0001:
@@ -116,8 +120,11 @@ def main(
     ex_native_field = calc_veg_mean_per_reach(thiessen_valley, ex_native, "ex", "ntv", tempOut)
     hist_native_field = calc_veg_mean_per_reach(thiessen_valley, hist_native, "hs", "ntv", tempOut)
     arcpy.AddField_management(tempOut, "NATIV_DEP", "DOUBLE")
+    arcpy.AddMessage("Updating Native veg field...")
     with arcpy.da.UpdateCursor(tempOut, [ex_native_field, hist_native_field, "NATIV_DEP"]) as cursor:
-        for row in cursor:
+        for counter, row in enumerate(cursor):
+            if counter % 100 == 0:
+                arcpy.AddMessage("\tDone {}".format(counter))
             row[2] = row[0] / row[1]
             cursor.updateRow(row)
             if row[2] > 1 and row[1] == 0.0001:
@@ -336,18 +343,24 @@ def reclassify_adjusted_veg(masked_raster, veg_lookup, field_name, out_name, fol
 
 
 def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tempOut):
+
+    arcpy.AddMessage("Calculating veg mean for {} {}".format(veg_type, out_type))
     # set raster environment for mask
     arcpy.env.extent = thiessen_valley
     arcpy.env.snapRaster = veg_lookup
     # calculate proportion of area with coded vegetation (riparian or native riparian) for each reach based on thiessen polygons
     # Note: since raster values are 0 and 1, "MEAN" is the same as the proportion of area for all values=1
+    arcpy.AddMessage("\t Doing zonal stats...")
     veg_zs = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", veg_lookup, veg_type+"_veg_zs_"+out_type, statistics_type="MEAN")
     # add existing veg field to temp output by reach ids & calculate based on joined zonal stats
     arcpy.JoinField_management(tempOut, "FID", veg_zs, "RCH_FID", "MEAN")
     veg_field = veg_type.capitalize() + out_type.capitalize() + "_Mean"
     arcpy.AddField_management(tempOut, veg_field, "DOUBLE")
+    arcpy.AddMessage("\t Updating veg field...")
     with arcpy.da.UpdateCursor(tempOut, ["MEAN", veg_field]) as cursor:
-        for row in cursor:
+        for counter, row in enumerate(cursor):
+            if counter % 100 == 0:
+                arcpy.AddMessage("\t\tDone {}".format(counter))
             row[1] = row[0]
             cursor.updateRow(row)
             if row[1] == 0:
@@ -359,28 +372,33 @@ def calc_veg_mean_per_reach(thiessen_valley, veg_lookup, veg_type, out_type, tem
 
 def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen_valley, tempOut, fcOut, intermediates_folder, scratch):
     # set extent for all rasters
-    arcpy.env.extent = thiessen_valley
+    arcpy.env.extent = 'MAXOF'
     arcpy.env.snapRaster = ex_veg
     # setting folder paths
     ex_veg_lookup_folder = os.path.join(intermediates_folder, "03_VegetationRasters/01_Ex_Veg")
     hist_veg_lookup_folder = os.path.join(intermediates_folder, "03_VegetationRasters/02_Hist_Veg")
     # create existing and historic rasters based on vegetation "conversion" fields
+    arcpy.AddMessage('\t Creating Lookups...')
     ex_veg_conversion_lookup = Lookup(ex_veg, "CONVERSION")
     ex_veg_conversion_lookup.save(os.path.join(ex_veg_lookup_folder, "Ex_Cover.tif"))
     hist_conversion_lookup = Lookup(hist_veg, "CONVERSION")
     hist_conversion_lookup.save(os.path.join(hist_veg_lookup_folder, "Hist_Cover.tif"))
     # create change raster by substracting existing from historic
+    arcpy.AddMessage('\t Creating Conversion Raster...')
     conversion_raster = hist_conversion_lookup - ex_veg_conversion_lookup
     int_conversion_raster = Int(conversion_raster)
 
     # get raster of pixels with historic or existing riparian
+    arcpy.AddMessage('\t Creating Lookups...')
     ex_riparian_lookup = Lookup(ex_veg, "RIPARIAN")
     hist_riparian_lookup = Lookup(hist_veg, "RIPARIAN")
+    arcpy.AddMessage('\t Creating Riparian Raster...')
     riparian_sum = ex_riparian_lookup + hist_riparian_lookup
     all_riparian = Reclassify(riparian_sum, "VALUE", "0 NODATA; 1 1; 2 2", "NODATA")
     all_riparian.save(os.path.join(os.path.dirname(ex_veg_lookup_folder), "All_Riparian_recl.tif"))
     riparian_conversion_raster = ExtractByMask(int_conversion_raster, all_riparian)
-    
+
+    arcpy.AddMessage('\t Reclassifying data...')
     # reclassify change raster to include only values pertaining to riparian conversion; all non-riparian conversion gets a NODATA value
     remap = "-480 NODATA; -460 NODATA; -450 NODATA; -435 NODATA; -400 NODATA; -80 -50; -64 NODATA; -63 NODATA; -62 NODATA; -60 -50; -50 -50; -47 NODATA; -48 NODATA; -49 NODATA; " \
             "-45 NODATA; -37 NODATA; -38 NODATA; -39 NODATA; -35 -50; -30 NODATA; -25 NODATA; -20 NODATA; -19 NODATA; -18 NODATA; -17 NODATA; -115 NODATA; 17 NODATA; 18 NODATA; 5 NODATA; " \
@@ -393,6 +411,8 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     for row in cursor:
         valueList.append(row.getValue("VALUE"))
     del cursor
+
+    arcpy.AddMessage('\t Creating Individual Conversion Rasters...')
 
     # make individual rasters for each conversion value - value gets a "1", everything else is "NODATA"
     if 0 in valueList:
@@ -436,19 +456,23 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     out_conversion_raster = ExtractByMask(final_conversion_raster, valley_buf)
     out_conversion_raster.save(os.path.join(intermediates_folder, "03_VegetationRasters/Conversion_Raster.tif"))
 
-    # calculate total pixel count for each reach based on zonal stats within thiessen polygons 
+    # calculate total pixel count for each reach based on zonal stats within thiessen polygons
+    arcpy.AddMessage('\t Zonal Statistics per reach...')
     count_table = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", final_conversion_raster, "count_table", statistics_type="VARIETY")
     arcpy.JoinField_management(tempOut, "FID", count_table, "RCH_FID", "COUNT")
     # add count field for calculations and set counts of 0 to 1 to avoid division issues
     arcpy.AddField_management(tempOut, "count_calc", "SHORT")
     with arcpy.da.UpdateCursor(tempOut, ["COUNT", "count_calc"]) as cursor:
-        for row in cursor:
+        for counter, row in enumerate(cursor):
+            if counter % 100 == 0:
+                arcpy.AddMessage("\t\tDone {}".format(counter))
             row[1] = row[0]
             cursor.updateRow(row)
             if row[1] == 0:
                 row[1] = 1
             cursor.updateRow(row)
 
+    arcpy.AddMessage('\t Calculating proportions...')
     # calculate count and proportion of each conversion type per reach and join to temporary output shp
     calculate_conversion_proportion(conversion_0, thiessen_valley, tempOut, valueList, 0, "noch")
     calculate_conversion_proportion(conversion_35, thiessen_valley, tempOut, valueList, 35, "decid")
@@ -460,6 +484,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     calculate_conversion_proportion(conversion_99, thiessen_valley, tempOut, valueList, 99, "agr")
     calculate_conversion_proportion(conversion_min50, thiessen_valley, tempOut, valueList, -50, "exp")
 
+    arcpy.AddMessage('\t Creating arrays...')
     # create numpy arrays for proportion of each conversion type
     prop0_array = arcpy.da.FeatureClassToNumPyArray(tempOut, "prop_noch")
     array0 = np.asarray(prop0_array, np.float64)
@@ -482,6 +507,8 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     del prop0_array, prop50_array, prop60_array, prop80_array, prop97_array, prop98_array, prop99_array, propMin50_array # clear up memory
 
     # flag conversion type based on proportions of all conversions
+
+    arcpy.AddMessage('\t Flagging Conversion types...')
     out_conv_code = np.zeros(len(array0), dtype=np.float64)
     for i in range(len(array0)):
         if array0[i] >= 0.85:  # if no change proportion is greater than or equal to 0.9
@@ -563,6 +590,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 out_conv_code[i] = 0
 
     # save conversion types table
+    arcpy.AddMessage('\t Saving Conversion Tables...')
     fid = np.arange(0, len(out_conv_code), 1)
     columns = np.column_stack((fid, out_conv_code))
     out_table = intermediates_folder + "/Conversion_Table.txt"
@@ -572,7 +600,8 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
     conv_code_table = scratch + "/conv_code_table" 
     arcpy.CopyRows_management(out_table, conv_code_table)
     arcpy.Delete_management(out_table)
-    
+
+    arcpy.AddMessage('\t Updating Conversion Types...')
     # join conversion types table to temp output shp
     arcpy.JoinField_management(tempOut, "FID", conv_code_table, "FID", "conv_code")
 
@@ -656,6 +685,7 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                     row[1] = "Very Minor Change" # minor change with small sample size
             cursor.updateRow(row)
 
+    arcpy.AddMessage('\t Handling NoData...')
     # set everything with count 0 with nodata values, type as no riparian
     with arcpy.da.UpdateCursor(tempOut, ["COUNT", "RIPAR_DEP", "NATIV_DEP", "conv_code", "Conv_Type", "ExRip_Mean",
                                          "HsRip_Mean", "ExNtv_Mean", "HsNtv_Mean"]) as cursor:
@@ -672,6 +702,9 @@ def calculate_riparian_conversion(ex_veg, hist_veg, valley_buf, valley, thiessen
                 cursor.updateRow(row)
     
     # if any features in temp output shp are outside of valley bottom, set all conversion fields to NoData value
+
+    arcpy.AddMessage('\t Handling values outside of valley bottom...')
+
     arcpy.MakeFeatureLayer_management(tempOut, "outlyr")
     arcpy.SelectLayerByLocation_management("outlyr", "HAVE_THEIR_CENTER_IN", valley)
     arcpy.SelectLayerByLocation_management("outlyr", selection_type="SWITCH_SELECTION")
@@ -727,6 +760,7 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
             string_val = "min50"
         else:
             string_val = str(value)
+        arcpy.AddMessage('\t\t\t Zonal Statistics for {}...'.format(value))
         table = ZonalStatisticsAsTable(thiessen_valley, "RCH_FID", conversion_raster, "table_"+string_val, "", "SUM")
         # add zonal stats calculations to temporary output shp
         arcpy.JoinField_management(tempOut, "FID", table, "RCH_FID", "SUM")
@@ -745,6 +779,7 @@ def calculate_conversion_proportion(conversion_raster, thiessen_valley, tempOut,
     # calculate proportion of conversion type based on sum/count fields
     prop_field = "prop_"+field_suffix # new prop field for conversion type
     arcpy.AddField_management(tempOut, prop_field, "DOUBLE")
+    arcpy.AddMessage('\t\t\t Updating {}...'.format(value))
     with arcpy.da.UpdateCursor(tempOut, ["count_calc", sum_field, prop_field]) as cursor:
         for row in cursor:
             row[2] = row[1] / row[0]
@@ -778,7 +813,7 @@ def make_layers(fcOut, thiessen_valley, veg_rasters_folder):
     
 def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network, lg_river, dredge_tailings, intermediates_folder, analysis_folder):
     xmlfile = projPath + "/RVDproject.rs.xml"
-    if not os.path.exists(xml_file):
+    if not os.path.exists(xmlfile):
         # initiate xml file creation
         newxml = projectxml.ProjectXML(xmlfile, "RVD", projName)
 
@@ -1063,6 +1098,15 @@ def write_xml(projPath, projName, hucID, hucName, ex_veg, hist_veg, seg_network,
                               
 def getUUID():
     return str(uuid.uuid4()).upper()
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == '__main__':

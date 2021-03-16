@@ -45,7 +45,7 @@ def calc_drain_area(smDEM, flowDir):
 
     # derive drainage area raster (in square km) from input DEM
     # note: draiange area calculation assumes input dem is in meters
-    filled_DEM = Fill(smDEM) # fill sinks in dem
+    filled_DEM = Fill(smDEM)  # fill sinks in dem
     flow_direction = FlowDirection(filled_DEM) # calculate flow direction
     flow_accumulation = FlowAccumulation(flow_direction) # calculate flow accumulattion
     DrainArea = flow_accumulation * cellArea / 1000000 # calculate drainage area in square kilometers
@@ -68,49 +68,53 @@ def zonalStatsWithinBuffer(buffer, ras, statType, statField, outFC, outFCField, 
     # get input raster stat value within each buffer
     # note: zonal stats as table does not support overlapping polygons so we will check which
     #       reach buffers output was produced for and which we need to run tool on again
-    statTbl = arcpy.sa.ZonalStatisticsAsTable(buffer, 'ReachID', ras, os.path.join(scratch, 'statTbl'), 'DATA', statType)
+    if 'NHDPlusID' in arcpy.ListFields(buffer):
+        id_field = 'NHDPlusID'
+    else:
+        id_field = 'ReachID'
+    statTbl = arcpy.sa.ZonalStatisticsAsTable(buffer, id_field, ras, os.path.join(scratch, 'statTbl'), 'DATA', statType)
     # get list of segment buffers where zonal stats tool produced output
-    haveStatList = [row[0] for row in arcpy.da.SearchCursor(statTbl, 'ReachID')]
+    haveStatList = [row[0] for row in arcpy.da.SearchCursor(statTbl, id_field)]
     # create dictionary to hold all reach buffer min dem z values
     statDict = {}
     # add buffer raster stat values to dictionary
-    with arcpy.da.SearchCursor(statTbl, ['ReachID', statField]) as cursor:
+    with arcpy.da.SearchCursor(statTbl, [id_field, statField]) as cursor:
         for row in cursor:
             statDict[row[0]] = row[1]
     # create list of overlapping buffer reaches (i.e., where zonal stats tool did not produce output)
     needStatList = []
-    with arcpy.da.SearchCursor(buffer, ['ReachID']) as cursor:
+    with arcpy.da.SearchCursor(buffer, [id_field]) as cursor:
         for row in cursor:
             if row[0] not in haveStatList:
                 needStatList.append(row[0])
     # run zonal stats until we have output for each overlapping buffer segment
     stat = None
     tmp_buff_lyr = None
-    while len(needStatList) > 0:
-        # create tuple of segment ids where still need raster values
-        needStat = ()
-        for reach in needStatList:
-            if reach not in needStat:
-                needStat += (reach,)
-        # use the segment id tuple to create selection query and run zonal stats tool
-        if len(needStat) == 1:
-            quer = '"ReachID" = ' + str(needStat[0])
-        else:
-            quer = '"ReachID" IN ' + str(needStat)
-        tmp_buff_lyr = arcpy.MakeFeatureLayer_management(buffer, 'tmp_buff_lyr')
-        arcpy.SelectLayerByAttribute_management(tmp_buff_lyr, 'NEW_SELECTION', quer)
-        stat = arcpy.sa.ZonalStatisticsAsTable(tmp_buff_lyr, 'ReachID', ras, os.path.join(scratch, 'stat'), 'DATA', statType)
-        # add segment stat values from zonal stats table to main dictionary
-        with arcpy.da.SearchCursor(stat, ['ReachID', statField]) as cursor:
-            for row in cursor:
-                statDict[row[0]] = row[1]
-        # create list of reaches that were run and remove from 'need to run' list
-        haveStatList2 = [row[0] for row in arcpy.da.SearchCursor(stat, 'ReachID')]
-        for reach in haveStatList2:
-            needStatList.remove(reach)
+
+    # create tuple of segment ids where still need raster values
+    needStat = ()
+    for reach in needStatList:
+        if reach not in needStat:
+            needStat += (reach,)
+    # use the segment id tuple to create selection query and run zonal stats tool
+    if len(needStat) == 1:
+        quer = '"{}" = '.format(id_field) + str(needStat[0])
+    else:
+        quer = '"{}" IN '.format(id_field) + str(needStat)
+    tmp_buff_lyr = arcpy.MakeFeatureLayer_management(buffer, 'tmp_buff_lyr')
+    arcpy.SelectLayerByAttribute_management(tmp_buff_lyr, 'NEW_SELECTION', quer)
+    stat = arcpy.sa.ZonalStatisticsAsTable(tmp_buff_lyr, id_field, ras, os.path.join(scratch, 'stat'), 'DATA', statType)
+    # add segment stat values from zonal stats table to main dictionary
+    with arcpy.da.SearchCursor(stat, [id_field, statField]) as cursor:
+        for row in cursor:
+            statDict[row[0]] = row[1]
+    # create list of reaches that were run and remove from 'need to run' list
+    haveStatList2 = [row[0] for row in arcpy.da.SearchCursor(stat, id_field)]
+    for reach in haveStatList2:
+        needStatList.remove(reach)
 
     # populate dictionary value to output field by ReachID
-    with arcpy.da.UpdateCursor(outFC, ['ReachID', outFCField]) as cursor:
+    with arcpy.da.UpdateCursor(outFC, [id_field, outFCField]) as cursor:
         for row in cursor:
             try:
                 aKey = row[0]
@@ -149,6 +153,10 @@ def main(
     min_hole,
     check_drain_area):
 
+    arcpy.AddMessage("Running VBET...")
+
+    arcpy.env.parallelProcessingFactor = "0"
+    
     check_drain_area = parseInputBool(check_drain_area)
 
     # create temporary directory
@@ -221,17 +229,25 @@ def main(
     if not os.path.exists(flowDir):
         os.mkdir(flowDir)
     if FlowAcc is None:
-        print "Calculating drainage area..."
+        arcpy.AddMessage("Calculating drainage area...")
         calc_drain_area(smDEM, flowDir)
         DrAr = os.path.join(flowDir, 'DrainArea_sqkm.tif')
         inFlow = Raster(DrAr)
     else:
-        print "Getting path to existing drainage area raster..."
+        arcpy.AddMessage("Getting path to existing drainage area raster...")
         DrAr = FlowAcc
+        arcpy.AddMessage(DrAr)
         inFlow = Raster(DrAr)
 
     # check that da thresholds are larger than the drainage area raster values
     arcpy.AddMessage("Checking drainage area thresholds...")
+
+    #arcpy.AddMessage(type(inFlow.maximum))
+    #arcpy.AddMessage(type(high_da_thresh))
+    #arcpy.AddMessage(type(low_da_thresh))
+    #arcpy.AddMessage(inFlow.maximum)
+    #arcpy.AddMessage(high_da_thresh)
+    #arcpy.AddMessage(low_da_thresh)
 
     if float(inFlow.maximum) > float(high_da_thresh) and float(inFlow.maximum) > float(low_da_thresh):
         pass
@@ -243,7 +259,7 @@ def main(
     else:
         raise Exception("Low drainage area threshold is less than the lowest network drainage area value")
 
-    print "Calculating stream network drainage area values..."
+    arcpy.AddMessage("Calculating stream network drainage area values...")
 
     # create network segment midpoints
     network_midpoints = os.path.join(tempDir, "network_midpoints.shp")
@@ -265,6 +281,7 @@ def main(
     # get max drainage area within 100 m midpoint buffer
     zonalStatsWithinBuffer(midpoint_buffer, inFlow, "MAXIMUM", 'MAX', fcNetwork, "DA_sqkm", tempDir)
     arcpy.Delete_management(midpoint_buffer)
+
 
     # replace '0' drainage area values with tiny value
     with arcpy.da.UpdateCursor(fcNetwork, ["DA_sqkm"]) as cursor:

@@ -24,7 +24,7 @@ from math import pi
 import projectxml
 import uuid
 import datetime
-from SupportingFunctions import *
+from SupportingFunctions import find_available_num_prefix, make_layer
 
 
 def main(
@@ -59,6 +59,7 @@ def main(
     scratch = os.path.join(projPath, 'Temp')
     if not os.path.exists(scratch):
         os.mkdir(scratch)
+    arcpy.env.scratchWorkspace = scratch
     arcpy.env.workspace = 'in_memory'
     
     arcpy.env.overwriteOutput = True
@@ -237,8 +238,7 @@ def main(
         else:
             row[3] = "Confined - Impacted"
         cursor.updateRow(row)
-    del row
-    del cursor
+
 
     # merge the results of the rca for confined and unconfined valleys
     if not outName.endswith(".shp"):
@@ -264,8 +264,7 @@ def main(
         elif row[0] > 0.85:
             row[1] = "Intact"
         cursor.updateRow(row)
-    del row
-    del cursor
+
 
     # If any segments are found outside of the valley bottom, set the fields to a NoData value
     arcpy.AddMessage("Cleaning up and saving final output...")
@@ -291,7 +290,7 @@ def main(
 
     # temp output and environment clean up
     arcpy.Delete_management(tempOut)
-    arcpy.Delete_management(fcOut)
+    #arcpy.Delete_management(fcOut)
     arcpy.Delete_management(out_table)
     arcpy.CheckInExtension('spatial')
 
@@ -413,8 +412,7 @@ def calc_lui(ex_veg, thiessen_valley, intermediates_folder, fcOut):
     for row in cursor:
         row[1] = row[0]
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     return
@@ -452,8 +450,7 @@ def calc_connectivity(frag_valley, thiessen_valley, fcOut, dredge_tailings, ex_v
     for row in cursor:
         row[1] = row[0]
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     return
@@ -486,8 +483,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
         if row[1] == 0:
             row[1] = 0.0001
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     arcpy.JoinField_management(fcOut, "FID", histveg_zs, "RCH_FID", "MEAN")
@@ -499,8 +495,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
         if row[1] == 0:
             row[1] = 0.0001
         cursor.updateRow(row)
-    del row
-    del cursor
+
     arcpy.DeleteField_management(fcOut, "MEAN")
 
     arcpy.AddField_management(fcOut, "VEG", "DOUBLE")
@@ -508,8 +503,7 @@ def calc_veg(ex_veg, hist_veg, thiessen_valley, intermediates_folder, fcOut):
     for row in cursor:
         row[2] = row[0] / row[1]
         cursor.updateRow(row)
-    del row
-    del cursor
+
 
     return
 
@@ -823,6 +817,15 @@ def write_xml(projName, hucID, hucName, projPath, ex_veg, hist_veg, seg_network,
 
 def getUUID():
     return str(uuid.uuid4()).upper()
+
+
+def make_folder(folder):
+    """
+    Makes folder if it doesn't exist already
+    """
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    return
 
 
 if __name__ == '__main__':
