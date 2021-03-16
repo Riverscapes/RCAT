@@ -142,20 +142,25 @@ def build_folder_structure(output_folder):
 
 
 def calculate_polygon_area(polygons, network, type):
-    arcpy.AddField_management(polygons, "AREA", "DOUBLE")
+    add_field_clean(polygons, "AREA", "DOUBLE")
     with arcpy.da.UpdateCursor(polygons, ["AREA", "SHAPE@AREA"]) as cursor:
         for row in cursor:
             row[0] = row[1]
             cursor.updateRow(row)
     arcpy.JoinField_management(network, "FID", polygons, "RCH_FID", "AREA")
     area_field = type+"_Area"
-    arcpy.AddField_management(network, area_field, "DOUBLE")
+    add_field_clean(network, area_field, "DOUBLE")
     with arcpy.da.UpdateCursor(network, ["AREA", area_field]) as cursor:
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
     arcpy.DeleteField_management(network, "AREA")
 
+
+def add_field_clean(table, field, field_type='FLOAT'):
+    if field in arcpy.ListFields(table):
+        arcpy.DeleteField_management(table, field)
+    arcpy.AddField_management(table, field, field_type)
 
 def create_clipped_thiessen_polygons(intermediates_folder, bankfull_channel, valley, temp_dir):
     # find midpoints of all reaches in segmented network
