@@ -335,13 +335,13 @@ def create_bankfull_polygon(network, intersect, MinBankfullWidth, bankfull_folde
     # buffer network by bufwidth field to create bankfull polygon
     arcpy.AddMessage("Buffering network...")
     bankfull = os.path.join(temp_dir, "bankfull.shp")
-    arcpy.Buffer_analysis(intersect, bankfull, "BUFWIDTH", "FULL", "ROUND", "ALL")
+    arcpy.Buffer_analysis(intersect, bankfull, "BUFWIDTH", "FULL", "ROUND", "NONE")
 
     # merge buffer with min buffer
     bankfull_min_buffer = os.path.join(temp_dir, "min_buffer.shp")
     bankfull_merge = os.path.join(temp_dir, "bankfull_merge.shp")
     #bankfull_dissolve = os.path.join(temp_dir, "bankfull_dissolve.shp")
-    arcpy.Buffer_analysis(network, bankfull_min_buffer, str(MinBankfullWidth), "FULL", "ROUND", "ALL")
+    arcpy.Buffer_analysis(network, bankfull_min_buffer, str(MinBankfullWidth), "FULL", "ROUND", "NONE")
     arcpy.Merge_management([bankfull, bankfull_min_buffer], bankfull_merge)
 
     # dissolve polygon buffers
