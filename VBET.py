@@ -236,7 +236,6 @@ def main(
     else:
         arcpy.AddMessage("Getting path to existing drainage area raster...")
         DrAr = FlowAcc
-        arcpy.AddMessage(DrAr)
         inFlow = Raster(DrAr)
 
     # check that da thresholds are larger than the drainage area raster values

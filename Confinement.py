@@ -158,9 +158,13 @@ def calculate_polygon_area(polygons, network, type):
 
 
 def add_field_clean(table, field, field_type='FLOAT'):
-    if field in arcpy.ListFields(table):
+    #This is bad but it works
+    try:
         arcpy.DeleteField_management(table, field)
-    arcpy.AddField_management(table, field, field_type)
+        arcpy.AddMessage('Removed Old Field...')
+        arcpy.AddField_management(table, field, field_type)
+    except:
+        arcpy.AddField_management(table, field, field_type)
 
 def create_clipped_thiessen_polygons(intermediates_folder, bankfull_channel, valley, temp_dir):
     # find midpoints of all reaches in segmented network
