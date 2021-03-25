@@ -428,12 +428,12 @@ def main(
     fcOutput = os.path.join(outDir, outName)
 
     arcpy.SmoothPolygon_cartography(elim_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
-
+    arcpy.CopyFeatures_management(fcOutput, os.path.join(outDir, "Unfragmented_Valley.shp"))
     arcpy.AddMessage("Successfully saved valley bottom output shapefile...")
 
     # temporary code to copy fcs with issues to output folder
     # arcpy.CopyFeatures_management(merged_polygon, os.path.join(outDir, "merged_polygon.shp"))
-    # arcpy.CopyFeatures_management(dissolved_valley, os.path.join(outDir, "dissolved_valley.shp"))
+
 
     # delete temporary files and workspace...
     arcpy.AddMessage("Removing scratch files...")
