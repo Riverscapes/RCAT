@@ -18,22 +18,23 @@ def main(valley_bottom, streams, fragmenters, out_folder):
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = out_folder
 
-    # Convert Fragmenters to Python List
-    fragmenters = fragmenters.split(';')
-
     # Copy Valley Bottom
     valley_copy = arcpy.CopyFeatures_management(valley_bottom, "Valley_Copy.shp")
 
-    # Union all fragmenters
-    fragmenters_union = arcpy.Union_analysis(fragmenters, "All_Fragmenters.shp")
+    # Merge all fragmenters
+    fragmenters_merge = arcpy.Merge_management(fragmenters, "All_Fragmenters.shp")
 
     # Convert everything to a cut polygon
-    mesh = arcpy.FeatureToPolygon_management([valley_copy, fragmenters_union], 'Polygon_Mesh.shp')
+    mesh = arcpy.FeatureToPolygon_management([valley_copy, fragmenters_merge], 'Polygon_Mesh.shp')
 
     # Clip that polygon with the orginal VB
-    new_valley = arcpy.Clip_analysis(mesh, valley_copy, "Prelim_Frag_Valley.shp")
+    new_valley = arcpy.Clip_analysis(mesh, valley_copy, "Prelim_Clip.shp")
 
     # Add Connected field
+    try:
+        arcpy.management.DeleteField(new_valley, 'Connected')
+    except: 
+        pass
     arcpy.AddField_management(new_valley, 'Connected', 'SHORT')
 
     # Select all streams where network touches, set connected to 1
@@ -46,8 +47,15 @@ def main(valley_bottom, streams, fragmenters, out_folder):
 
     # Set remaining streams to zero
     arcpy.CalculateField_management(valley_layer, "Connected", "0", "PYTHON_9.3")
-    arcpy.SelectLayerByAttribute_management(valley_layer, "CLEAR SELECTION", "")
-    arcpy.CopyFeatures_management(valley_layer, "Valley_Final.shp")
+    arcpy.SelectLayerByAttribute_management(valley_layer, "CLEAR_SELECTION", "")
+    arcpy.CopyFeatures_management(valley_layer, "PrelimFragVB.shp")
+    
+    # Delete Temperary Shapefiles
+    for shape in [valley_copy, fragmenters_merge, mesh, new_valley]:
+        try:
+            arcpy.management.Delete(shape)
+        except:
+            pass
 
 
 if __name__ == '__main__':

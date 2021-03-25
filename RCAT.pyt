@@ -12,6 +12,7 @@ import Promoter
 import segmentNetwork
 import LANDFIRE_RCAT_fields
 import Layer_Package_Generator
+import Fragmenter
 
 
 class Toolbox(object):
@@ -24,7 +25,7 @@ class Toolbox(object):
         # List of tool classes associated with this toolbox
         self.tools = [VBETBuilder, VBETtool, NHDNetworkBuildertool, RVDtool, RCATBuilder, RCAtool,
                       BankfullChannelTool, ConfinementTool, Promotertool, SegmentNetworkTool, 
-					  LANDFIREfields, Layer_Package_Tool]
+					  LANDFIREfields, Layer_Package_Tool, FragmentValleyBottom]
 
 
 class VBETBuilder(object):
@@ -1319,4 +1320,68 @@ class Layer_Package_Tool(object):
         Layer_Package_Generator.main(p[0].valueAsText,
                       p[1].valueAsText,
                       p[2].valueAsText)
+        return
+
+class FragmentValleyBottom(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Fragment Valley Bottom"
+        self.category = "Supporting Tools"
+        self.description = "Fragments the valley bottom by any input polyline features (roads, levees, etc.)"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        param0 = arcpy.Parameter(
+            displayName="Unfragmented Valley Bottom",
+            name="un_vb",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param1 = arcpy.Parameter(
+            displayName="Stream Network",
+            name="streams",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input")
+
+        param2 = arcpy.Parameter(
+            displayName="Fragmenting Polylines",
+            name="fragmenters",
+            datatype="DEFeatureClass",
+            parameterType="Required",
+            direction="Input",
+            multiValue = True)
+
+        param3 = arcpy.Parameter(
+            displayName="Out Folder",
+            name="out",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [param0, param1, param2, param3]
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, p, messages):
+        """The source code of the tool."""
+        Fragmenter.main(p[0].valueAsText,
+                      p[1].valueAsText,
+                      p[2].valueAsText,
+                      p[3].valueAsText)
         return
