@@ -17,15 +17,19 @@ import arcpy
 
 # User defined arguments:
 
-# nhd_flowline_path - path to input flowlines that will be segmented
-# outpath - name and path of output segmented flowline network
-# interval - reach spacing (in meters)
-# min_segLength - minimum segment (reach) length (in meters)
+
+#nhd_flowline_path = r'C:\Users\A01636107\Box\ET_Al_Projects\RCAT\Inputs\Inputs\RS_Context.shp'
+#outpath = r'C:\Users\A01636107\Desktop\LCT_NEVADA\RCAT\300m_Networks\test_NetworkSegment.shp'
+#interval = 500
+#min_segLength = 30
 
 
 def main(nhd_flowline_path, outpath, interval, min_segLength):
     #  import required modules and extensions
     arcpy.CheckOutExtension('Spatial')
+    
+    interval = float(interval)
+    min_segLength = float (min_segLength)
 
     #  environment settings
     arcpy.env.workspace = 'in_memory' # set workspace to temporary workspace
@@ -82,7 +86,8 @@ def main(nhd_flowline_path, outpath, interval, min_segLength):
     flowline_network_dissolve = arcpy.Dissolve_management(flowline_network, 'in_memory/flowline_network_dissolve', '', '', 'SINGLE_PART')
 
     #  intersect to split by segments
-    flowline_int = arcpy.Intersect_analysis([flowline_network, flowline_network_dissolve], 'in_memory/flowline_int')
+    temp_file_path = outpath.replace('.shp','_temp.shp')
+    flowline_int = arcpy.Intersect_analysis([flowline_network, flowline_network_dissolve], temp_file_path)
     arcpy.AddField_management(flowline_int, 'SegID', 'LONG')
     arcpy.AddField_management(flowline_int, 'SegLen', 'DOUBLE')
     ct = 1
@@ -170,6 +175,7 @@ def main(nhd_flowline_path, outpath, interval, min_segLength):
     # save flowline segment output
     arcpy.CopyFeatures_management(flowline_seg, outpath)
 
+    arcpy.Delete_management(flowline_int)
     arcpy.Delete_management('in_memory')
 
 import argparse
