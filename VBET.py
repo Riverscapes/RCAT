@@ -68,10 +68,36 @@ def zonalStatsWithinBuffer(buffer, ras, statType, statField, outFC, outFCField, 
     # get input raster stat value within each buffer
     # note: zonal stats as table does not support overlapping polygons so we will check which
     #       reach buffers output was produced for and which we need to run tool on again
-    if 'NHDPlusID' in arcpy.ListFields(buffer):
-        id_field = 'NHDPlusID'
+
+    # Check if this network is coming from Riverscapes Context, which has a different Reach ID Field
+    if 'ReachCode' in [field.name for field in arcpy.ListFields(buffer)] and 'ReachCode' in [field.name for field in arcpy.ListFields(outFC)]:
+
+        # Need to convert the ReachCode field from a string to a shorter, usable number
+        id_field = 'RchCode_L'
+
+        # Delete the field if it's already there
+        if id_field in [field.name for field in arcpy.ListFields(buffer)]:
+            arcpy.DeleteField_management(buffer, id_field)
+        if id_field in [field.name for field in arcpy.ListFields(outFC)]:
+            arcpy.DeleteField_management(outFC, id_field)
+
+        # Add a new ID field
+        arcpy.AddField_management(buffer, id_field, "LONG")
+        arcpy.AddField_management(outFC, id_field, "LONG")
+
+        # The new Reach ID field is identical to ReachCode, but is now a LONG, and the first 6 digits are removed
+        arcpy.CalculateField_management(buffer, id_field, "int(!ReachCode![6:])", "PYTHON_9.3")
+        arcpy.CalculateField_management(outFC, id_field, "int(!ReachCode![6:])", "PYTHON_9.3")
+
     else:
         id_field = 'ReachID'
+
+    # Give a warning if the Reach ID field isn't actually distinguishing between reaches
+    reach_ids = [row[0] for row in arcpy.da.SearchCursor(buffer, id_field)]
+    if len(set(reach_ids)) < 5:
+        arcpy.AddWarning('Caution, the reach ID field ({}) has very few unique values'.format(id_field))
+
+
     statTbl = arcpy.sa.ZonalStatisticsAsTable(buffer, id_field, ras, os.path.join(scratch, 'statTbl'), 'DATA', statType)
     # get list of segment buffers where zonal stats tool produced output
     haveStatList = [row[0] for row in arcpy.da.SearchCursor(statTbl, id_field)]
@@ -425,6 +451,11 @@ def main(
     # save final valley bottom
     outDir = os.path.join(projPath, "02_Analyses\\Output_" + str(j))
     os.mkdir(outDir)
+
+    # In case they forget to add .shp
+    if '.shp' not in outName:
+        outName = outName + '.shp'
+
     fcOutput = os.path.join(outDir, outName)
 
     arcpy.SmoothPolygon_cartography(elim_valley, fcOutput, "PAEK", "65 Meters", "FIXED_ENDPOINT", "NO_CHECK")
