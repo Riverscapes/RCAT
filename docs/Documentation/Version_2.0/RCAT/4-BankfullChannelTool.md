@@ -3,7 +3,7 @@ title: Step 4 - Bankfull Channel Polygon Tool
 category: RCAT
 ---
 
-The Bankfull Channel Tool generates an approximate bankfull channel, with an optional buffer. This tool is modified from the Bankfull Channel tool in the [Confinement Toolbox](http://confinement.riverscapes.xyz/) and is included as a basic tool for generating an active channel polygon used in the [Confinement Tool]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool.md). 
+The Bankfull Channel Tool generates an approximate bankfull channel, with an optional buffer. This tool is modified from the Bankfull Channel tool in the [Confinement Toolbox](http://confinement.riverscapes.net/) and is included as a basic tool for generating an active channel polygon used in the [Confinement Tool]({{ site.baseurl }}/Documentation/Version_2.0/RCAT/5-ConfinementTool.md). 
 
 ## Parameters
 
